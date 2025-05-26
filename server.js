@@ -1,0 +1,59 @@
+import app from './app/main/app.js';
+import database from './database/sequelize.js';
+import logger from './app/utils/logger.js';
+
+let server;
+
+const startServer = async () => {
+    try {
+        await database.authenticate();
+        await database.sync();
+
+        logger.info('Database connected and models synced.');
+
+        // Inicia o servidor
+        server = app.listen(process.env.PORT_SERVER, () => {
+            logger.info(`App running at port ${process.env.PORT_SERVER} on ${process.env.NODE_ENV}.`);
+        });
+    } catch (error) {
+        logger.error(`Failed to connect to the database: ${error}`);
+        process.exit(1);
+    }
+};
+
+startServer();
+
+const closeServer = async () => {
+    if (server) {
+        await server.close();
+    }
+
+    await database.close();
+
+    logger.warn('All requests stopped, shutting down');
+};
+
+const gracefulShutdownHandler = function gracefulShutdownHandler(signal) {
+    logger.warn(`Caught ${signal}, gracefully shutting down`);
+
+    setTimeout(() => {
+        logger.warn('Shutting down application');
+        closeServer();
+    }, 0);
+};
+
+process.on('SIGINT', gracefulShutdownHandler);
+process.on('SIGTERM', gracefulShutdownHandler);
+process.on('SIGQUIT', gracefulShutdownHandler);
+
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error(`App exiting due to an unhandled promise: ${promise} and reason: ${reason}`);
+    throw reason;
+});
+
+process.on('uncaughtException', (error) => {
+    logger.error(`App exiting due to an uncaught exception: ${error}`);
+    process.exit(1);
+});
+
+export { app, server, closeServer };

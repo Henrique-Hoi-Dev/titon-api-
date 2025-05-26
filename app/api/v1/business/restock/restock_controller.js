@@ -1,16 +1,52 @@
-const BaseResourceController = require('../../base/base_resource_controller');
-const BaseService = require('./base_service');
-const HttpStatus = require('http-status');
+import BaseResourceController from '../../base/base_resource_controller';
+import RestockService from './restock_service';
+import HttpStatus from 'http-status';
 
-class UsersController extends BaseResourceController {
+class RestockController extends BaseResourceController {
     constructor() {
         super();
-        this._baseService = new BaseService();
+        this._restockService = new RestockService();
     }
 
-    async searchUserVtex(req, res, next) {
+    async create(req, res, next) {
         try {
-            const data = await this._baseService.baseFunciton(req.body, req.query);
+            const data = await this._restockService.create(req.driverId, req.body);
+            res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async uploadDocuments(req, res, next) {
+        try {
+            const data = await this._restockService.uploadDocuments(req, req.params);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async deleteFile(req, res, next) {
+        try {
+            const data = await this._restockService.deleteFile(req.params);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async getAll(req, res, next) {
+        try {
+            const data = await this._restockService.getAll(req.query);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async getId(req, res, next) {
+        try {
+            const data = await this._restockService.getId(req.params.id);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -18,4 +54,4 @@ class UsersController extends BaseResourceController {
     }
 }
 
-module.exports = UsersController;
+export default RestockController;

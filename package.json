@@ -1,7 +1,7 @@
 {
-    "name": "base-backend",
+    "name": "api-truck-manager",
     "version": "2.0.0",
-    "description": "Template Node.js 20 LTS – Express 5, Zod, Pino, Jest",
+    "description": "API para gerenciamento de caminhões",
     "main": "server.js",
     "type": "module",
     "scripts": {
@@ -12,8 +12,12 @@
         "single-test": "cross-env NODE_ENV=test jest -t",
         "coverage": "npm run test -- --coverage --silent=false",
         "dev": "cross-env NODE_ENV=development nodemon server.js",
-        "dev:debug": "cross-env NODE_ENV=development node --inspect-brk server.js",
-        "start": "cross-env NODE_ENV=production node server.js",
+        "dev:debug": "cross-env NODE_ENV=development node server.js",
+        "dev:migrate": "cross-env NODE_ENV=development sequelize db:migrate",
+        "dev:seed": "cross-env NODE_ENV=development sequelize db:seed:all",
+        "start": "npm run build && cross-env NODE_ENV=production node dist/server.js",
+        "start:migrate": "cross-env NODE_ENV=production sequelize db:migrate",
+        "start:seed": "cross-env NODE_ENV=production sequelize db:seed:all",
         "lint": "eslint . --ext .js",
         "lint:fix": "eslint . --ext .js --fix",
         "style:check": "prettier --check \"**/*.js\"",
@@ -63,6 +67,8 @@
         "pino-http": "^10.4.0",
         "qs": "^6.14.0",
         "sequelize": "^6.37.7",
+        "tesseract.js": "^6.0.1",
+        "xlsx": "^0.18.5",
         "yup": "^1.6.1"
     },
     "devDependencies": {

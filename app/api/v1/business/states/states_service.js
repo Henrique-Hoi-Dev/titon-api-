@@ -1,20 +1,52 @@
-const baseModel = require('./base_model');
-const BaseService = require('../../base/base_service');
+import { Op } from 'sequelize';
+import StatesModel from './states_model';
+import XLSX from 'xlsx';
+import fs from 'fs';
+import path from 'path';
+import BaseService from '../../base/base_service';
 
-class UsersService extends BaseService {
+class StatesService extends BaseService {
     constructor() {
         super();
-        this._usersModel = baseModel;
+        this._statesModel = StatesModel;
     }
 
-    async baseFunciton() {}
+    async allStates({ search = '' }) {
+        const states = await this._statesModel.findAll({
+            where: {
+                [Op.or]: [{ name: { [Op.iLike]: `%${search}%` } }, { uf: { [Op.iLike]: `%${search}%` } }]
+            },
+            attributes: ['id', 'name', 'uf']
+        });
+        return states;
+    }
 
-    _updateHours(numOfHours, date = new Date()) {
-        const dateCopy = new Date(date.getTime());
+    async popularCityStateData(props) {
+        const { file } = props;
 
-        dateCopy.setHours(dateCopy.getHours() - numOfHours);
+        if (file === undefined) throw new Error('FILE_NOT_FOUND_ERROR');
 
-        return dateCopy;
+        const workbook = XLSX.read(file.buffer, {
+            type: 'buffer',
+            cellDates: true,
+            cellText: true
+        });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true });
+
+        // const cities = jsonData.map((row) => {
+        //   return `{ name: "${row.name}", states_id: statesMap['${row.stateUf}'] }`;
+        // });
+
+        // // Formatando o resultado final como um array JS
+        // const output = `const cities = [\n  ${cities.join(
+        //   ',\n  '
+        // )}\n];\n\nmodule.exports = cities;`;
+
+        // // Salvando o arquivo gerado
+        // fs.writeFileSync(path.join(__dirname, 'citiesArray.js'), output);
+
+        return jsonData;
     }
 
     _handleMongoError(error) {
@@ -26,4 +58,4 @@ class UsersService extends BaseService {
     }
 }
 
-module.exports = UsersService;
+export default StatesService;

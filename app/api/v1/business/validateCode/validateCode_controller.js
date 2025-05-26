@@ -8,10 +8,10 @@ class ValidateCodeController extends BaseResourceController {
         this._validateCodeService = new ValidateCodeService();
     }
 
-    async searchUserVtex(req, res, next) {
+    async validateCode(req, res, next) {
         try {
-            const data = await this._validateCodeService.baseFunciton(req.body, req.query);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+            const data = await this._validateCodeService.validateCode(req.body, req.query);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }

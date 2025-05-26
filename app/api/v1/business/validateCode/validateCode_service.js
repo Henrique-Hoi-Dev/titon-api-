@@ -9,14 +9,6 @@ class ValidateCodeService extends BaseService {
 
     async baseFunciton() {}
 
-    _updateHours(numOfHours, date = new Date()) {
-        const dateCopy = new Date(date.getTime());
-
-        dateCopy.setHours(dateCopy.getHours() - numOfHours);
-
-        return dateCopy;
-    }
-
     _handleMongoError(error) {
         const keys = Object.keys(error.errors);
         const err = new Error(error.errors[keys[0]].message);

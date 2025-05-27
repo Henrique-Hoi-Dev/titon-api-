@@ -1,6 +1,8 @@
+/* eslint-disable quotes */
 'use strict';
 
 module.exports = {
+    // eslint-disable-next-line no-unused-vars
     up: async (queryInterface, Sequelize) => {
         // Primeiro, verifique se o valor 'DRAFT' já existe no enum
         const result = await queryInterface.sequelize.query(
@@ -9,11 +11,14 @@ module.exports = {
         const exists = result[0][0].exists;
 
         if (!exists) {
-            await queryInterface.sequelize.query("ALTER TYPE enum_freights_status ADD VALUE 'DRAFT';");
+            await queryInterface.sequelize.query(
+                "ALTER TYPE enum_freights_status ADD VALUE 'DRAFT';"
+            );
         }
     },
 
+    // eslint-disable-next-line no-unused-vars
     down: async (queryInterface, Sequelize) => {
         // Reversão pode ser complexa e depende do seu caso específico
-    },
+    }
 };

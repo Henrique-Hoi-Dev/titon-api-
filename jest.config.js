@@ -1,12 +1,13 @@
 // For a detailed explanation regarding each configuration property, visit:
 // https://jestjs.io/docs/en/configuration.html
 
-const path = require('path');
-const { resolve } = path;
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname);
 
-module.exports = {
+export default {
     rootDir: root,
     displayName: 'root-tests',
 

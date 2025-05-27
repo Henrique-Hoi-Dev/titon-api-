@@ -2,6 +2,7 @@ import ManagerModel from './manager_model.js';
 import BaseService from '../../base/base_service.js';
 import Permission from '../permission/permission_model.js';
 import { generateManagerToken } from '../../../../utils/jwt.js';
+import { Op } from 'sequelize';
 
 class ManagerService extends BaseService {
     constructor() {
@@ -74,7 +75,12 @@ class ManagerService extends BaseService {
             permission_id: addPermissions.id
         });
 
-        const { type_role, id } = resultUser?.toJSON();
+        if (!resultUser) {
+            const err = new Error('ERRO_EDIT_USER_PERMISSION');
+            err.status = 404;
+            throw err;
+        }
+        const { type_role, id } = resultUser.toJSON();
 
         const userData = {
             id,
@@ -152,7 +158,8 @@ class ManagerService extends BaseService {
             if (userExist) throw Error('This user email already exists.');
         }
 
-        if (oldPassword && !(await user.checkPassword(oldPassword))) throw Error('Password does not match!');
+        if (oldPassword && !(await user.checkPassword(oldPassword)))
+            throw Error('Password does not match!');
 
         await user.update({
             name: body.name,

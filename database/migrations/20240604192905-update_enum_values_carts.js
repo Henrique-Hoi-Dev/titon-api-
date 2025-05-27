@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-    up: async (queryInterface, Sequelize) => {
+    up: async (queryInterface) => {
         // Renomear o enum antigo
         await queryInterface.sequelize.query(
             'ALTER TYPE "enum_carts_cart_bodyworks" RENAME TO "enum_carts_cart_bodyworks_old";'
@@ -9,6 +9,7 @@ module.exports = {
 
         // Criar o novo enum com valores atualizados
         await queryInterface.sequelize.query(
+            // eslint-disable-next-line quotes
             "CREATE TYPE \"enum_carts_cart_bodyworks\" AS ENUM('TANK', 'BULKCARRIER', 'SIDER', 'CHEST', 'BUCKET');"
         );
 
@@ -24,12 +25,13 @@ module.exports = {
         await queryInterface.sequelize.query('DROP TYPE "enum_carts_cart_bodyworks_old";');
     },
 
-    down: async (queryInterface, Sequelize) => {
+    down: async (queryInterface) => {
         // Reverter para o enum antigo
         await queryInterface.sequelize.query(
             'ALTER TYPE "enum_carts_cart_bodyworks" RENAME TO "enum_carts_cart_bodyworks_new";'
         );
         await queryInterface.sequelize.query(
+            // eslint-disable-next-line quotes
             "CREATE TYPE \"enum_carts_cart_bodyworks_old\" AS ENUM('tank', 'bulkCarrier', 'sider', 'chest', 'bucket');"
         );
         await queryInterface.sequelize.query(
@@ -39,5 +41,5 @@ module.exports = {
         await queryInterface.sequelize.query(
             'ALTER TYPE "enum_carts_cart_bodyworks_old" RENAME TO "enum_carts_cart_bodyworks";'
         );
-    },
+    }
 };

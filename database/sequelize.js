@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Sequelize } from 'sequelize';
 import Models from './models/index.js';
 

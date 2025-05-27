@@ -13,7 +13,9 @@ const startServer = async () => {
 
         // Inicia o servidor
         server = app.listen(process.env.PORT_SERVER, () => {
-            logger.info(`App running at port ${process.env.PORT_SERVER} on ${process.env.NODE_ENV}.`);
+            logger.info(
+                `App running at port ${process.env.PORT_SERVER} on ${process.env.NODE_ENV}.`
+            );
         });
     } catch (error) {
         logger.error(`Failed to connect to the database: ${error}`);

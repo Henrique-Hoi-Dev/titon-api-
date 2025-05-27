@@ -5,115 +5,114 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 autoIncrement: true,
-                primaryKey: true,
+                primaryKey: true
             },
             name: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             phone: {
                 type: Sequelize.STRING,
                 allowNull: false,
-                unique: true,
+                unique: true
             },
             email: {
                 type: Sequelize.STRING,
-                unique: true,
+                unique: true
             },
             cpf: {
                 type: Sequelize.STRING,
                 allowNull: false,
-                unique: true,
+                unique: true
             },
 
             password_hash: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             number_cnh: {
-                type: Sequelize.STRING,
+                type: Sequelize.STRING
             },
             valid_cnh: {
-                type: Sequelize.DATE,
+                type: Sequelize.DATE
             },
             date_valid_mopp: {
-                type: Sequelize.DATE,
+                type: Sequelize.DATE
             },
             date_valid_nr20: {
-                type: Sequelize.DATE,
+                type: Sequelize.DATE
             },
             date_valid_nr35: {
-                type: Sequelize.DATE,
+                type: Sequelize.DATE
             },
             date_admission: {
-                type: Sequelize.DATE,
+                type: Sequelize.DATE
             },
             date_birthday: {
-                type: Sequelize.DATE,
+                type: Sequelize.DATE
             },
             status: {
                 type: Sequelize.ENUM,
                 values: ['ACTIVE', 'INACTIVE', 'INCOMPLETE'],
-                defaultValue: 'ACTIVE',
+                defaultValue: 'ACTIVE'
             },
             type_positions: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             permission_id: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.INTEGER
             },
             external_user_id: {
-                type: Sequelize.STRING,
+                type: Sequelize.STRING
             },
             player_id: {
-                type: Sequelize.STRING,
+                type: Sequelize.STRING
             },
             cart: {
-                type: Sequelize.STRING,
+                type: Sequelize.STRING
             },
             truck: {
-                type: Sequelize.STRING,
+                type: Sequelize.STRING
             },
             credit: {
                 type: Sequelize.INTEGER,
-                defaultValue: 0,
+                defaultValue: 0
             },
-            credit: Sequelize.INTEGER,
             transactions: {
                 type: Sequelize.ARRAY({
                     type: Sequelize.JSONB,
                     defaultValue: {
                         typeTransactions: Sequelize.STRING,
-                        value: Sequelize.INTEGER,
-                    },
+                        value: Sequelize.INTEGER
+                    }
                 }),
-                defaultValue: [],
+                defaultValue: []
             },
             value_fix: {
                 type: Sequelize.INTEGER,
-                defaultValue: 0,
+                defaultValue: 0
             },
             percentage: {
                 type: Sequelize.INTEGER,
-                defaultValue: 0,
+                defaultValue: 0
             },
             daily: {
                 type: Sequelize.INTEGER,
-                defaultValue: 0,
+                defaultValue: 0
             },
             created_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: false
             },
             updated_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
-            },
+                allowNull: false
+            }
         });
     },
 
     down: (queryInterface) => {
         return queryInterface.dropTable('drivers');
-    },
+    }
 };

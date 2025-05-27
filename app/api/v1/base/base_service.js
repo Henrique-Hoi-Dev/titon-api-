@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import logger from '../../../utils/logger.js';
 
 class BaseService {
@@ -34,15 +35,17 @@ class BaseService {
                         !_.isArray(data[index].reason.errors) &&
                         _.isObject(data[index].reason.errors)
                     ) {
-                        data[index].reason.errors = Object.keys(data[index].reason.errors).map((item) => {
-                            return {
-                                message: data[index].reason.errors[item].message,
-                                context: {
-                                    value: data[index].reason.errors[item].value,
-                                    key: data[index].reason.errors[item].path
-                                }
-                            };
-                        });
+                        data[index].reason.errors = Object.keys(data[index].reason.errors).map(
+                            (item) => {
+                                return {
+                                    message: data[index].reason.errors[item].message,
+                                    context: {
+                                        value: data[index].reason.errors[item].value,
+                                        key: data[index].reason.errors[item].path
+                                    }
+                                };
+                            }
+                        );
                     }
                 }
                 rejected.push(data[index]);
@@ -69,7 +72,9 @@ class BaseService {
     customValidation(schema, data) {
         const result = schema.validate(data, { abortEarly: false, context: true });
         if (result.error)
-            result.error.details = result.error.details.map((detail) => _.pick(detail, ['message', 'context']));
+            result.error.details = result.error.details.map((detail) =>
+                _.pick(detail, ['message', 'context'])
+            );
         return result.error;
     }
 }

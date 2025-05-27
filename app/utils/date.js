@@ -3,9 +3,11 @@ import format from 'date-fns/format';
 
 const ONE_MIN_IN_MS = 60000;
 
-const createExpirationDateFromNow = (timeInMin = 30) => new Date(Date.now() + ONE_MIN_IN_MS * timeInMin);
+const createExpirationDateFromNow = (timeInMin = 30) =>
+    new Date(Date.now() + ONE_MIN_IN_MS * timeInMin);
 
-const isDateAfterNow = (date = Date.now()) => (_.isDate(date) ? date > new Date() : new Date(date) > new Date());
+const isDateAfterNow = (date = Date.now()) =>
+    _.isDate(date) ? date > new Date() : new Date(date) > new Date();
 
 const parseDateString = (dateString) => {
     if (typeof dateString !== 'string' || dateString.trim() === '') {

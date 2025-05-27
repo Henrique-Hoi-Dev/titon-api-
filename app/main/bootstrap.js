@@ -27,8 +27,10 @@ const bootstrap = (environment = process.env.NODE_ENV ? process.env.NODE_ENV : '
         process.env[key] = environmentVariables[key];
     }
 
+    // eslint-disable-next-line no-console
     console.log(`Ambiente: ${environment}`);
     if (environment === 'test' || environment === 'development') {
+        // eslint-disable-next-line no-console
         console.log('Variáveis carregadas:', environmentVariables);
     }
 };

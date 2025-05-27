@@ -114,7 +114,9 @@ class DepositMoneyService extends BaseService {
 
             return infoDepositMoney;
         } catch (error) {
-            throw error;
+            const err = new Error(error);
+            err.status = 400;
+            throw err;
         }
     }
 
@@ -122,7 +124,9 @@ class DepositMoneyService extends BaseService {
         try {
             return await deleteFile({ filename, category });
         } catch (error) {
-            throw error;
+            const err = new Error(error);
+            err.status = 400;
+            throw err;
         }
     }
 

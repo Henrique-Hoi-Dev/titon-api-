@@ -23,6 +23,7 @@ class NotificationService extends BaseService {
             name: item.name,
             text: item.contents
         }));
+        // eslint-disable-next-line no-console
         console.log('OneSignal notifications:', oneSignalList);
 
         // Busca notificações locais do banco com paginação
@@ -52,7 +53,8 @@ class NotificationService extends BaseService {
         const notification = await this._notificationModel.findByPk(id);
         if (!notification) throw Error('NOTIFICATION_NOT_FOUND');
 
-        if (notification.driver_id === null) throw Error('Do not have permission for this notification');
+        if (notification.driver_id === null)
+            throw Error('Do not have permission for this notification');
 
         if (notification.read === true) throw Error('Has already been read.');
 
@@ -69,10 +71,14 @@ class NotificationService extends BaseService {
                 where: { driver_id: driverId }
             });
 
-            if (!notifications || notifications.length === 0) return { msg: 'NOTIFICATION_NOT_FOUND' };
+            if (!notifications || notifications.length === 0)
+                return { msg: 'NOTIFICATION_NOT_FOUND' };
 
             // Atualiza todas as notificações para read: true de uma só vez
-            await this._notificationModel.update({ read: true }, { where: { driver_id: driverId } });
+            await this._notificationModel.update(
+                { read: true },
+                { where: { driver_id: driverId } }
+            );
 
             return { msg: 'successful' };
         } catch (error) {
@@ -100,7 +106,7 @@ class NotificationService extends BaseService {
 
         if (!checkIsMaster) throw Error('User not is Master');
 
-        const notifications = await Notifications.findAll({
+        const notifications = await this._notificationModel.findAll({
             where: { user_id: req.userId, read: false },
             order: [['created_at', 'DESC']],
             attributes: [
@@ -137,12 +143,13 @@ class NotificationService extends BaseService {
         const notification = await this._notificationModel.findByPk(id);
 
         if (!notification) throw Error('Notification not found');
-        if (notification.user_id === null) throw Error('Do not have permission for this notification');
+        if (notification.user_id === null)
+            throw Error('Do not have permission for this notification');
         if (notification.read === true) throw Error('Has already been read.');
 
         await notification.update({ read: true });
 
-        return await Notifications.findByPk(id, {
+        return await this._notificationModel.findByPk(id, {
             attributes: ['id', 'content', 'read', 'freight_id', 'driver_id']
         });
     }

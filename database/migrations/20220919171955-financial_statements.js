@@ -5,127 +5,127 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 autoIncrement: true,
-                primaryKey: true,
+                primaryKey: true
             },
             creator_user_id: {
                 type: Sequelize.INTEGER,
                 references: { model: 'users', key: 'id' },
                 allowNull: false,
                 onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
+                onDelete: 'CASCADE'
             },
             driver_id: {
                 type: Sequelize.INTEGER,
                 references: { model: 'drivers', key: 'id' },
                 allowNull: false,
                 onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
+                onDelete: 'CASCADE'
             },
             truck_id: {
                 type: Sequelize.INTEGER,
                 references: { model: 'trucks', key: 'id' },
                 allowNull: false,
                 onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
+                onDelete: 'CASCADE'
             },
             cart_id: {
                 type: Sequelize.INTEGER,
                 references: { model: 'carts', key: 'id' },
                 allowNull: true,
                 onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
+                onDelete: 'CASCADE'
             },
             percentage_commission: {
                 type: Sequelize.INTEGER,
-                defaultValue: 0,
+                defaultValue: 0
             },
             fixed_commission: {
                 type: Sequelize.INTEGER,
-                defaultValue: 0,
+                defaultValue: 0
             },
             daily: {
                 type: Sequelize.INTEGER,
-                defaultValue: 0,
+                defaultValue: 0
             },
             status: {
                 type: Sequelize.BOOLEAN,
                 allowNull: false,
-                defaultValue: true,
+                defaultValue: true
             },
             start_km: {
                 type: Sequelize.INTEGER,
-                allowNull: true,
+                allowNull: true
             },
             final_km: {
                 type: Sequelize.INTEGER,
-                allowNull: true,
+                allowNull: true
             },
             start_date: {
                 type: Sequelize.DATE,
-                allowNull: true,
+                allowNull: true
             },
             final_date: {
                 type: Sequelize.DATE,
-                allowNull: true,
+                allowNull: true
             },
             driver_name: {
                 type: Sequelize.STRING,
-                allowNull: true,
+                allowNull: true
             },
             truck_models: {
                 type: Sequelize.STRING,
-                allowNull: true,
+                allowNull: true
             },
             truck_board: {
                 type: Sequelize.STRING,
-                allowNull: true,
+                allowNull: true
             },
             truck_avatar: {
                 type: Sequelize.STRING,
-                allowNull: true,
+                allowNull: true
             },
             cart_models: {
                 type: Sequelize.STRING,
-                allowNull: true,
+                allowNull: true
             },
             cart_board: {
                 type: Sequelize.STRING,
-                allowNull: true,
+                allowNull: true
             },
             invoicing_all: {
                 type: Sequelize.INTEGER,
-                allowNull: true,
+                allowNull: true
             },
             transactions: {
                 type: Sequelize.ARRAY({
                     type: Sequelize.JSONB,
                     defaultValue: {
                         typeTransactions: Sequelize.STRING,
-                        value: Sequelize.INTEGER,
-                    },
+                        value: Sequelize.INTEGER
+                    }
                 }),
-                defaultValue: [],
+                defaultValue: []
             },
             medium_fuel_all: {
                 type: Sequelize.INTEGER,
-                allowNull: true,
+                allowNull: true
             },
             total_value: {
                 type: Sequelize.INTEGER,
-                allowNull: true,
+                allowNull: true
             },
             created_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: false
             },
             updated_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
-            },
+                allowNull: false
+            }
         });
     },
 
     down: (queryInterface) => {
         return queryInterface.dropTable('financial_statements');
-    },
+    }
 };

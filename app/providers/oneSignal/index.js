@@ -32,9 +32,10 @@ export default {
             };
 
             const response = await oneSignalClient.createNotification(notification);
-            console.log('notifica::::::::::::', response.body);
+            this.logger.info('notifica::::::::::::', response.body);
             return response.body;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Erro ao enviar notificação:', error);
             throw error;
         }
@@ -49,14 +50,15 @@ export default {
                 included_segments: ['All'],
                 headings: { pt: title },
                 contents: { pt: message },
-                app_id: appId
+                app_id: process.env.ONESIGNAL_APP_ID
             };
 
             const response = await oneSignalClient.createNotification(notification);
             return response.body;
-        } catch (error) {
-            console.error('Erro ao enviar notificação para todos:', error);
-            throw error;
+        } catch {
+            const err = new Error('ERROR_SEND_NOTIFICATION_TO_ALL');
+            err.status = 400;
+            throw err;
         }
     },
 
@@ -74,6 +76,7 @@ export default {
             });
             return response.data;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Erro ao buscar players:', error);
             throw error;
         }
@@ -93,8 +96,11 @@ export default {
             });
             return response.data;
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.error('Erro ao buscar notificações:', error);
-            throw error;
+            const err = new Error('ERROR_GET_NOTIFICATIONS');
+            err.status = 400;
+            throw err;
         }
     }
 };

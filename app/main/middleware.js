@@ -120,4 +120,11 @@ async function ensureAuthorization(req, res, next) {
     next();
 }
 
-export default { logError, handleError, throw404, ensureAuthorization, verifyManagerToken, verifyDriverToken };
+export default {
+    logError,
+    handleError,
+    throw404,
+    ensureAuthorization,
+    verifyManagerToken,
+    verifyDriverToken
+};

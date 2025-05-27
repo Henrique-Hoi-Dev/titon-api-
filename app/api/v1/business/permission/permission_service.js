@@ -7,49 +7,44 @@ class PermissionService extends BaseService {
         this._permissionModel = Permission;
     }
 
-    async createPermission(req, res) {
-        let result = {};
-        let permission = req;
+    async createPermission(body) {
+        let permission = body;
 
-        const permissionExist = await this._permissionModel.findOne({ where: { role: permission.role } });
+        const permissionExist = await this._permissionModel.findOne({
+            where: { role: permission.role }
+        });
 
         if (permissionExist) {
-            result = { httpStatus: httpStatus.CONFLICT, msg: 'This permission role already exists.' };
-            return result;
+            const err = new Error('PERMISSION_ALREADY_EXISTS');
+            err.status = 409;
+            throw err;
         }
 
         const resultPermission = await this._permissionModel.create(permission);
 
-        result = { httpStatus: HttpStatus.OK, status: 'successful', dataResult: resultPermission };
-        return result;
+        return resultPermission;
     }
 
-    async updatePermission(req, res) {
-        let result = {};
-
-        const permission = await this._permissionModel.findByPk(req.params.id);
+    async updatePermission(body, id) {
+        const permission = await this._permissionModel.findByPk(id);
 
         if (!permission) {
-            result = { httpStatus: httpStatus.CONFLICT, msg: 'This permission role already exists.' };
-            return result;
+            const err = new Error('PERMISSION_NOT_FOUND');
+            err.status = 404;
+            throw err;
         }
 
-        const resultPermission = await permission.update(req);
+        const resultPermission = await permission.update(body);
 
-        result = { httpStatus: httpStatus.OK, status: 'successful', dataResult: resultPermission };
-        return result;
+        return resultPermission;
     }
 
     async getAllPermission() {
-        let result = {};
-
         const permissao = await this._permissionModel.findAll({
             attributes: ['id', 'role', 'actions']
         });
 
-        result = { httpStatus: httpStatus.OK, status: 'successful', dataResult: permissao };
-
-        return result;
+        return permissao;
     }
 
     _updateHours(numOfHours, date = new Date()) {

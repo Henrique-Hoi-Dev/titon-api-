@@ -7,34 +7,34 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 autoIncrement: true,
                 primaryKey: true,
-                allowNull: false,
+                allowNull: false
             },
             name: {
                 type: Sequelize.STRING(100),
-                allowNull: false,
+                allowNull: false
             },
             states_id: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 references: {
                     model: 'states',
-                    key: 'id',
+                    key: 'id'
                 },
                 onUpdate: 'CASCADE',
-                onDelete: 'CASCADE',
+                onDelete: 'CASCADE'
             },
             created_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: false
             },
             updated_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
-            },
+                allowNull: false
+            }
         });
     },
 
-    down: async (queryInterface, Sequelize) => {
+    down: async (queryInterface) => {
         return queryInterface.dropTable('cities');
-    },
+    }
 };

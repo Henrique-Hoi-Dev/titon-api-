@@ -96,16 +96,20 @@ class TravelExpensesService extends BaseService {
             });
 
             return infoTravelExpenses;
-        } catch (error) {
-            throw error;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
         }
     }
 
     async _deleteFileIntegration({ filename, category }) {
         try {
             return await deleteFile({ filename, category });
-        } catch (error) {
-            throw error;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
         }
     }
 

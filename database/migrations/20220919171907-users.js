@@ -5,46 +5,46 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 autoIncrement: true,
-                primaryKey: true,
+                primaryKey: true
             },
             name: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             email: {
                 type: Sequelize.STRING,
                 allowNull: false,
-                unique: true,
+                unique: true
             },
             type_role: {
                 type: Sequelize.ENUM,
                 values: ['MASTER', 'USER', 'MANAGER', 'DIRECTOR', 'COLLABORATOR'],
-                defaultValue: 'USER',
+                defaultValue: 'USER'
             },
             img_receipt: {
                 type: Sequelize.JSONB,
-                allowNull: true,
+                allowNull: true
             },
             permission_id: {
                 type: Sequelize.INTEGER,
-                allowNull: true,
+                allowNull: true
             },
             password_hash: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             created_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: false
             },
             updated_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
-            },
+                allowNull: false
+            }
         });
     },
 
     down: (queryInterface) => {
         return queryInterface.dropTable('users');
-    },
+    }
 };

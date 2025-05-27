@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // const HttpStatus = require('http-status');
 
 const BaseService = require('../../app/api/v1/business/base/base_service');

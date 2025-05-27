@@ -1,11 +1,13 @@
 import BaseService from '../../base/base_service.js';
 import Cities from './cities_model.js';
+import States from '../states/states_model.js';
 import { Op, literal } from 'sequelize';
 
 class CitiesService extends BaseService {
     constructor() {
         super();
         this._citiesModel = Cities;
+        this._statesModel = States;
     }
 
     async allCities({ search = '', uf = '' }) {
@@ -16,7 +18,7 @@ class CitiesService extends BaseService {
             attributes: ['id', 'name'],
             include: [
                 {
-                    model: States,
+                    model: this._statesModel,
                     as: 'states',
                     attributes: ['uf'],
                     where: uf ? { uf: { [Op.iLike]: `%${uf}%` } } : {}

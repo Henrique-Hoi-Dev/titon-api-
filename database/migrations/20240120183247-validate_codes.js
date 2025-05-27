@@ -5,39 +5,39 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 autoIncrement: true,
-                primaryKey: true,
+                primaryKey: true
             },
             cpf: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             expiration_date: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: false
             },
             code: {
                 type: Sequelize.STRING,
                 allowNull: false,
-                unique: true,
+                unique: true
             },
             status: {
                 type: Sequelize.ENUM({
-                    values: ['AVAILABLE', 'EXPIRED', 'USED'],
+                    values: ['AVAILABLE', 'EXPIRED', 'USED']
                 }),
-                defaultValue: 'AVAILABLE',
+                defaultValue: 'AVAILABLE'
             },
             created_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: false
             },
             updated_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
-            },
+                allowNull: false
+            }
         });
     },
 
     down: (queryInterface) => {
         return queryInterface.dropTable('validate_codes');
-    },
+    }
 };

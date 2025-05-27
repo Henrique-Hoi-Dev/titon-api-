@@ -6,7 +6,10 @@ class ValidateCode extends Model {
         super.init(
             {
                 cpf: { type: Sequelize.STRING },
-                expiration_date: { type: Sequelize.DATE, defaultValue: createExpirationDateFromNow(30) },
+                expiration_date: {
+                    type: Sequelize.DATE,
+                    defaultValue: createExpirationDateFromNow(30)
+                },
                 code: { type: Sequelize.STRING, unique: true },
                 status: {
                     type: Sequelize.ENUM({

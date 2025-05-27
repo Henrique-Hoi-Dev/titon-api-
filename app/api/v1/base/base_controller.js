@@ -68,10 +68,17 @@ class BaseController {
         const config = e.config;
 
         return {
-            message: e.message || (response.data && (response.data.errorMessage || response.data.message)),
+            message:
+                e.message ||
+                (response.data && (response.data.errorMessage || response.data.message)),
             status: response.status,
             key: e.key,
-            errors: { ...response.data, url: config.url, baseURL: config.baseURL, request: JSON.parse(config.data) }
+            errors: {
+                ...response.data,
+                url: config.url,
+                baseURL: config.baseURL,
+                request: JSON.parse(config.data)
+            }
         };
     }
 

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const BaseErrorontroller = require('../../app/api/v1/base/base_error_handler');
 const baseErrorontroller = new BaseErrorontroller();
 
@@ -26,7 +27,9 @@ describe('Test UNIT BaseErrorontroller', () => {
         });
     });
     it('errorResponse to match CONFLICT_DUPLICATE_KEY_ERROR', async () => {
-        expect(baseErrorontroller.errorResponse({ status: 409, key: 'CONFLICT_DUPLICATE_KEY_ERROR' })).toEqual({
+        expect(
+            baseErrorontroller.errorResponse({ status: 409, key: 'CONFLICT_DUPLICATE_KEY_ERROR' })
+        ).toEqual({
             errors: [
                 {
                     error_code: 8,

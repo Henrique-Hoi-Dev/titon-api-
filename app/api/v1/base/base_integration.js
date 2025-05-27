@@ -19,7 +19,7 @@ class BaseIntegration {
             },
             function (error) {
                 logger.debug(error);
-                const err = new Error(`INTEGRATION_ERROR`);
+                const err = new Error('INTEGRATION_ERROR');
                 err.key = 'INTEGRATION_ERROR';
                 err.status = error?.response?.status ?? 400;
                 err.errors = error.response;

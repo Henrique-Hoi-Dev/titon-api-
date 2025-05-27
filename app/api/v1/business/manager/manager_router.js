@@ -65,8 +65,18 @@ router
     );
 
 router
-    .put('/driver/:id', middleware.ensureAuthorization, middleware.verifyManagerToken, driverController.update)
-    .get('/driver/:id', middleware.ensureAuthorization, middleware.verifyManagerToken, driverController.getId)
+    .put(
+        '/driver/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        driverController.update
+    )
+    .get(
+        '/driver/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        driverController.getId
+    )
     .patch('/driver/reset-password/:cpf', driverController.resetPassword)
     .get('/drivers', driverController.getAll)
     .get('/drivers-select', driverController.getAllSelect)
@@ -87,7 +97,11 @@ router
     .get('/freight/:id', freightController.getId)
     .delete('/freight/:id', freightController.delete);
 
-router.get('/notifications', verifyIfUserHasRole('MASTER'), notificationController.getAllUserNotifications);
+router.get(
+    '/notifications',
+    verifyIfUserHasRole('MASTER'),
+    notificationController.getAllUserNotifications
+);
 
 router.put('/notifications/:id', verifyIfUserHasRole('MASTER'), notificationController.updateRead);
 

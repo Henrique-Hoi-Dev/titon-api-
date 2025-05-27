@@ -27,7 +27,8 @@ class DriverService extends BaseService {
 
         if (!driver) throw Error('DRIVER_NOT_FOUND');
 
-        if (!(driver.dataValues.type_positions === 'COLLABORATOR')) throw Error('INSUFFICIENT_PERMISSIONS');
+        if (!(driver.dataValues.type_positions === 'COLLABORATOR'))
+            throw Error('INSUFFICIENT_PERMISSIONS');
 
         if (!(await driver.checkPassword(password))) throw Error('INVALID_DRIVER_PASSWORD');
 
@@ -77,7 +78,8 @@ class DriverService extends BaseService {
 
         const driver = await this._driverModel.findByPk(id);
 
-        if (oldPassword && !(await driver.checkPassword(oldPassword))) throw Error('PASSWORDS_NOT_MATCHED');
+        if (oldPassword && !(await driver.checkPassword(oldPassword)))
+            throw Error('PASSWORDS_NOT_MATCHED');
 
         await driver.update({ ...body });
 
@@ -115,11 +117,11 @@ class DriverService extends BaseService {
             });
 
             const message =
-                `Olá,\n\n` +
-                `Você solicitou uma redefinição de senha em LOGBOOK. Use o código de verificação abaixo para prosseguir com a redefinição:\n\n` +
+                'Olá,\n\n' +
+                'Você solicitou uma redefinição de senha em LOGBOOK. Use o código de verificação abaixo para prosseguir com a redefinição:\n\n' +
                 `*Código de Verificação*: *${code.code}*\n\n` +
-                `Por questões de segurança, este código é válido por apenas 15 minutos. Não compartilhe este código com ninguém.\n\n` +
-                `Se você não solicitou uma redefinição de senha, por favor ignore esta mensagem.`;
+                'Por questões de segurança, este código é válido por apenas 15 minutos. Não compartilhe este código com ninguém.\n\n' +
+                'Se você não solicitou uma redefinição de senha, por favor ignore esta mensagem.';
 
             let resultSendSMS = await sendSMS({
                 phoneNumber: phone,
@@ -129,7 +131,7 @@ class DriverService extends BaseService {
             resultSendSMS.cpf = user.cpf;
             resultSendSMS.code = verificationCode;
 
-            return { token: generateToken(resultSendSMS) };
+            return { token: generateDriverToken(resultSendSMS) };
         } catch (error) {
             if (['CELL_PHONE_DOES_NOT_EXIST', 'ERROR_SENDING_CODE'].includes(error.message)) {
                 throw new Error(`${error.message}`);
@@ -162,6 +164,7 @@ class DriverService extends BaseService {
 
         if (expirationTime < now) {
             // Código expirou
+            // eslint-disable-next-line no-unused-vars
             valid = false;
 
             await this._validateCodeModel.update(
@@ -196,7 +199,7 @@ class DriverService extends BaseService {
 
         if (upValidOk) {
             return {
-                token: generateToken({
+                token: generateDriverToken({
                     valid: true,
                     name: driver.name,
                     phone: driver.phone,
@@ -269,7 +272,7 @@ class DriverService extends BaseService {
             const driver = await this._driverModel.findOne({ where: { cpf } });
             if (!driver) throw new Error('DRIVER_NOT_FOUND');
 
-            const newToke = generateToken({ cpf: cpf });
+            const newToke = generateDriverToken({ cpf: cpf });
             const resetUrl = `${
                 process.env.FRONT_URL || 'http://localhost:3000'
             }/driver/forgot-password?token=${newToke}`;
@@ -283,7 +286,7 @@ class DriverService extends BaseService {
 
             return resetUrl;
         } catch (error) {
-            console.error(error);
+            this.logger.error(error);
             throw Error(error);
         }
     }
@@ -292,7 +295,7 @@ class DriverService extends BaseService {
         const select = await this._driverModel.findAll({
             where: {
                 id: {
-                    [Op.notIn]: literal(`(SELECT "driver_id" FROM "financial_statements")`)
+                    [Op.notIn]: literal('(SELECT "driver_id" FROM "financial_statements")')
                 }
             },
             attributes: ['id', 'name']
@@ -317,11 +320,11 @@ class DriverService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', name, id, search } = query;
+        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
 
         const where = {};
         // if (id) where.id = id;
-
+        /* eslint-disable indent */
         const drivers = await this._driverModel.findAll({
             where: search
                 ? {
@@ -335,7 +338,17 @@ class DriverService extends BaseService {
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0,
-            attributes: ['id', 'name', 'cpf', 'credit', 'value_fix', 'percentage', 'daily', 'cart', 'truck']
+            attributes: [
+                'id',
+                'name',
+                'cpf',
+                'credit',
+                'value_fix',
+                'percentage',
+                'daily',
+                'cart',
+                'truck'
+            ]
         });
 
         const total = await this._driverModel.count();
@@ -377,12 +390,13 @@ class DriverService extends BaseService {
         return driver;
     }
 
-    async update(body, id) {
+    async updateDriver(body, id) {
         const { oldPassword } = body;
 
         const driver = await this._driverModel.findByPk(id);
 
-        if (oldPassword && !(await driver.checkPassword(oldPassword))) throw Error('Password does not match!');
+        if (oldPassword && !(await driver.checkPassword(oldPassword)))
+            throw Error('PASSWORDS_NOT_MATCHED');
 
         await driver.update(body);
 

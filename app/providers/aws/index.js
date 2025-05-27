@@ -21,11 +21,11 @@ export const sendSMS = async ({ phoneNumber, message }) => {
 
     try {
         const data = await sns.publish(params).promise();
-        console.log('Código de redefinição enviado com sucesso!', data);
         return data;
-    } catch (error) {
-        console.error('Erro ao enviar código de redefinição:', error);
-        return error;
+    } catch {
+        const err = new Error('ERROR_SEND_SMS');
+        err.status = 400;
+        throw err;
     }
 };
 
@@ -42,10 +42,11 @@ export const sendFile = async ({ file, body }) => {
             })
             .promise();
 
-        console.log('Integration Location:', Location);
         return Location;
-    } catch (error) {
-        throw error;
+    } catch {
+        const err = new Error('ERROR_UPLOAD_FILE');
+        err.status = 400;
+        throw err;
     }
 };
 

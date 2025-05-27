@@ -5,36 +5,36 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 autoIncrement: true,
-                primaryKey: true,
+                primaryKey: true
             },
             driver_name: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             truck_models: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             cart_models: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: false
             },
             credit: {
                 type: Sequelize.DOUBLE,
-                allowNull: false,
+                allowNull: false
             },
             created_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
+                allowNull: false
             },
             updated_at: {
                 type: Sequelize.DATE,
-                allowNull: false,
-            },
+                allowNull: false
+            }
         });
     },
 
     down: (queryInterface) => {
         return queryInterface.dropTable('data_drivers');
-    },
+    }
 };

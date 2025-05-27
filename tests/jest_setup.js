@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const supertest = require('supertest');
 const { app, server, closeServer } = require('../server');
 

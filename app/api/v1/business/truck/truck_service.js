@@ -100,16 +100,20 @@ class TruckService extends BaseService {
             });
 
             return infoTruck;
-        } catch (error) {
-            throw error;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
         }
     }
 
     async _deleteFileIntegration({ filename, category }) {
         try {
             return await deleteFile({ filename, category });
-        } catch (error) {
-            throw error;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
         }
     }
 
@@ -117,7 +121,7 @@ class TruckService extends BaseService {
         const select = await this._truckModel.findAll({
             where: {
                 id: {
-                    [Op.notIn]: literal(`(SELECT "truck_id" FROM "financial_statements")`)
+                    [Op.notIn]: literal('(SELECT "truck_id" FROM "financial_statements")')
                 }
             },
             attributes: ['id', 'truck_models', 'truck_board']
@@ -156,7 +160,7 @@ class TruckService extends BaseService {
 
         const where = {};
         // if (id) where.id = id;
-
+        /* eslint-disable indent */
         const trucks = await this._truckModel.findAll({
             where: search
                 ? {
@@ -221,7 +225,8 @@ class TruckService extends BaseService {
     }
 
     async update(body, id) {
-        const { truck_models, truck_name_brand, truck_color, truck_km, truck_year, truck_avatar } = body;
+        const { truck_models, truck_name_brand, truck_color, truck_km, truck_year, truck_avatar } =
+            body;
 
         // const chassisExist = await Truck.findOne({ where: { truck_chassis: truck_chassis } });
         // const boardExist = await Truck.findOne({ where: { truck_board: truck_board } });
@@ -271,7 +276,10 @@ class TruckService extends BaseService {
         const truck = await this._truckModel.findByPk(id);
         if (!truck) throw Error('TRUCK_NOT_FOUND');
 
-        const isInUse = await this._financialStatementsModel.findAll({ truck_board: truck.truck_board, status: true });
+        const isInUse = await this._financialStatementsModel.findAll({
+            truck_board: truck.truck_board,
+            status: true
+        });
 
         if (isInUse) throw Error('CANNOT_DELETE_TRUCK_IN_USE');
 

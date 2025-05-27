@@ -1,6 +1,7 @@
 import HttpStatus from 'http-status';
 import BaseResourceController from '../../base/base_resource_controller.js';
 import FreightService from './freight_service.js';
+import validateAndReturn from '../../../../utils/validFile.js';
 
 class FreightController extends BaseResourceController {
     constructor() {
@@ -8,9 +9,9 @@ class FreightController extends BaseResourceController {
         this._freightService = new FreightService();
     }
 
-    async createDriver(req, res, next) {
+    async createFreightDriver(req, res, next) {
         try {
-            const data = await this._freightService.create(req.driverId, req.body);
+            const data = await this._freightService.createFreightDriver(req.driverId, req.body);
             return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -19,16 +20,24 @@ class FreightController extends BaseResourceController {
 
     async getId(req, res, next) {
         try {
-            const data = await this._freightService.getId(req.params.id, req, req.params.financialId);
+            const data = await this._freightService.getId(
+                req.params.id,
+                req,
+                req.params.financialId
+            );
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async updateDriver(req, res, next) {
+    async updateFreightDriver(req, res, next) {
         try {
-            const data = await this._freightService.update(req.body, req.params.id, req);
+            const data = await this._freightService.updateFreightDriver(
+                req.body,
+                req.params.id,
+                req
+            );
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -81,9 +90,9 @@ class FreightController extends BaseResourceController {
         }
     }
 
-    async deleteDriver(req, res, next) {
+    async deleteFreightDriver(req, res, next) {
         try {
-            const data = await this._freightService.delete(req.params.id, req);
+            const data = await this._freightService.deleteFreightDriver(req.params.id, req);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -99,9 +108,9 @@ class FreightController extends BaseResourceController {
         }
     }
 
-    async getId(req, res, next) {
+    async getIdDriver(req, res, next) {
         try {
-            const data = await this._freightService.getId(req.params.id);
+            const data = await this._freightService.getIdDriver(req.params.id);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -117,18 +126,22 @@ class FreightController extends BaseResourceController {
         }
     }
 
-    async update(req, res, next) {
+    async updateFreightManager(req, res, next) {
         try {
-            const data = await this._freightService.update(req.userProps, req.body, req.params.id);
+            const data = await this._freightService.updateFreightManager(
+                req.driver,
+                req.body,
+                req.params.id
+            );
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async delete(req, res, next) {
+    async deleteFreightManager(req, res, next) {
         try {
-            const data = await this._freighstService.delete(req.params.id);
+            const data = await this._freightService.deleteFreightManager(req.params.id);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

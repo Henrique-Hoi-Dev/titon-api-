@@ -34,8 +34,18 @@ router
     .post('/code-validation', driverController.validCodeForgotPassword);
 
 router
-    .get('/profile', middleware.ensureAuthorization, middleware.verifyDriverToken, driverController.profile)
-    .put('/update-profile', middleware.ensureAuthorization, middleware.verifyDriverToken, driverController.update)
+    .get(
+        '/profile',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        driverController.profile
+    )
+    .put(
+        '/update-profile',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        driverController.update
+    )
     .put(
         '/forgot-password',
         middleware.ensureAuthorization,
@@ -64,8 +74,18 @@ router
     );
 
 router
-    .post('/freight', middleware.ensureAuthorization, middleware.verifyDriverToken, freightController.create)
-    .patch('/freight/:id', middleware.ensureAuthorization, middleware.verifyDriverToken, freightController.update)
+    .post(
+        '/freight',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        freightController.create
+    )
+    .patch(
+        '/freight/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        freightController.update
+    )
     .patch(
         '/freight/upload-documents/:id',
         upload.single('file'),

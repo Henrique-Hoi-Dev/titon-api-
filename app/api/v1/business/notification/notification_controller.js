@@ -19,7 +19,10 @@ class NotificationController extends BaseResourceController {
 
     async activateReceiveNotifications(req, res, next) {
         try {
-            const data = await this._notificationService.activateReceiveNotifications(req.body, req.driverId);
+            const data = await this._notificationService.activateReceiveNotifications(
+                req.body,
+                req.driverId
+            );
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

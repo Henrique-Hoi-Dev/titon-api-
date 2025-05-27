@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { isAfter, parseISO, sub } from 'date-fns';
+import { isAfter, parseISO } from 'date-fns';
 
 import FinancialStatement from './financialStatements_model.js';
 import BaseService from '../../base/base_service.js';
@@ -73,13 +73,14 @@ class FinancialStatementService extends BaseService {
         };
     }
 
-    async update(body, driverId) {
+    async updateDriverFinancial(body, driverId) {
         const financialStatement = await this._financialStatementModel.findOne({
             where: { driver_id: driverId, status: true }
         });
         if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
 
-        const { id, truck_models, total_value, cart_models, driver_id } = await financialStatement.update(body);
+        const { id, truck_models, total_value, cart_models, driver_id } =
+            await financialStatement.update(body);
 
         const driverFinancial = await this._driverModel.findByPk(driver_id);
         if (!driverFinancial) throw Error('DRIVER_NOT_FOUND');
@@ -99,10 +100,24 @@ class FinancialStatementService extends BaseService {
         return { data: driver, financial: financial };
     }
 
-    _calculate(values) {
-        let initialValue = 0;
-        let total = values.reduce((accumulator, currentValue) => accumulator + currentValue, initialValue);
-        return total;
+    async updateFinancial(body, id) {
+        const financialStatement = await this._financialStatementModel.findByPk(id);
+
+        if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
+
+        const result = await financialStatement.update(body);
+
+        const driverFinancial = await Driver.findByPk(result.driver_id);
+
+        const { truck_models, cart_models, total_value } = result;
+
+        await driverFinancial.update({
+            credit: total_value,
+            truck: truck_models,
+            cart: cart_models
+        });
+
+        return result;
     }
 
     async _updateValorFinancial(props) {
@@ -126,10 +141,9 @@ class FinancialStatementService extends BaseService {
         const valoresDeposit = deposit.map((res) => res.value);
         const totalvalueDeposit = await this._calculate(valoresDeposit);
 
-        console.log('🚀  totalvalueDeposit:', totalvalueRestock, totalvalueTravel);
-
         await financial.update({
-            total_value: (await this._calculate([totalvalueTravel, totalvalueRestock])) - totalvalueDeposit
+            total_value:
+                (await this._calculate([totalvalueTravel, totalvalueRestock])) - totalvalueDeposit
         });
     }
 
@@ -208,7 +222,15 @@ class FinancialStatementService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', status_check, status, search } = query;
+        const {
+            page = 1,
+            limit = 100,
+            sort_order = 'ASC',
+            sort_field = 'id',
+            status_check,
+            status,
+            search
+        } = query;
 
         const where = {};
         if (status) where.status = status;
@@ -216,6 +238,7 @@ class FinancialStatementService extends BaseService {
         const whereStatus = {};
         if (status_check) whereStatus.status = status_check;
 
+        /* eslint-disable indent */
         const financialStatements = await this._financialStatementModel.findAll({
             where: search
                 ? {
@@ -309,26 +332,6 @@ class FinancialStatementService extends BaseService {
         };
     }
 
-    async update(body, id) {
-        const financialStatement = await this._financialStatementModel.findByPk(id);
-
-        if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
-
-        const result = await financialStatement.update(body);
-
-        const driverFinancial = await Driver.findByPk(result.driver_id);
-
-        const { truck_models, cart_models, total_value } = result;
-
-        await driverFinancial.update({
-            credit: total_value,
-            truck: truck_models,
-            cart: cart_models
-        });
-
-        return result;
-    }
-
     async finishing(body, id) {
         const financialStatement = await this._financialStatementModel.findByPk(id, {
             include: {
@@ -353,10 +356,18 @@ class FinancialStatementService extends BaseService {
 
     async delete(id) {
         const financial = await this._financialStatementModel.findByPk(id);
-        if (!financial) throw Errro('FINANCIAL_NOT_FOUND');
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const user = await this._managerModel.findByPk(financial.creator_user_id);
-        if (!user) throw Errro('USER_NOT_FOUND');
+        if (!user) {
+            const err = new Error('USER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const retult = await this._financialStatementModel.destroy({
             where: {
@@ -372,58 +383,14 @@ class FinancialStatementService extends BaseService {
         return retult;
     }
 
-    async getFinancialCurrent(id) {
-        const financialStatement = await this._financialStatementModel.findOne({
-            where: { driver_id: id, status: true },
-            include: {
-                model: this._freightModel,
-                as: 'freight'
-            }
-        });
-
-        if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
-        return financialStatement;
-    }
-
-    async getAllFinished(id, query) {
-        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id' } = query;
-
-        const totalItems = (
-            await this._financialStatementModel.findAll({
-                where: { driver_id: id, status: false }
-            })
-        ).length;
-
-        const totalPages = Math.ceil(totalItems / limit);
-
-        const financialStatements = await this._financialStatementModel.findAll({
-            where: { driver_id: id, status: false },
-            order: [[sort_field, sort_order]],
-            limit: limit,
-            offset: page - 1 ? (page - 1) * limit : 0,
-            include: {
-                model: Freight,
-                as: 'freight'
-            }
-        });
-
-        const currentPage = Number(page);
-
-        return {
-            data: financialStatements,
-            totalItems,
-            totalPages,
-            currentPage
-        };
-    }
-
     async updateDriver(body, driverId) {
         const financialStatement = await this._financialStatementModel.findOne({
             where: { driver_id: driverId, status: true }
         });
         if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
 
-        const { id, truck_models, total_value, cart_models, driver_id } = await financialStatement.update(body);
+        const { id, truck_models, total_value, cart_models, driver_id } =
+            await financialStatement.update(body);
 
         const driverFinancial = await this._driverModel.findByPk(driver_id);
         if (!driverFinancial) throw Error('DRIVER_NOT_FOUND');
@@ -445,11 +412,14 @@ class FinancialStatementService extends BaseService {
 
     _calculate(values) {
         let initialValue = 0;
-        let total = values.reduce((accumulator, currentValue) => accumulator + currentValue, initialValue);
+        let total = values.reduce(
+            (accumulator, currentValue) => accumulator + currentValue,
+            initialValue
+        );
         return total;
     }
 
-    async _updateValorFinancial(props) {
+    async updateValorFinancial(props) {
         const financial = await this._financialStatementModel.findOne({
             where: { id: props.financial_statements_id, status: true }
         });
@@ -470,21 +440,10 @@ class FinancialStatementService extends BaseService {
         const valoresDeposit = deposit.map((res) => res.value);
         const totalvalueDeposit = await this._calculate(valoresDeposit);
 
-        console.log('🚀  totalvalueDeposit:', totalvalueRestock, totalvalueTravel);
-
         await financial.update({
-            total_value: (await this._calculate([totalvalueTravel, totalvalueRestock])) - totalvalueDeposit
+            total_value:
+                (await this._calculate([totalvalueTravel, totalvalueRestock])) - totalvalueDeposit
         });
-    }
-
-    _handleError(error) {
-        if (error.name === 'SequelizeValidationError') {
-            const err = new Error(error.errors[0].message);
-            err.field = error.errors[0].path;
-            err.status = 400;
-            throw err;
-        }
-        throw error;
     }
 }
 

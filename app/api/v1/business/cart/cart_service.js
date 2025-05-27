@@ -1,10 +1,13 @@
 import CartModel from './cart_model.js';
 import BaseService from '../../base/base_service.js';
+import { literal, Op } from 'sequelize';
+import FinancialStatements from '../financialStatements/financialStatements_model.js';
 
 class CartService extends BaseService {
     constructor() {
         super();
         this._cartModel = CartModel;
+        this._financialStatementsModel = FinancialStatements;
     }
 
     async create(body) {
@@ -13,7 +16,7 @@ class CartService extends BaseService {
         });
         if (chassisExist) throw Error('This chassis cart already exists.');
 
-        const boardExist = await Cart.findOne({
+        const boardExist = await this._cartModel.findOne({
             where: { cart_board: body.cart_board }
         });
         if (boardExist) throw Error('This board cart already exists.');
@@ -24,11 +27,11 @@ class CartService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', cart_models, id, search } = query;
+        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
 
         const where = {};
         // if (id) where.id = id;
-
+        /* eslint-disable indent */
         const carts = await this._cartModel.findAll({
             where: search
                 ? {
@@ -58,6 +61,7 @@ class CartService extends BaseService {
                 'cart_board'
             ]
         });
+        /* eslint-enable indent */
 
         const total = await this._cartModel.count();
         const totalPages = Math.ceil(total / limit);
@@ -76,17 +80,17 @@ class CartService extends BaseService {
         const select = await this._cartModel.findAll({
             where: {
                 id: {
-                    [Op.notIn]: literal(`(SELECT "cart_id" FROM "financial_statements")`)
+                    [Op.notIn]: literal('(SELECT "cart_id" FROM "financial_statements")')
                 }
             },
             attributes: ['id', 'cart_models']
         });
 
-        const selectFinancial = await Cart.findAll({
+        const selectFinancial = await this._cartModel.findAll({
             attributes: ['id', 'cart_models'],
             include: [
                 {
-                    model: FinancialStatements,
+                    model: this._financialStatementsModel,
                     as: 'financialStatements',
                     required: true,
                     where: {
@@ -131,7 +135,7 @@ class CartService extends BaseService {
 
         await cart.update(body);
 
-        const cartResult = await Cart.findByPk(id, {
+        const cartResult = await this._cartModel.findByPk(id, {
             attributes: [
                 'id',
                 'cart_models',
@@ -156,11 +160,14 @@ class CartService extends BaseService {
         const cart = await this._cartModel.findByPk(id);
         if (!cart) throw Error('CART_NOT_FOUND');
 
-        const isInUse = await FinancialStatements.findAll({ cart_board: cart.cart_board, status: true });
+        const isInUse = await FinancialStatements.findAll({
+            cart_board: cart.cart_board,
+            status: true
+        });
 
         if (isInUse) throw Error('CANNOT_DELETE_CART_IN_USE');
 
-        await Cart.destroy({
+        await this._cartModel.destroy({
             where: {
                 id: id
             }

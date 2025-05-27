@@ -28,7 +28,7 @@ class DriverController extends BaseResourceController {
 
     update = async (req, res, next) => {
         try {
-            const data = await this._driverService.update(req.body, req.params.id);
+            const data = await this._driverService.updateDriver(req.body, req.params.id);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

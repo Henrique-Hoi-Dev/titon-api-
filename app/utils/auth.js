@@ -5,12 +5,11 @@ function verifyIfUserHasRole(role) {
         try {
             const user = req.manager;
 
-            console.log('🚀 ~ user.type_role === role:', user);
             if (user.type_role === role) {
                 next();
             } else {
                 const error = new Error('PERMISSION_NOT_FOUND');
-                error.status = 403;
+                error.status = HttpStatus.FORBIDDEN;
                 throw error;
             }
         } catch (err) {

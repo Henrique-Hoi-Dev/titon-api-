@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 const BaseController = require('../../app/api/v1/base/base_controller');
 const baseController = new BaseController();
 
@@ -19,7 +20,9 @@ describe('Test UNIT BaseController', () => {
     });
 
     it('method not found', async () => {
-        expect(baseController.notFound('Resource not found')).toEqual(new Error('Resource not found'));
+        expect(baseController.notFound('Resource not found')).toEqual(
+            new Error('Resource not found')
+        );
     });
 
     it('method not found message empty', async () => {
@@ -37,13 +40,15 @@ describe('Test UNIT BaseController', () => {
     });
 
     it('method unprocessableEntity', async () => {
-        expect(baseController.unprocessableEntity('Invalid credentials or missing parameters')).toEqual(
-            new Error('Invalid credentials or missing parameters')
-        );
+        expect(
+            baseController.unprocessableEntity('Invalid credentials or missing parameters')
+        ).toEqual(new Error('Invalid credentials or missing parameters'));
     });
 
     it('method not found  message empty', async () => {
-        expect(baseController.unprocessableEntity()).toEqual(new Error('Invalid credentials or missing parameters'));
+        expect(baseController.unprocessableEntity()).toEqual(
+            new Error('Invalid credentials or missing parameters')
+        );
     });
 
     it('method Error message', async () => {

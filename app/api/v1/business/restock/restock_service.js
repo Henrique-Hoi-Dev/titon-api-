@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
 import BaseService from '../../base/base_service.js';
+import Tesseract from 'tesseract.js';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -36,7 +37,7 @@ class RestockService extends BaseService {
 
             const now = this._updateHours(dayjs().tz('America/Sao_Paulo').utcOffset() / 60);
 
-            const result = await Restock.create({
+            const result = await this._restockModel.create({
                 ...body,
                 total_value_fuel,
                 registration_date: now,
@@ -85,6 +86,7 @@ class RestockService extends BaseService {
             } = await Tesseract.recognize(file.buffer, 'eng');
             extractedText = text;
         } catch (err) {
+            // eslint-disable-next-line no-console
             console.warn('Erro ao extrair texto do comprovante:', err.message);
         }
 
@@ -106,16 +108,20 @@ class RestockService extends BaseService {
             });
 
             return infoRestock;
-        } catch (error) {
-            throw error;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
         }
     }
 
     async _deleteFileIntegration({ filename, category }) {
         try {
             return await deleteFile({ filename, category });
-        } catch (error) {
-            throw error;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
         }
     }
 

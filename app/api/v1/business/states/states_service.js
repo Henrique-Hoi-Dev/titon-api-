@@ -12,7 +12,10 @@ class StatesService extends BaseService {
     async allStates({ search = '' }) {
         const states = await this._statesModel.findAll({
             where: {
-                [Op.or]: [{ name: { [Op.iLike]: `%${search}%` } }, { uf: { [Op.iLike]: `%${search}%` } }]
+                [Op.or]: [
+                    { name: { [Op.iLike]: `%${search}%` } },
+                    { uf: { [Op.iLike]: `%${search}%` } }
+                ]
             },
             attributes: ['id', 'name', 'uf']
         });

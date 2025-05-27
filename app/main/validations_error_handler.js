@@ -1,6 +1,6 @@
 import BaseErrorHandler from '../api/v1/base/base_error_handler.js';
 import errorMapping from '../utils/error_mapping.js';
-import message from '../../locale/error/en.json' assert { type: 'json' };
+import message from '../../locale/error/en.json';
 
 class ValidationsErrorHandler extends BaseErrorHandler {
     errorResponse(data) {
@@ -19,7 +19,13 @@ class ValidationsErrorHandler extends BaseErrorHandler {
             });
 
             const errorName = data.name === 'ValidationError' ? 'VALIDATION_ERROR' : data.name;
-            return { message: message[errorName], key: errorName, errorCode: errorMapping[errorName], status, errors };
+            return {
+                message: message[errorName],
+                key: errorName,
+                errorCode: errorMapping[errorName],
+                status,
+                errors
+            };
         }
 
         return super.errorResponse(data);

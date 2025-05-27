@@ -1,11 +1,11 @@
-import TruckModel from './truck_model';
-import FinancialStatements from '../financial_statements/financial_statements_model';
-import BaseService from '../../base/base_service';
+import TruckModel from './truck_model.js';
+import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import BaseService from '../../base/base_service.js';
 
 import { Op, literal } from 'sequelize';
 
-import { generateRandomCode } from '../../../utils/crypto';
-import { deleteFile, sendFile } from '../../../../providers/aws';
+import { generateRandomCode } from '../../../../utils/crypto.js';
+import { deleteFile, sendFile } from '../../../../providers/aws/index.js';
 
 class TruckService extends BaseService {
     constructor() {
@@ -275,7 +275,7 @@ class TruckService extends BaseService {
 
         if (isInUse) throw Error('CANNOT_DELETE_TRUCK_IN_USE');
 
-        await Truck.destroy({
+        await this._trusckModel.destroy({
             where: {
                 id: id
             }
@@ -295,4 +295,4 @@ class TruckService extends BaseService {
     }
 }
 
-module.exports = UsersService;
+export default TruckService;

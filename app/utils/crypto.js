@@ -18,7 +18,7 @@ const encryptPassword = (password) => bcrypt.hashSync(password, 10);
  * @param {number} [numberOfDigits=5] - O número de dígitos que o código gerado deve ter. O valor padrão é 5.
  * @returns {string} Um código aleatório com o número especificado de dígitos.
  *
- * @example
+ * @examples
  * // Retorna um código com 5 dígitos (por padrão)
  * const requestCode = generateNumericCode();
  *

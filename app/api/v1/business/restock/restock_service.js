@@ -1,14 +1,13 @@
-import { deleteFile, sendFile } from '../../../../providers/aws';
-import { generateRandomCode } from '../utils/crypto';
+import { deleteFile, sendFile } from '../../../../providers/aws/index.js';
+import { generateRandomCode } from '../../../../utils/crypto.js';
 
-import RestockModel from './restock_model';
-import FreightModel from '../freight/freight_model';
-import FinancialStatements from '../financial_statements/financial_statements_model';
+import RestockModel from './restock_model.js';
+import FreightModel from '../freight/freight_model.js';
+import FinancialStatements from '../financialStatements/financialStatements_model.js';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import CustomError from '../../../../utils/custom_error';
-import BaseService from '../../base/base_service';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+import BaseService from '../../base/base_service.js';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -27,10 +26,10 @@ class RestockService extends BaseService {
         const financial = await this._financialStatementsModel.findOne({
             where: { driver_id: driverId, status: true }
         });
-        if (!financial) throw new CustomError('FINANCIAL_NOT_FOUND', 404);
+        if (!financial) throw new Error('FINANCIAL_NOT_FOUND');
 
         const freight = await this._freightModel.findByPk(freight_id);
-        if (!freight) throw new CustomError('FREIGHT_NOT_FOUND', 404);
+        if (!freight) throw new Error('FREIGHT_NOT_FOUND');
 
         if (freight.status === 'STARTING_TRIP') {
             const total_value_fuel = value_fuel * liters_fuel;
@@ -47,14 +46,14 @@ class RestockService extends BaseService {
             return { data: result };
         }
 
-        throw new CustomError('This front is not traveling', 404);
+        throw new Error('This front is not traveling');
     }
 
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
 
         const restock = await this._restockModel.findByPk(id);
-        if (!restock) throw Error('RESTOCK_NOT_FOUND');
+        if (!restock) throw new Error('RESTOCK_NOT_FOUND');
 
         if (restock.img_receipt && restock.img_receipt.uuid) {
             await this.deleteFile({ id });

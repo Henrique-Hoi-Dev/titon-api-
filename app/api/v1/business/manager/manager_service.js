@@ -10,16 +10,30 @@ class ManagerService extends BaseService {
         this._permissionModel = Permission;
     }
 
-    async create(body) {
-        let { email, name, password } = body;
+    async signin(body) {
+        const { email, password } = body;
 
-        const schema = Yup.object().shape({
-            name: Yup.string().required(),
-            email: Yup.string().email().required(),
-            password: Yup.string().required().min(8)
+        const user = await this._managerModel.findOne({ where: { email } });
+
+        if (!user) throw Error('USER_NOT_FOUND');
+
+        if (!(await user.checkPassword(password))) throw Error('INVALID_USER_PASSWORD');
+
+        const { id, name, type_role, permission_id } = user;
+
+        const permissions = await Permission.findByPk(permission_id, {
+            attributes: ['role', 'actions']
         });
 
-        if (!(await schema.isValid(body))) throw Error('Validation failed!');
+        const token = jwt.sign({ id, name, email, type_role, permissions }, process.env.TOKEN_KEY, {
+            expiresIn: process.env.TOKEN_EXP
+        });
+
+        return { token };
+    }
+
+    async signup(body) {
+        let { email, name, password } = body;
 
         // doing email verification
         const userExist = await this._managerModel.findOne({ where: { email: email } });
@@ -92,20 +106,6 @@ class ManagerService extends BaseService {
     }
 
     async update(body, id) {
-        const schema = Yup.object().shape({
-            name: Yup.string(),
-            email: Yup.string().email(),
-            oldPassword: Yup.string().min(8),
-            password: Yup.string()
-                .min(8)
-                .when('oldPassword', (oldPassword, field) => (oldPassword ? field.required() : field)),
-            confirmPassword: Yup.string().when('password', (password, field) =>
-                password ? field.required().oneOf([Yup.ref('password')]) : field
-            )
-        });
-
-        if (!(await schema.isValid(body))) throw Error('Validation failed!');
-
         const { email, oldPassword } = body;
 
         const user = await this._managerModel.findByPk(id);

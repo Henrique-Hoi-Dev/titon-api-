@@ -2,9 +2,9 @@ import ev from 'express-validation';
 import _ from 'lodash';
 import ValidationsErrorHandler from './validations_error_handler.js';
 import keys from '../utils/error_mapping.js';
-import { verifyKeycloackToken, verifyMyCashToken, verifyInternalApiToken } from '../utils/jwt.js';
-import { checkUserHasAccess } from '../utils/auth.js';
 import logger from '../utils/logger.js';
+import { verifyDriverTokenApi, verifyManagerTokenApi } from '../utils/jwt.js';
+import { JWT_ERROR_MAPPING } from '../utils/enum.js';
 
 const validationsErrorHandler = new ValidationsErrorHandler();
 
@@ -68,83 +68,47 @@ function throw404(req, res, next) {
     next(err);
 }
 
-function verifyInternalToken(req, res, next) {
-    try {
-        const token = req.header('Authorization-internal').replace('Bearer ', '');
-        const decodedToken = verifyInternalApiToken(token);
-
-        if (!decodedToken) {
-            const error = new Error('INVALID_TOKEN');
-            error.status = 401;
-            next(error);
-        }
-
-        next();
-    } catch (err) {
-        const error = new Error('INVALID_TOKEN');
-        error.status = 401;
-        next(error);
-    }
-}
-
-function verifyIfUserHasAccess(accessArray) {
-    return function (req, res, next) {
-        try {
-            if (!req?.locals?.user?.sub || !req?.locals?.user?.accessControl) {
-                const token = req?.header('Authorization')?.replace('Bearer ', '');
-
-                const decodedToken = verifyKeycloackToken(token);
-                req.locals = { ...req.locals, user: decodedToken };
-            }
-
-            if (!checkUserHasAccess(accessArray, req?.locals?.user)) {
-                const err = new Error('INSUFFICIENT_PERMISSIONS');
-                err.status = 403;
-                throw err;
-            }
-
-            next();
-        } catch (err) {
-            logger.error(err);
-
-            if (err.message === 'INSUFFICIENT_PERMISSIONS') {
-                next(err);
-            }
-
-            const error = new Error('INVALID_TOKEN');
-            error.status = 401;
-            next(error);
-        }
-    };
-}
-
-async function verifyMyCashInternalToken(req, res, next) {
+async function verifyManagerToken(req, res, next) {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
 
-        const decodedToken = verifyMyCashToken(token);
-        req.locals = { ...req.locals, user: decodedToken };
+        if (!token) {
+            const error = new Error('INVALID_TOKEN');
+            error.status = 401;
+            return next(error);
+        }
+
+        const decodedToken = verifyManagerTokenApi(token);
+        req.manager = decodedToken;
 
         next();
-    } catch (err) {
-        const error = new Error('INVALID_TOKEN');
+    } catch (jwtError) {
+        const errorKey = JWT_ERROR_MAPPING[jwtError.message] || 'VERIFY_TOKEN_ERROR_INVALID_TOKEN';
+        const error = new Error(errorKey);
         error.status = 401;
-        next(error);
+        return next(error);
     }
 }
 
-async function verifyKeycloackInternalToken(req, res, next) {
+async function verifyDriverToken(req, res, next) {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
 
-        const decodedToken = verifyKeycloackToken(token);
-        req.locals = { ...req.locals, user: decodedToken };
+        if (!token) {
+            const error = new Error('INVALID_TOKEN');
+            error.status = 401;
+            return next(error);
+        }
+
+        const decodedToken = verifyDriverTokenApi(token);
+        req.driver = decodedToken;
 
         next();
-    } catch (err) {
-        const error = new Error('INVALID_TOKEN');
+    } catch (jwtError) {
+        const errorKey = JWT_ERROR_MAPPING[jwtError.message] || 'VERIFY_TOKEN_ERROR_INVALID_TOKEN';
+        const error = new Error(errorKey);
         error.status = 401;
-        next(error);
+        return next(error);
     }
 }
 
@@ -157,13 +121,4 @@ async function ensureAuthorization(req, res, next) {
     next();
 }
 
-export {
-    logError,
-    handleError,
-    throw404,
-    verifyMyCashInternalToken,
-    verifyKeycloackInternalToken,
-    ensureAuthorization,
-    verifyIfUserHasAccess,
-    verifyInternalToken
-};
+export { logError, handleError, throw404, ensureAuthorization, verifyManagerToken, verifyDriverToken };

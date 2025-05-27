@@ -1,5 +1,5 @@
-import BaseResourceController from '../../base/base_resource_controller';
-import NotificationService from './notification_service';
+import BaseResourceController from '../../base/base_resource_controller.js';
+import NotificationService from './notification_service.js';
 import HttpStatus from 'http-status';
 
 class NotificationController extends BaseResourceController {

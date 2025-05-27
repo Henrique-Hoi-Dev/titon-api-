@@ -1,127 +1,160 @@
-const DepositMoney = require('./depositMoney_model');
-const BaseService = require('../../base/base_service');
-const { Op } = require('sequelize');
+import DepositMoney from './depositMoney_model.js';
+import BaseService from '../../base/base_service.js';
+import Driver from '../driver/driver_model.js';
+import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import Freight from '../freight/freight_model.js';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+
+import { deleteFile, sendFile } from '../../../../providers/aws/index.js';
+import { generateRandomCode } from '../../../../utils/crypto.js';
+import { updateHours } from '../../../../utils/updateHours.js';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault('America/Sao_Paulo');
 
 class DepositMoneyService extends BaseService {
     constructor() {
         super();
         this._depositMoneyModel = DepositMoney;
+        this._driverModel = Driver;
+        this._financialStatementsModel = FinancialStatements;
+        this._freightModel = Freight;
     }
 
-    async findAll(query = {}) {
-        try {
-            const where = {};
-            
-            if (query.userId) {
-                where.userId = query.userId;
-            }
+    async create(user, body) {
+        const { freight_id } = body;
 
-            if (query.driverId) {
-                where.driverId = query.driverId;
-            }
+        const financial = await this._financialStatementsModel.findOne({
+            where: { driver_id: user.id, status: true }
+        });
+        if (!financial) throw new Error('FINANCIAL_NOT_FOUND');
 
-            if (query.status) {
-                where.status = query.status;
-            }
+        const freight = await this._freightModel.findByPk(freight_id);
 
-            if (query.minAmount) {
-                where.amount = {
-                    [Op.gte]: query.minAmount
-                };
-            }
+        if (!freight) throw new Error('FREIGHT_NOT_FOUND');
 
-            if (query.maxAmount) {
-                where.amount = {
-                    ...where.amount,
-                    [Op.lte]: query.maxAmount
-                };
-            }
+        if (freight.status === 'STARTING_TRIP') {
+            const now = updateHours(dayjs().tz('America/Sao_Paulo').utcOffset() / 60);
 
-            if (query.startDate) {
-                where.transactionDate = {
-                    [Op.gte]: query.startDate
-                };
-            }
-
-            if (query.endDate) {
-                where.transactionDate = {
-                    ...where.transactionDate,
-                    [Op.lte]: query.endDate
-                };
-            }
-
-            return await this._depositMoneyModel.findAll({
-                where,
-                order: [['transactionDate', 'DESC']]
+            const result = await this._depositMoneyModel.create({
+                ...body,
+                registration_date: now,
+                financial_statements_id: financial.id
             });
-        } catch (error) {
-            this._handleError(error);
+
+            const driverFind = await this._driverModel.findByPk(user.id);
+            driverFind.addTransaction({
+                value: result.value,
+                typeTransactions: result.type_transaction
+            });
+
+            const driver = await this._driverModel.findByPk(driverFind.id);
+            const values = driverFind.transactions.map((res) => res.value);
+            const total = values.reduce((acc, cur) => acc + cur, 0);
+
+            await driver.update({
+                transactions: driverFind.transactions,
+                credit: total
+            });
+
+            return { data: result };
         }
+
+        throw new Error('This front is not traveling');
     }
 
-    async findById(id) {
-        try {
-            return await this._depositMoneyModel.findByPk(id);
-        } catch (error) {
-            this._handleError(error);
-        }
-    }
+    async uploadDocuments(payload, { id }) {
+        const { file, body } = payload;
 
-    async create(data) {
-        try {
-            data.transactionDate = new Date();
-            return await this._depositMoneyModel.create(data);
-        } catch (error) {
-            this._handleError(error);
-        }
-    }
+        const depositMoney = await this._depositMoneyModel.findByPk(id);
+        if (!depositMoney) throw Error('DEPOSIT_MONEY_NOT_FOUND');
 
-    async update(id, data) {
-        try {
-            const deposit = await this._depositMoneyModel.findByPk(id);
-            if (!deposit) {
-                throw new Error('Depósito não encontrado');
+        if (depositMoney.img_receipt && depositMoney.img_receipt.uuid) {
+            await this.deleteFile({ id });
+        }
+
+        if (!body.category) throw Error('CATEGORY_OR_TYPE_NOT_FOUND');
+
+        const originalFilename = file.originalname;
+
+        const code = generateRandomCode(9);
+
+        file.name = code;
+
+        await sendFile(payload);
+
+        const infoDepositMoney = await depositMoney.update({
+            img_receipt: {
+                uuid: file.name,
+                name: originalFilename,
+                mimetype: file.mimetype,
+                category: body.category
             }
-            return await deposit.update(data);
-        } catch (error) {
-            this._handleError(error);
-        }
+        });
+
+        return infoDepositMoney;
     }
 
-    async delete(id) {
+    async deleteFile({ id }) {
+        const depositMoney = await this._depositMoneyModel.findByPk(id);
+        if (!depositMoney) throw Error('FREIGHT_NOT_FOUND');
+
         try {
-            const deposit = await this._depositMoneyModel.findByPk(id);
-            if (!deposit) {
-                throw new Error('Depósito não encontrado');
-            }
-            await deposit.destroy();
-            return true;
+            await this._deleteFileIntegration({
+                filename: depositMoney.img_receipt.uuid,
+                category: depositMoney.img_receipt.category
+            });
+
+            const infoDepositMoney = await depositMoney.update({
+                img_receipt: {}
+            });
+
+            return infoDepositMoney;
         } catch (error) {
-            this._handleError(error);
+            throw error;
         }
     }
 
-    async updateStatus(id, status) {
+    async _deleteFileIntegration({ filename, category }) {
         try {
-            const deposit = await this._depositMoneyModel.findByPk(id);
-            if (!deposit) {
-                throw new Error('Depósito não encontrado');
-            }
-            return await deposit.update({ status });
+            return await deleteFile({ filename, category });
         } catch (error) {
-            this._handleError(error);
+            throw error;
         }
     }
 
-    _handleError(error) {
-        if (error.name === 'SequelizeValidationError') {
-            const err = new Error(error.errors[0].message);
-            err.field = error.errors[0].path;
-            err.status = 400;
-            throw err;
-        }
-        throw error;
+    async getAll(query) {
+        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
+
+        const totalItems = (await this._depositMoneyModel.findAll()).length;
+        const totalPages = Math.ceil(totalItems / limit);
+
+        const depositMoney = await this._depositMoneyModel.findAll({
+            order: [[sort_field, sort_order]],
+            limit: limit,
+            offset: page - 1 ? (page - 1) * limit : 0
+        });
+
+        const currentPage = Number(page);
+
+        return {
+            data: depositMoney,
+            totalItems,
+            totalPages,
+            currentPage
+        };
+    }
+
+    async getId(id) {
+        const depositMoney = await this._depositMoneyModel.findByPk(id, {});
+
+        if (!depositMoney) throw Error('DEPOSIT_NOT_FOUND');
+
+        return { data: depositMoney };
     }
 }
 
-module.exports = DepositMoneyService; 
+export default DepositMoneyService;

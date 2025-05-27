@@ -63,4 +63,4 @@ class CartController extends BaseResourceController {
     }
 }
 
-export default new CartController();
+export default CartController;

@@ -1,7 +1,7 @@
-import BaseService from '../../base/base_service';
-import Notification from './notification_model';
-import Driver from '../driver/driver_model';
-import OneSignalProvider from '../../../../providers/oneSignal/index';
+import BaseService from '../../base/base_service.js';
+import Notification from './notification_model.js';
+import Driver from '../driver/driver_model.js';
+import OneSignalProvider from '../../../../providers/oneSignal/index.js';
 
 class NotificationService extends BaseService {
     constructor() {

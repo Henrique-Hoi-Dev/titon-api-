@@ -1,33 +1,19 @@
-import pkg from 'lodash';
-const { isEmpty } = pkg;
-import logger from './logger.js';
+import HttpStatus from 'http-status';
 
-function localsUserHasRole(user, roleArray) {
-    if (!roleArray || !Array.isArray(roleArray) || roleArray.length < 1) {
-        const err = Error('INVALID_ROLE');
-        err.status = 401;
-        throw err;
-    }
-    return user?.resource_access?.[process.env.KEYCLOAK_CLIENT_ID]?.roles?.some((element) =>
-        roleArray.includes(element)
-    );
+function verifyIfUserHasRole(role) {
+    return function (req, res, next) {
+        try {
+            const user = req.locals.user;
+
+            if (user.type_role === role) {
+                next();
+            } else {
+                return res.status(HttpStatus.FORBIDDEN).json({ error: 'INVALID_ROLE' });
+            }
+        } catch (err) {
+            next(err);
+        }
+    };
 }
 
-function checkUserHasAccess(accessArray, user) {
-    try {
-        const result = !(
-            isEmpty(user?.accessControl) ||
-            !accessArray.some((access) => {
-                const [feature, permission] = access.split(':');
-                if (!feature || !permission) return false;
-                return user?.accessControl?.[feature]?.[permission];
-            })
-        );
-        return result;
-    } catch (err) {
-        logger.error(err);
-        return false;
-    }
-}
-
-export { localsUserHasRole, checkUserHasAccess };
+export { verifyIfUserHasRole };

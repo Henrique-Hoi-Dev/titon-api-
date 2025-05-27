@@ -1,9 +1,10 @@
 import Joi from 'joi';
 
 export default {
-    searchUserVtex: {
+    signin: {
         body: Joi.object({
-            params: Joi.string()
+            cpf: Joi.string().required(),
+            password: Joi.string().required()
         })
     }
 };

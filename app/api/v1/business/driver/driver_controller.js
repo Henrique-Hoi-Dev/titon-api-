@@ -8,6 +8,15 @@ class DriverController extends BaseResourceController {
         this._driverService = new DriverService();
     }
 
+    async signin(req, res, next) {
+        try {
+            const data = await this._driverService.signin(req.body);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
     async profile(req, res, next) {
         try {
             const data = await this._driverService.profile(req.user.id);

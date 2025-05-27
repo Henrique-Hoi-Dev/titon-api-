@@ -1,8 +1,8 @@
-const BaseResourceController = require('../../base/base_resource_controller');
-const TruckService = require('./truck_service');
-const HttpStatus = require('http-status');
+import BaseResourceController from '../../base/base_resource_controller.js';
+import TruckService from './truck_service.js';
+import HttpStatus from 'http-status';
 
-class UsersController extends BaseResourceController {
+class TruckController extends BaseResourceController {
     constructor() {
         super();
         this._truckService = new TruckService();
@@ -72,4 +72,4 @@ class UsersController extends BaseResourceController {
     }
 }
 
-module.exports = UsersController;
+export default TruckController;

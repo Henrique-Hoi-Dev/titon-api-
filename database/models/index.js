@@ -2,7 +2,7 @@ import Cart from '../../app/api/v1/business/cart/cart_model.js';
 import Cities from '../../app/api/v1/business/cities/cities_model.js';
 import Credit from '../../app/api/v1/business/credit/credit_model.js';
 import DataDriver from '../../app/api/v1/business/dataDriver/dataDriver_model.js';
-import Deposit from '../../app/api/v1/business/deposit/deposit_model.js';
+import DepositMoney from '../../app/api/v1/business/depositMoney/depositMoney_model.js';
 import Driver from '../../app/api/v1/business/driver/driver_model.js';
 import FinancialStatements from '../../app/api/v1/business/financialStatements/financialStatements_model.js';
 import Freight from '../../app/api/v1/business/freight/freight_model.js';
@@ -20,7 +20,7 @@ const Models = [
     Cities,
     Credit,
     DataDriver,
-    Deposit,
+    DepositMoney,
     Driver,
     FinancialStatements,
     Freight,

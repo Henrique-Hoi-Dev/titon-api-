@@ -45,4 +45,4 @@ class CreditController extends BaseResourceController {
     }
 }
 
-export default new CreditController();
+export default CreditController;

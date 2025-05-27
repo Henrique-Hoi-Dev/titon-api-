@@ -27,12 +27,8 @@ const bootstrap = (environment = process.env.NODE_ENV ? process.env.NODE_ENV : '
         process.env[key] = environmentVariables[key];
     }
 
-    // Log para debug
-    // eslint-disable-next-line no-console
     console.log(`Ambiente: ${environment}`);
-    // eslint-disable-next-line no-console
     if (environment === 'test' || environment === 'development') {
-        // eslint-disable-next-line no-console
         console.log('Variáveis carregadas:', environmentVariables);
     }
 };

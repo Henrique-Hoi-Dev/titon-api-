@@ -1,6 +1,6 @@
-const BaseResourceController = require('../../base/base_resource_controller');
-const FinancialStatementService = require('./financialStatements_service');
-const HttpStatus = require('http-status');
+import BaseResourceController from '../../base/base_resource_controller.js';
+import FinancialStatementService from './financialStatements_service.js';
+import HttpStatus from 'http-status';
 
 class FinancialStatementController extends BaseResourceController {
     constructor() {
@@ -8,31 +8,28 @@ class FinancialStatementController extends BaseResourceController {
         this._financialStatementService = new FinancialStatementService();
     }
 
-    async findAll(req, res, next) {
-        try {
-            const statements = await this._financialStatementService.findAll(req.query);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: statements }));
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
-    async findById(req, res, next) {
-        try {
-            const statement = await this._financialStatementService.findById(req.params.id);
-            if (!statement) {
-                return res.status(HttpStatus.NOT_FOUND).json({ message: 'Extrato financeiro não encontrado' });
-            }
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: statement }));
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
     async create(req, res, next) {
         try {
-            const statement = await this._financialStatementService.create(req.body);
-            res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data: statement }));
+            const data = await this._financialStatementService.create(req.userProps, req.body);
+            return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async getAll(req, res, next) {
+        try {
+            const data = await this._financialStatementService.getAll(req.query);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async getId(req, res, next) {
+        try {
+            const data = await this._financialStatementService.getId(req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
@@ -40,8 +37,17 @@ class FinancialStatementController extends BaseResourceController {
 
     async update(req, res, next) {
         try {
-            const statement = await this._financialStatementService.update(req.params.id, req.body);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: statement }));
+            const data = await this._financialStatementService.update(req.body, req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async finishing(req, res, next) {
+        try {
+            const data = await this._financialStatementService.finishing(req.body, req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
@@ -49,38 +55,39 @@ class FinancialStatementController extends BaseResourceController {
 
     async delete(req, res, next) {
         try {
-            await this._financialStatementService.delete(req.params.id);
-            res.status(HttpStatus.NO_CONTENT).send();
+            const data = await this._financialStatementService.delete(req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async updateStatus(req, res, next) {
+    async getFinancialCurrent(req, res, next) {
         try {
-            const { status } = req.body;
-            if (!status) {
-                return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Status é obrigatório' });
-            }
-            const statement = await this._financialStatementService.updateStatus(req.params.id, status);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: statement }));
+            const data = await FinancialStatementsService.getFinancialCurrent(req.driverId);
+            return res.status(HttpStatus.OK).json(JSON.parse(JSON.stringify({ data })));
+        } catch (error) {
+            next(res.status(HttpStatus.BAD_REQUEST).json({ mgs: error.message }));
+        }
+    }
+
+    async getAllFinished(req, res, next) {
+        try {
+            const data = await this._financialStatementService.getAllFinished(req.driverId, req.query);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async getBalance(req, res, next) {
+    async updateDriver(req, res, next) {
         try {
-            const { userId, startDate, endDate } = req.query;
-            if (!userId) {
-                return res.status(HttpStatus.BAD_REQUEST).json({ message: 'ID do usuário é obrigatório' });
-            }
-            const balance = await this._financialStatementService.getBalance(userId, startDate, endDate);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: { balance } }));
+            const data = await this._financialStatementService.updateDriver(req.body, req.driverId);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 }
 
-module.exports = FinancialStatementController; 
+export default FinancialStatementController;

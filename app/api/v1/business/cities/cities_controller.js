@@ -18,4 +18,4 @@ class CitiesController extends BaseResourceController {
     }
 }
 
-export default new CitiesController();
+export default CitiesController;

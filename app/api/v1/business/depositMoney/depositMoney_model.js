@@ -1,5 +1,5 @@
 import Sequelize, { DataTypes, Model } from 'sequelize';
-import { BRAZILIANBANKSENUM, DEPOSITMONEYENUM } from '../../../../utils/enums_deposit';
+import { BRAZILIANBANKSENUM, DEPOSITMONEYENUM } from '../../../../utils/enums_deposit.js';
 
 class DepositMoney extends Model {
     static init(sequelize) {

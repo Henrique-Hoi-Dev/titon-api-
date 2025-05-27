@@ -1,4 +1,3 @@
-import * as Yup from 'yup';
 import BaseService from '../../base/base_service.js';
 import Driver from './driver_model.js';
 import ValidateCode from '../validateCode/validateCode_model.js';
@@ -7,7 +6,7 @@ import FinancialStatements from '../financialStatements/financialStatements_mode
 import { validateCpf } from '../../../../utils/validateCpf.js';
 import { createExpirationDateFromNow } from '../../../../utils/date.js';
 import { Op, literal } from 'sequelize';
-import { generateToken } from '../../../../utils/jwt.js';
+import { generateDriverToken } from '../../../../utils/jwt.js';
 import { sendSMS } from '../../../../providers/aws/index.js';
 import { generateRandomCode } from '../../../../utils/crypto.js';
 
@@ -17,6 +16,35 @@ class DriverService extends BaseService {
         this._driverModel = Driver;
         this._validateCodeModel = ValidateCode;
         this._financialStatementsModel = FinancialStatements;
+    }
+
+    async signin(body) {
+        const { cpf, password } = body;
+
+        const driver = await Driver.findOne({
+            where: { cpf: cpf }
+        });
+
+        if (!driver) throw Error('DRIVER_NOT_FOUND');
+
+        if (!(driver.dataValues.type_positions === 'COLLABORATOR')) throw Error('INSUFFICIENT_PERMISSIONS');
+
+        if (!(await driver.checkPassword(password))) throw Error('INVALID_DRIVER_PASSWORD');
+
+        const { id, credit, value_fix, percentage, type_positions, status, name } = driver;
+
+        const token = generateDriverToken({
+            id,
+            cpf,
+            type_positions,
+            status,
+            credit,
+            value_fix,
+            percentage,
+            name
+        });
+
+        return { token };
     }
 
     async profile(id) {
@@ -45,19 +73,6 @@ class DriverService extends BaseService {
     }
 
     async update(id, body) {
-        const schema = Yup.object().shape({
-            name: Yup.string(),
-            oldPassword: Yup.string().min(8),
-            password: Yup.string()
-                .min(8)
-                .when('oldPassword', (oldPassword, field) => (oldPassword ? field.required() : field)),
-            confirmPassword: Yup.string().when('password', (password, field) =>
-                password ? field.required().oneOf([Yup.ref('password')]) : field
-            )
-        });
-
-        if (!(await schema.isValid(body))) throw Error('VALIDATION_ERROR');
-
         const { oldPassword } = body;
 
         const driver = await this._driverModel.findByPk(id);
@@ -195,18 +210,6 @@ class DriverService extends BaseService {
 
     async forgotPassword(body) {
         try {
-            const schema = Yup.object().shape({
-                oldPassword: Yup.string().min(8),
-                password: Yup.string()
-                    .min(8)
-                    .when('oldPassword', (oldPassword, field) => (oldPassword ? field.required() : field)),
-                confirmPassword: Yup.string().when('password', (password, field) =>
-                    password ? field.required().oneOf([Yup.ref('password')]) : field
-                )
-            });
-
-            if (!(await schema.isValid(body))) throw Error('VALIDATION_ERROR');
-
             const { password, cpf } = body;
 
             const driver = await this._driverModel.findOne({ where: { cpf } });
@@ -232,14 +235,6 @@ class DriverService extends BaseService {
     async create(body) {
         const cpf = body.cpf.replace(/\D/g, '');
         const validCpf = validateCpf(cpf);
-
-        const schema = Yup.object().shape({
-            name: Yup.string().required(),
-            cpf: Yup.string().required(),
-            password: Yup.string().required().min(8)
-        });
-
-        if (!(await schema.isValid(body))) throw new Error('VALIDATION_ERROR');
 
         if (!body.value_fix && !body.percentage) {
             throw new Error('NEED_SOME_PAYMENT');
@@ -383,19 +378,6 @@ class DriverService extends BaseService {
     }
 
     async update(body, id) {
-        const schema = Yup.object().shape({
-            name: Yup.string(),
-            oldPassword: Yup.string().min(8),
-            password: Yup.string()
-                .min(8)
-                .when('oldPassword', (oldPassword, field) => (oldPassword ? field.required() : field)),
-            confirmPassword: Yup.string().when('password', (password, field) =>
-                password ? field.required().oneOf([Yup.ref('password')]) : field
-            )
-        });
-
-        if (!(await schema.isValid(body))) throw Error('Validation failed!');
-
         const { oldPassword } = body;
 
         const driver = await this._driverModel.findByPk(id);

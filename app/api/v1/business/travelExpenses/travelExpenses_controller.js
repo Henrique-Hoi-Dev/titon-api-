@@ -1,6 +1,6 @@
-const BaseResourceController = require('../../base/base_resource_controller');
-const TravelExpensesService = require('./travelExpenses_service');
-const HttpStatus = require('http-status');
+import BaseResourceController from '../../base/base_resource_controller.js';
+import TravelExpensesService from './travelExpenses_service.js';
+import HttpStatus from 'http-status';
 
 class TravelExpensesController extends BaseResourceController {
     constructor() {

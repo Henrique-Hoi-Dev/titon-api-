@@ -8,22 +8,83 @@ class FreightController extends BaseResourceController {
         this._freightService = new FreightService();
     }
 
-    async findAll(req, res, next) {
+    async createDriver(req, res, next) {
         try {
-            const freights = await this._freightService.findAll(req.query);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: freights }));
+            const data = await this._freightService.create(req.driverId, req.body);
+            return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async findById(req, res, next) {
+    async getId(req, res, next) {
         try {
-            const freight = await this._freightService.findById(req.params.id);
-            if (!freight) {
-                return res.status(HttpStatus.NOT_FOUND).json({ message: 'Frete não encontrado' });
-            }
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: freight }));
+            const data = await this._freightService.getId(req.params.id, req, req.params.financialId);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async updateDriver(req, res, next) {
+        try {
+            const data = await this._freightService.update(req.body, req.params.id, req);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async startingTrip(req, res, next) {
+        try {
+            const data = await this._freightService.startingTrip(req.body, req.user);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async finishedTrip(req, res, next) {
+        try {
+            const data = await this._freightService.finishedTrip(req.body, req.user);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async uploadDocuments(req, res, next) {
+        try {
+            const data = await this._freightService.uploadDocuments(req, req.params);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async deleteFile(req, res, next) {
+        try {
+            const data = await this._freightService.deleteFile(req.params, req.query);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async getDocuments(req, res, next) {
+        try {
+            const { fileData, contentType } = await this._freightService.getDocuments(req.query);
+            res.set('Content-Type', validateAndReturn(contentType));
+            return res.send(fileData);
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async deleteDriver(req, res, next) {
+        try {
+            const data = await this._freightService.delete(req.params.id, req);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
@@ -31,8 +92,26 @@ class FreightController extends BaseResourceController {
 
     async create(req, res, next) {
         try {
-            const freight = await this._freightService.create(req.body);
-            res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data: freight }));
+            const data = await this._freightService.create(req.body);
+            return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async getId(req, res, next) {
+        try {
+            const data = await this._freightService.getId(req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async firstCheckId(req, res, next) {
+        try {
+            const data = await this._freightService.firstCheckId(req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
@@ -40,8 +119,8 @@ class FreightController extends BaseResourceController {
 
     async update(req, res, next) {
         try {
-            const freight = await this._freightService.update(req.params.id, req.body);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: freight }));
+            const data = await this._freightService.update(req.userProps, req.body, req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
@@ -49,47 +128,12 @@ class FreightController extends BaseResourceController {
 
     async delete(req, res, next) {
         try {
-            await this._freightService.delete(req.params.id);
-            res.status(HttpStatus.NO_CONTENT).send();
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
-    async updateStatus(req, res, next) {
-        try {
-            const { status } = req.body;
-            if (!status) {
-                return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Status é obrigatório' });
-            }
-            const freight = await this._freightService.updateStatus(req.params.id, status);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: freight }));
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
-    async assignDriver(req, res, next) {
-        try {
-            const { driverId } = req.body;
-            if (!driverId) {
-                return res.status(HttpStatus.BAD_REQUEST).json({ message: 'ID do motorista é obrigatório' });
-            }
-            const freight = await this._freightService.assignDriver(req.params.id, driverId);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: freight }));
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
-    async completeFreight(req, res, next) {
-        try {
-            const freight = await this._freightService.completeFreight(req.params.id);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: freight }));
+            const data = await this._freighstService.delete(req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 }
 
-export default FreightController; 
+export default FreightController;

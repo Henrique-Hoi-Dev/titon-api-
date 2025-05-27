@@ -1,6 +1,6 @@
-const BaseResourceController = require('../../base/base_resource_controller');
-const DepositMoneyService = require('./depositMoney_service');
-const HttpStatus = require('http-status');
+import BaseResourceController from '../../base/base_resource_controller.js';
+import DepositMoneyService from './depositMoney_service.js';
+import HttpStatus from 'http-status';
 
 class DepositMoneyController extends BaseResourceController {
     constructor() {
@@ -8,66 +8,50 @@ class DepositMoneyController extends BaseResourceController {
         this._depositMoneyService = new DepositMoneyService();
     }
 
-    async findAll(req, res, next) {
-        try {
-            const deposits = await this._depositMoneyService.findAll(req.query);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: deposits }));
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
-    async findById(req, res, next) {
-        try {
-            const deposit = await this._depositMoneyService.findById(req.params.id);
-            if (!deposit) {
-                return res.status(HttpStatus.NOT_FOUND).json({ message: 'Depósito não encontrado' });
-            }
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: deposit }));
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
     async create(req, res, next) {
         try {
-            const deposit = await this._depositMoneyService.create(req.body);
-            res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data: deposit }));
+            const data = await this._depositMoneyService.create(req.user, req.body);
+            res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async update(req, res, next) {
+    async uploadDocuments(req, res, next) {
         try {
-            const deposit = await this._depositMoneyService.update(req.params.id, req.body);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: deposit }));
+            const data = await this._depositMoneyService.uploadDocuments(req, req.params);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async delete(req, res, next) {
+    async deleteFile(req, res, next) {
         try {
-            await this._depositMoneyService.delete(req.params.id);
-            res.status(HttpStatus.NO_CONTENT).send();
+            const data = await this._depositMoneyService.deleteFile(req.params);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async updateStatus(req, res, next) {
+    async getAll(req, res, next) {
         try {
-            const { status } = req.body;
-            if (!status) {
-                return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Status é obrigatório' });
-            }
-            const deposit = await this._depositMoneyService.updateStatus(req.params.id, status);
-            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data: deposit }));
+            const data = await this._depositMoneyService.getAll(req.query);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async getId(req, res, next) {
+        try {
+            const data = await this._depositMoneyService.getId(req.params.id);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 }
 
-module.exports = DepositMoneyController; 
+export default DepositMoneyController;

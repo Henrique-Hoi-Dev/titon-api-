@@ -1,8 +1,8 @@
-import StatesService from './states_service';
-import BaseResourceController from '../../base/base_resource_controller';
+import StatesService from './states_service.js';
+import BaseResourceController from '../../base/base_resource_controller.js';
 import HttpStatus from 'http-status';
 
-class UsersController extends BaseResourceController {
+class StatesController extends BaseResourceController {
     constructor() {
         super();
         this._statesService = new StatesService();
@@ -27,4 +27,4 @@ class UsersController extends BaseResourceController {
     }
 }
 
-module.exports = UsersController;
+export default StatesController;

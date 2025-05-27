@@ -1,9 +1,7 @@
 import { Op } from 'sequelize';
-import StatesModel from './states_model';
+import StatesModel from './states_model.js';
 import XLSX from 'xlsx';
-import fs from 'fs';
-import path from 'path';
-import BaseService from '../../base/base_service';
+import BaseService from '../../base/base_service.js';
 
 class StatesService extends BaseService {
     constructor() {

@@ -8,9 +8,18 @@ class ManagerController extends BaseResourceController {
         this._managerService = new ManagerService();
     }
 
-    async create(req, res, next) {
+    async signin(req, res, next) {
         try {
-            const data = await this._managerService.create(req.body);
+            const data = await this._managerService.signin(req.body);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async signup(req, res, next) {
+        try {
+            const data = await this._managerService.signup(req.body);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

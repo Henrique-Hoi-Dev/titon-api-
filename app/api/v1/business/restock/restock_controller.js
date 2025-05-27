@@ -1,5 +1,5 @@
-import BaseResourceController from '../../base/base_resource_controller';
-import RestockService from './restock_service';
+import BaseResourceController from '../../base/base_resource_controller.js';
+import RestockService from './restock_service.js';
 import HttpStatus from 'http-status';
 
 class RestockController extends BaseResourceController {

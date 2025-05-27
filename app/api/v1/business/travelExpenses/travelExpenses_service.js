@@ -1,16 +1,15 @@
-import { deleteFile, sendFile } from '../../../../providers/aws';
-import { generateRandomCode } from '../utils/crypto';
-import { updateHours } from '../../../../utils/updateHours';
+import { deleteFile, sendFile } from '../../../../providers/aws/index.js';
+import { generateRandomCode } from '../../../../utils/crypto.js';
+import { updateHours } from '../../../../utils/updateHours.js';
 
-import TravelExpensesModel from './travelExpenses_model';
-import BaseService from '../../base/base_service';
-import CustomError from '../../../../utils/custom_error';
+import TravelExpensesModel from './travelExpenses_model.js';
+import BaseService from '../../base/base_service.js';
 import dayjs from 'dayjs';
-import FinancialStatements from '../financial_statements/financial_statements_model';
-import Freight from '../freight/freight_model';
+import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import Freight from '../freight/freight_model.js';
 
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -30,10 +29,10 @@ class TravelExpensesService extends BaseService {
         const financial = await this._financialStatementsModel.findOne({
             where: { driver_id: driverId, status: true }
         });
-        if (!financial) throw new CustomError('FINANCIAL_NOT_FOUND', 404);
+        if (!financial) throw new Error('FINANCIAL_NOT_FOUND');
 
         const freight = await this._freightModel.findByPk(freight_id);
-        if (!freight) throw new CustomError('FREIGHT_NOT_FOUND', 404);
+        if (!freight) throw new Error('FREIGHT_NOT_FOUND');
 
         if (freight.status === 'STARTING_TRIP') {
             const now = updateHours(dayjs().tz('America/Sao_Paulo').utcOffset() / 60);
@@ -47,7 +46,7 @@ class TravelExpensesService extends BaseService {
             return { data: result };
         }
 
-        throw new CustomError('This front is not traveling', 404);
+        throw new Error('This front is not traveling');
     }
 
     async uploadDocuments(payload, { id }) {

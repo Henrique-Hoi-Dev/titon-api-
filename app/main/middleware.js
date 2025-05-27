@@ -73,14 +73,13 @@ async function verifyManagerToken(req, res, next) {
         const token = req.header('Authorization')?.replace('Bearer ', '');
 
         if (!token) {
-            const error = new Error('INVALID_TOKEN');
+            const error = new Error('VERIFY_TOKEN_ERROR_MANAGER_INVALID_TOKEN');
             error.status = 401;
             return next(error);
         }
 
         const decodedToken = verifyManagerTokenApi(token);
         req.manager = decodedToken;
-
         next();
     } catch (jwtError) {
         const errorKey = JWT_ERROR_MAPPING[jwtError.message] || 'VERIFY_TOKEN_ERROR_INVALID_TOKEN';
@@ -95,7 +94,7 @@ async function verifyDriverToken(req, res, next) {
         const token = req.header('Authorization')?.replace('Bearer ', '');
 
         if (!token) {
-            const error = new Error('INVALID_TOKEN');
+            const error = new Error('VERIFY_TOKEN_ERROR_DRIVER_INVALID_TOKEN');
             error.status = 401;
             return next(error);
         }
@@ -121,4 +120,4 @@ async function ensureAuthorization(req, res, next) {
     next();
 }
 
-export { logError, handleError, throw404, ensureAuthorization, verifyManagerToken, verifyDriverToken };
+export default { logError, handleError, throw404, ensureAuthorization, verifyManagerToken, verifyDriverToken };

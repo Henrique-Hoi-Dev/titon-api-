@@ -1,7 +1,7 @@
 import ManagerModel from './manager_model.js';
 import BaseService from '../../base/base_service.js';
 import Permission from '../permission/permission_model.js';
-import Yup from 'yup';
+import { generateManagerToken } from '../../../../utils/jwt.js';
 
 class ManagerService extends BaseService {
     constructor() {
@@ -15,46 +15,76 @@ class ManagerService extends BaseService {
 
         const user = await this._managerModel.findOne({ where: { email } });
 
-        if (!user) throw Error('USER_NOT_FOUND');
+        if (!user) {
+            const error = new Error('USER_NOT_FOUND');
+            error.status = 404;
+            throw error;
+        }
 
-        if (!(await user.checkPassword(password))) throw Error('INVALID_USER_PASSWORD');
+        if (!(await user.checkPassword(password))) {
+            const error = new Error('INVALID_USER_PASSWORD');
+            error.status = 401;
+            throw error;
+        }
 
-        const { id, name, type_role, permission_id } = user;
+        const { permission_id, name, type_role, id } = user.toJSON();
 
         const permissions = await Permission.findByPk(permission_id, {
             attributes: ['role', 'actions']
         });
 
-        const token = jwt.sign({ id, name, email, type_role, permissions }, process.env.TOKEN_KEY, {
-            expiresIn: process.env.TOKEN_EXP
-        });
+        const userData = {
+            id,
+            name,
+            email,
+            type_role,
+            permissions: permissions.toJSON()
+        };
+
+        const token = this._generateToken(userData);
 
         return { token };
     }
 
     async signup(body) {
-        let { email, name, password } = body;
+        let { email, name, password, typeRole } = body;
 
-        // doing email verification
         const userExist = await this._managerModel.findOne({ where: { email: email } });
 
-        if (userExist) throw Error('This user email already exists.');
+        if (userExist?.toJSON()?.email) {
+            const error = new Error('THIS_USER_EMAIL_ALREADY_EXISTS');
+            error.status = 409;
+            throw error;
+        }
 
         const resultUser = await this._managerModel.create({
             name,
             email,
-            password
+            password,
+            type_role: typeRole
         });
 
-        const addPermissions = await this._permissionModel.findOne({
-            where: { role: resultUser.type_role }
-        });
+        const addPermissions = await this._permissionModel
+            .findOne({
+                where: { role: typeRole }
+            })
+            .then((permission) => permission.toJSON());
 
         await resultUser.update({
             permission_id: addPermissions.id
         });
 
-        return { msg: 'Registered User Successful!' };
+        const { type_role, id } = resultUser?.toJSON();
+
+        const userData = {
+            id,
+            name,
+            email,
+            type_role
+        };
+        const token = this._generateToken(userData);
+
+        return { token };
     }
 
     async getAll(query) {
@@ -70,20 +100,26 @@ class ManagerService extends BaseService {
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0,
             attributes: ['id', 'name', 'email', 'type_role'],
-            include: {
-                model: Permission,
-                as: 'permissions',
-                attributes: ['id', 'role', 'actions']
-            }
+            include: [
+                {
+                    model: this._permissionModel,
+                    as: 'permissions',
+                    attributes: ['id', 'role', 'actions']
+                }
+            ]
         });
 
         const total = await this._managerModel.count();
         const totalPages = Math.ceil(total / limit);
-
         const currentPage = Number(page);
 
+        const serializedUsers = users.map((user) => ({
+            ...user.toJSON(),
+            permissions: user.permissions ? user.permissions.toJSON() : null
+        }));
+
         return {
-            dataResult: users,
+            docs: serializedUsers,
             total,
             totalPages,
             currentPage
@@ -158,25 +194,24 @@ class ManagerService extends BaseService {
             }
         });
 
-        if (!user) throw Error('User not found');
+        if (!user) {
+            const error = new Error('USER_NOT_FOUND');
+            error.status = 404;
+            throw error;
+        }
 
         return { msg: 'Deleted user' };
     }
 
-    _updateHours(numOfHours, date = new Date()) {
-        const dateCopy = new Date(date.getTime());
+    _generateToken(user) {
+        if (!user) {
+            const error = new Error('USER_NOT_FOUND');
+            error.status = 404;
+            throw error;
+        }
 
-        dateCopy.setHours(dateCopy.getHours() - numOfHours);
-
-        return dateCopy;
-    }
-
-    _handleMongoError(error) {
-        const keys = Object.keys(error.errors);
-        const err = new Error(error.errors[keys[0]].message);
-        err.field = keys[0];
-        err.status = 409;
-        throw err;
+        const token = generateManagerToken(user);
+        return token;
     }
 }
 

@@ -2,8 +2,8 @@ import BaseService from '../../base/base_service.js';
 import Driver from './driver_model.js';
 import ValidateCode from '../validateCode/validateCode_model.js';
 import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import validateCpf from '../../../../utils/validateCpf.js';
 
-import { validateCpf } from '../../../../utils/validateCpf.js';
 import { createExpirationDateFromNow } from '../../../../utils/date.js';
 import { Op, literal } from 'sequelize';
 import { generateDriverToken } from '../../../../utils/jwt.js';
@@ -69,7 +69,7 @@ class DriverService extends BaseService {
 
         if (!driver) throw Error('DRIVER_NOT_FOUND');
 
-        return driver;
+        return driver.toJSON();
     }
 
     async update(id, body) {

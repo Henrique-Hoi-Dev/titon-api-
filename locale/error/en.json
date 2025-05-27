@@ -107,5 +107,9 @@
     "MANAGER_JWT_EXPIRES_IN_NOT_FOUND": "Manager JWT expires in not found",
     "DRIVER_JWT_EXPIRES_IN_NOT_FOUND": "Driver JWT expires in not found",
     "DRIVER_NOT_FOUND": "Driver not found",
-    "INVALID_DRIVER_PASSWORD": "Invalid driver password"
+    "INVALID_DRIVER_PASSWORD": "Invalid driver password",
+    "THIS_USER_EMAIL_ALREADY_EXISTS": "This user email already exists",
+    "VERIFY_TOKEN_ERROR_MANAGER_INVALID_TOKEN": "Invalid manager token",
+    "VERIFY_TOKEN_ERROR_DRIVER_INVALID_TOKEN": "Invalid driver token",
+    "PERMISSION_NOT_FOUND": "Permission not found"
 }

@@ -9,8 +9,8 @@ import validation from './manager_validation.js';
 import CreditController from '../credit/credit_controller.js';
 import CartController from '../cart/cart_controller.js';
 import multer from 'multer';
+import middleware from '../../../../main/middleware.js';
 
-import { ensureAuthorization, verifyManagerToken } from '../../../../main/middleware.js';
 import { validator } from '../../../../utils/validator.js';
 import { Router } from 'express';
 import { verifyIfUserHasRole } from '../../../../utils/auth.js';
@@ -31,48 +31,61 @@ const router = Router();
 router.post('/signup', validator(validation.signup), managerController.signup);
 router.post('/signin', validator(validation.signin), managerController.signin);
 
+router.post('/driver/signup', validator(validation.signupDriver), driverController.create);
+
 router
     .put(
         '/user/:id',
-        ensureAuthorization,
-        verifyManagerToken,
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         verifyIfUserHasRole('MASTER'),
         validator(validation.update),
         managerController.update
     )
-    .get('/user/:id', ensureAuthorization, verifyManagerToken, verifyIfUserHasRole('MASTER'), managerController.getId)
-    .get('/users', ensureAuthorization, verifyManagerToken, verifyIfUserHasRole('MASTER'), managerController.getAll)
+    .get(
+        '/user/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        managerController.getId
+    )
+    .get(
+        '/users',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        managerController.getAll
+    )
     .delete(
         '/user/:id',
-        ensureAuthorization,
-        verifyManagerToken,
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         verifyIfUserHasRole('MASTER'),
         managerController.delete
     );
 
 router
-    .put('/user/driver/:id', ensureAuthorization, verifyManagerToken, driverController.update)
-    .get('/user/driver/:id', ensureAuthorization, verifyManagerToken, driverController.getId)
-    .post('/driver/signup', driverController.create)
-    .patch('/user/driver/reset-password/:cpf', driverController.resetPassword)
+    .put('/driver/:id', middleware.ensureAuthorization, middleware.verifyManagerToken, driverController.update)
+    .get('/driver/:id', middleware.ensureAuthorization, middleware.verifyManagerToken, driverController.getId)
+    .patch('/driver/reset-password/:cpf', driverController.resetPassword)
     .get('/drivers', driverController.getAll)
     .get('/drivers-select', driverController.getAllSelect)
-    .delete('/user/driver/:id', driverController.delete);
+    .delete('/driver/:id', driverController.delete);
 
 router
-    .post('/user/financialStatement', financialStatementsController.create)
-    .patch('/user/financialStatement/:id', financialStatementsController.update)
-    .patch('/user/financialStatement/finishing/:id', financialStatementsController.finishing)
-    .get('/user/financialStatement/:id', financialStatementsController.getId)
+    .post('/financialStatement', financialStatementsController.create)
+    .patch('/financialStatement/:id', financialStatementsController.update)
+    .patch('/financialStatement/finishing/:id', financialStatementsController.finishing)
+    .get('/financialStatement/:id', financialStatementsController.getId)
     .get('/financialStatements', financialStatementsController.getAll)
-    .delete('/user/financialStatement/:id', financialStatementsController.delete);
+    .delete('/financialStatement/:id', financialStatementsController.delete);
 
 router
-    .post('/user/freight', freightController.create)
-    .patch('/user/freight/:id', verifyIfUserHasRole('MASTER'), freightController.update)
-    .get('/user/first-check/:id', verifyIfUserHasRole('MASTER'), freightController.firstCheckId)
-    .get('/user/freight/:id', freightController.getId)
-    .delete('/user/freight/:id', freightController.delete);
+    .post('/freight', freightController.create)
+    .patch('/freight/:id', verifyIfUserHasRole('MASTER'), freightController.update)
+    .get('/first-check/:id', verifyIfUserHasRole('MASTER'), freightController.firstCheckId)
+    .get('/freight/:id', freightController.getId)
+    .delete('/freight/:id', freightController.delete);
 
 router.get('/notifications', verifyIfUserHasRole('MASTER'), notificationController.getAllUserNotifications);
 
@@ -81,31 +94,31 @@ router.put('/notifications/:id', verifyIfUserHasRole('MASTER'), notificationCont
 router
     .post('/user/credit', verifyIfUserHasRole('MASTER'), creditController.create)
     .get('/credits', verifyIfUserHasRole('MASTER'), creditController.getAll)
-    .get('/user/credit/:id', verifyIfUserHasRole('MASTER'), creditController.getId)
-    .delete('/user/credit/:id', verifyIfUserHasRole('MASTER'), creditController.delete);
+    .get('/credit/:id', verifyIfUserHasRole('MASTER'), creditController.getId)
+    .delete('/credit/:id', verifyIfUserHasRole('MASTER'), creditController.delete);
 
 router
-    .post('/user/truck', truckController.create)
-    .put('/user/truck/:id', truckController.update)
-    .get('/user/truck/:id', truckController.getId)
+    .post('/truck', truckController.create)
+    .put('/truck/:id', truckController.update)
+    .get('/truck/:id', truckController.getId)
     .get('/trucks', truckController.getAll)
     .get('/trucks-select', truckController.getAllSelect)
     .patch('/truck/upload-image/:id', upload.single('file'), truckController.uploadImage)
-    .delete('/user/truck/:id', truckController.delete);
+    .delete('/truck/:id', truckController.delete);
 
 router
-    .post('/user/cart', cartController.create)
-    .put('/user/cart/:id', cartController.update)
-    .get('/user/cart/:id', cartController.getId)
+    .post('/cart', cartController.create)
+    .put('/cart/:id', cartController.update)
+    .get('/cart/:id', cartController.getId)
     .get('/carts', cartController.getAll)
     .get('/carts-select', cartController.getAllSelect)
-    .delete('/user/cart/:id', cartController.delete);
+    .delete('/cart/:id', cartController.delete);
 
 router
-    .post('/user/permission', verifyIfUserHasRole('MASTER'), permissionController.createPermission)
-    .put('/user/permission/:id', verifyIfUserHasRole('MASTER'), permissionController.updatePermission)
+    .post('/permission', verifyIfUserHasRole('MASTER'), permissionController.createPermission)
+    .put('/permission/:id', verifyIfUserHasRole('MASTER'), permissionController.updatePermission)
     .get('/permissions', verifyIfUserHasRole('MASTER'), permissionController.getAllPermission);
 
-router.put('/user/add-role/:id', verifyIfUserHasRole('MASTER'), managerController.addRole);
+router.put('/add-role/:id', verifyIfUserHasRole('MASTER'), managerController.addRole);
 
 export default router;

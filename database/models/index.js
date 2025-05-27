@@ -6,7 +6,7 @@ import DepositMoney from '../../app/api/v1/business/depositMoney/depositMoney_mo
 import Driver from '../../app/api/v1/business/driver/driver_model.js';
 import FinancialStatements from '../../app/api/v1/business/financialStatements/financialStatements_model.js';
 import Freight from '../../app/api/v1/business/freight/freight_model.js';
-import Manager from '../../app/api/v1/business/manager/manager_model.js';
+import Users from '../../app/api/v1/business/manager/manager_model.js';
 import Notification from '../../app/api/v1/business/notification/notification_model.js';
 import Permission from '../../app/api/v1/business/permission/permission_model.js';
 import Restock from '../../app/api/v1/business/restock/restock_model.js';
@@ -24,7 +24,7 @@ const Models = [
     Driver,
     FinancialStatements,
     Freight,
-    Manager,
+    Users,
     Notification,
     Permission,
     Restock,

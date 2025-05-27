@@ -1,4 +1,4 @@
-export const validateCpf = (cpf) => {
+export default function validateCpf(cpf) {
     if (cpf.length !== 11) {
         throw new Error('must be a valid CPF');
     }
@@ -39,4 +39,4 @@ export const validateCpf = (cpf) => {
         throw new Error('must be a valid CPF');
     }
     return cpf;
-};
+}

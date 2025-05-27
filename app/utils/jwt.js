@@ -67,13 +67,13 @@ const verifyDriverTokenApi = (token = '') => {
         throw error;
     }
 
-    if (!process.env.DRIVER_JWT_PUBLIC_KEY) {
-        const error = new Error('DRIVER_JWT_PUBLIC_KEY_NOT_FOUND');
+    if (!process.env.DRIVER_JWT_SECRET) {
+        const error = new Error('DRIVER_JWT_SECRET_NOT_FOUND');
         error.status = 401;
         throw error;
     }
 
-    return jwt.verify(token, process.env.DRIVER_JWT_PUBLIC_KEY);
+    return jwt.verify(token, process.env.DRIVER_JWT_SECRET);
 };
 
 export { generateManagerToken, generateDriverToken, verifyManagerTokenApi, verifyDriverTokenApi };

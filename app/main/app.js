@@ -1,4 +1,5 @@
-import './bootstrap.js';
+import 'dotenv/config';
+import bootstrap from './bootstrap.js';
 import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -8,28 +9,33 @@ import cors from 'cors';
 import hpp from 'hpp';
 import session from 'express-session';
 import i18n from 'i18n';
-import { logError, handleError, throw404 } from './middleware.js';
 import addRouters from './routers.js';
-import logger from '../utils/logger.js';
-import pinoHttp from 'pino-http';
 import csrf from 'csurf';
+import middleware from './middleware.js';
 
-const pinoHttpInstance = pinoHttp({ logger: logger });
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { pinoHttp } from 'pino-http';
+
+bootstrap(process.env.NODE_ENV || 'development');
+
+const currentFilePath = fileURLToPath(import.meta.url);
+const currentDirPath = dirname(currentFilePath);
+
+const memoryStore = new session.MemoryStore();
 const csrfProtection = csrf({
     cookie: true,
     ignoreMethods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'DELETE', 'PATCH']
 });
 
-const memoryStore = new session.MemoryStore();
-
 const app = express();
 
-app.use(pinoHttpInstance);
+app.use(pinoHttp());
 
 i18n.configure({
     locales: ['en'],
     defaultLocale: 'en',
-    directory: './locale/error',
+    directory: join(currentDirPath, '../../locale/error'),
     objectNotation: false,
     register: global,
     updateFiles: false,
@@ -43,7 +49,12 @@ const rawBodySaver = function (req, res, buffer, encoding) {
 };
 
 app.use(compress());
-app.use(cors());
+app.use(
+    cors({
+        origin: process.env.CORS_ORIGIN || '*',
+        credentials: true
+    })
+);
 app.use(
     bodyParser.json({
         limit: '50mb',
@@ -94,15 +105,16 @@ app.use(
 );
 
 app.use(cookieParser());
-app.use(csrfProtection);
 
 app.use('/v1/', routers.v1);
 app.use('/', routers.v1);
 
 addRouters(routers.v1);
 
-app.use(throw404);
-app.use(logError);
-app.use(handleError);
+app.use(csrfProtection);
+
+app.use(middleware.throw404);
+app.use(middleware.logError);
+app.use(middleware.handleError);
 
 export default app;

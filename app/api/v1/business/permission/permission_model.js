@@ -18,7 +18,7 @@ class Permission extends Model {
     }
 
     static associate(models) {
-        this.hasMany(models.Manager, { foreignKey: 'permission_id', as: 'users' });
+        this.hasMany(models.Users, { foreignKey: 'permission_id', as: 'users' });
     }
 }
 

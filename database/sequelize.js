@@ -1,8 +1,5 @@
-import bootstrap from '../app/main/bootstrap.js';
 import { Sequelize } from 'sequelize';
 import Models from './models/index.js';
-
-bootstrap(process.env.NODE_ENV || 'development');
 
 const sequelize = new Sequelize(process.env.DATABASE_URL_DB, {
     dialect: 'postgres',

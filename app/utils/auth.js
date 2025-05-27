@@ -3,12 +3,15 @@ import HttpStatus from 'http-status';
 function verifyIfUserHasRole(role) {
     return function (req, res, next) {
         try {
-            const user = req.locals.user;
+            const user = req.manager;
 
+            console.log('🚀 ~ user.type_role === role:', user);
             if (user.type_role === role) {
                 next();
             } else {
-                return res.status(HttpStatus.FORBIDDEN).json({ error: 'INVALID_ROLE' });
+                const error = new Error('PERMISSION_NOT_FOUND');
+                error.status = 403;
+                throw error;
             }
         } catch (err) {
             next(err);

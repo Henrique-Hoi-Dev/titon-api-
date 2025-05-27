@@ -9,8 +9,8 @@ import DepositMoneyController from '../depositMoney/depositMoney_controller.js';
 import TravelExpensesController from '../travelExpenses/travelExpenses_controller.js';
 import RestockController from '../restock/restock_controller.js';
 import multer from 'multer';
+import middleware from '../../../../main/middleware.js';
 
-import { ensureAuthorization, verifyDriverToken } from '../../../../main/middleware.js';
 import { validator } from '../../../../utils/validator.js';
 import { Router } from 'express';
 
@@ -27,92 +27,101 @@ const restockController = new RestockController();
 
 const router = Router();
 
+router.post('/signin', validator(validation.signin), driverController.signin);
+
 router
-    .post('/signin', validator(validation.signin), driverController.signin)
     .post('/code-request', driverController.requestCodeValidation)
     .post('/code-validation', driverController.validCodeForgotPassword);
 
 router
-    .get('/driver/profile', driverController.profile)
-    .put('/driver/update-profile', driverController.update)
-    .put('/driver/forgot-password', driverController.forgotPassword);
+    .get('/profile', middleware.ensureAuthorization, middleware.verifyDriverToken, driverController.profile)
+    .put('/update-profile', middleware.ensureAuthorization, middleware.verifyDriverToken, driverController.update)
+    .put(
+        '/forgot-password',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        driverController.forgotPassword
+    );
 
 router
-    .patch('/driver/financial', ensureAuthorization, verifyDriverToken, financialStatementsController.update)
+    .patch(
+        '/financial',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        financialStatementsController.update
+    )
     .get(
-        '/driver/financial/current',
-        ensureAuthorization,
-        verifyDriverToken,
+        '/financial/current',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
         financialStatementsController.getFinancialCurrent
     )
     .get(
-        '/driver/financial/finisheds',
-        ensureAuthorization,
-        verifyDriverToken,
+        '/financial/finisheds',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
         financialStatementsController.getAllFinished
     );
 
 router
-    .post('/driver/freight', ensureAuthorization, verifyDriverToken, freightController.create)
-    .patch('/driver/freight/:id', ensureAuthorization, verifyDriverToken, freightController.update)
-    .post('/driver/freight/starting-trip', ensureAuthorization, verifyDriverToken, freightController.startingTrip)
-    .post('/driver/freight/finished-trip', ensureAuthorization, verifyDriverToken, freightController.finishedTrip)
+    .post('/freight', middleware.ensureAuthorization, middleware.verifyDriverToken, freightController.create)
+    .patch('/freight/:id', middleware.ensureAuthorization, middleware.verifyDriverToken, freightController.update)
     .patch(
-        '/driver/freight/upload-documents/:id',
+        '/freight/upload-documents/:id',
         upload.single('file'),
 
         freightController.uploadDocuments
     )
-    .get('/driver/freight/search-documents', freightController.getDocuments)
-    .patch('/driver/freight/delete-documents/:id', freightController.deleteFile)
-    .get('/driver/freight/:id/:financialId', freightController.getId)
-    .delete('/driver/freight/:id', freightController.deleteDriver);
+    .get('/freight/search-documents', freightController.getDocuments)
+    .patch('/freight/delete-documents/:id', freightController.deleteFile)
+    .get('/freight/:id/:financialId', freightController.getId)
+    .delete('/freight/:id', freightController.deleteDriver);
 
 router
-    .post('/driver/deposit', depositMoneyController.create)
-    .get('/driver/deposit/:id', depositMoneyController.getId)
+    .post('/deposit', depositMoneyController.create)
+    .get('/deposit/:id', depositMoneyController.getId)
     .patch(
-        '/driver/deposit/upload-documents/:id',
+        '/deposit/upload-documents/:id',
         upload.single('file'),
 
         depositMoneyController.uploadDocuments
     )
-    .delete('/driver/deposit/delete-documents/:id', depositMoneyController.deleteFile)
-    .get('/driver/deposits', depositMoneyController.getAll);
+    .delete('/deposit/delete-documents/:id', depositMoneyController.deleteFile)
+    .get('/deposits', depositMoneyController.getAll);
 
 router
-    .post('/driver/travel', travelExpensesController.create)
-    .get('/driver/travel/:id', travelExpensesController.getId)
+    .post('/travel', travelExpensesController.create)
+    .get('/travel/:id', travelExpensesController.getId)
     .patch(
-        '/driver/travel/upload-documents/:id',
+        '/travel/upload-documents/:id',
         upload.single('file'),
 
         travelExpensesController.uploadDocuments
     )
-    .delete('/driver/travel/delete-documents/:id', travelExpensesController.deleteFile)
-    .get('/driver/travels', travelExpensesController.getAll);
+    .delete('/travel/delete-documents/:id', travelExpensesController.deleteFile)
+    .get('/travels', travelExpensesController.getAll);
 
 router
-    .post('/driver/restock', restockController.create)
-    .get('/driver/restock/:id', restockController.getId)
+    .post('/restock', restockController.create)
+    .get('/restock/:id', restockController.getId)
     .patch(
-        '/driver/restock/upload-documents/:id',
+        '/restock/upload-documents/:id',
         upload.single('file'),
 
         restockController.uploadDocuments
     )
-    .delete('/driver/restock/delete-documents/:id', restockController.deleteFile)
-    .get('/driver/restocks', restockController.getAll);
+    .delete('/restock/delete-documents/:id', restockController.deleteFile)
+    .get('/restocks', restockController.getAll);
 
 router.patch(
-    '/driver/activate/receive-notifications',
+    '/activate/receive-notifications',
 
     notificationController.activateReceiveNotifications
 );
 
-router.get('/driver/notifications', notificationController.getAll);
-router.put('/driver/notifications/:id', notificationController.update);
-router.post('/driver/notifications/allread', notificationController.markAllRead);
+router.get('/notifications', notificationController.getAll);
+router.put('/notifications/:id', notificationController.update);
+router.post('/notifications/allread', notificationController.markAllRead);
 
 router.get('/cities', citiesController.allCities);
 router.get('/states', statesController.allStates);

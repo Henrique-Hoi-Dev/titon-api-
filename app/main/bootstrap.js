@@ -1,37 +1,25 @@
 import dotenv from 'dotenv';
 
-const bootstrap = (environment = process.env.NODE_ENV ? process.env.NODE_ENV : 'development') => {
-    let environmentVariables = {};
+const bootstrap = (environment = process.env.NODE_ENV) => {
+    let path;
 
     if (environment === 'production') {
-        const result = dotenv.config();
-        if (result.parsed) {
-            environmentVariables = result.parsed;
-        }
-    }
-    if (environment === 'test') {
-        const result = dotenv.config({ path: '.env.test' });
-        if (result.parsed) {
-            environmentVariables = result.parsed;
-        }
-    }
-    if (environment === 'development') {
-        const result = dotenv.config({ path: '.env.development' });
-        if (result.parsed) {
-            environmentVariables = result.parsed;
-        }
+        path = '.env'; // produção usa .env direto
+    } else if (environment === 'development') {
+        path = '.env.development';
+    } else if (environment === 'test') {
+        path = '.env.test';
+    } else {
+        console.warn(`⚠️ Ambiente desconhecido: "${environment}", usando .env padrão`);
+        path = '.env';
     }
 
-    // Carrega as variáveis no process.env
-    for (const key in environmentVariables) {
-        process.env[key] = environmentVariables[key];
-    }
+    const result = dotenv.config({ path });
 
-    // eslint-disable-next-line no-console
-    console.log(`Ambiente: ${environment}`);
-    if (environment === 'test' || environment === 'development') {
-        // eslint-disable-next-line no-console
-        console.log('Variáveis carregadas:', environmentVariables);
+    if (result.error) {
+        console.error(`❌ Falha ao carregar variáveis de ambiente de ${path}`);
+    } else if (environment === 'development') {
+        console.log(`✅ Variáveis carregadas de ${path}`, result.parsed);
     }
 };
 

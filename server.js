@@ -1,3 +1,5 @@
+import bootstrap from './app/main/bootstrap.js';
+bootstrap();
 import app from './app/main/app.js';
 import database from './database/sequelize.js';
 import logger from './app/utils/logger.js';

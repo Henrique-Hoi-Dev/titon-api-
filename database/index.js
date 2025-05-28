@@ -1,6 +1,8 @@
-import { Sequelize } from 'sequelize';
+import 'dotenv/config';
 import Models from './models/index.js';
 import databaseConfig from '../config/config.cjs';
+
+import { Sequelize } from 'sequelize';
 
 const env = process.env.NODE_ENV || 'development';
 const config = databaseConfig[env];
@@ -9,7 +11,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     host: config.host,
     port: config.port,
     dialect: config.dialect,
-    logging: false,
+    logging: console.log,
     define: {
         timestamps: true,
         underscored: true,

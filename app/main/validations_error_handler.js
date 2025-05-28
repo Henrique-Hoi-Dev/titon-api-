@@ -1,8 +1,8 @@
 import BaseErrorHandler from '../api/v1/base/base_error_handler.js';
 import errorMapping from '../utils/error_mapping.js';
-const message = await import('../../locale/error/en.json', {
-    assert: { type: 'json' }
-});
+import { readFile } from 'fs/promises';
+const data = await readFile(new URL('../../locale/error/en.json', import.meta.url), 'utf-8');
+const message = JSON.parse(data);
 
 class ValidationsErrorHandler extends BaseErrorHandler {
     errorResponse(data) {

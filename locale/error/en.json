@@ -112,5 +112,6 @@
     "VERIFY_TOKEN_ERROR_MANAGER_INVALID_TOKEN": "Invalid manager token",
     "VERIFY_TOKEN_ERROR_DRIVER_INVALID_TOKEN": "Invalid driver token",
     "PERMISSION_NOT_FOUND": "Permission not found",
-    "ERRO_EDIT_USER_PERMISSION": "Error on edit user permission"
+    "ERRO_EDIT_USER_PERMISSION": "Error on edit user permission",
+    "VERIFY_TOKEN_ERROR_EXPIRED": "Token expired"
 }

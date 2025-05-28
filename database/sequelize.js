@@ -1,15 +1,16 @@
-/* eslint-disable no-console */
 import 'dotenv/config';
-import bootstrap from '../app/main/bootstrap.js';
+import Models from './models/index.js';
+import databaseConfig from '../config/config.cjs';
 
 import { Sequelize } from 'sequelize';
-import Models from './models/index.js';
 
-bootstrap(process.env.NODE_ENV || 'development');
-console.log('🚀 ~ process.env.DATABASE_URL_DB:', process.env.DATABASE_URL_DB);
+const env = process.env.NODE_ENV;
+const config = databaseConfig[env];
 
-const sequelize = new Sequelize(process.env.DATABASE_URL_DB, {
-    dialect: 'postgres',
+const sequelize = new Sequelize(config.database, config.username, config.password, {
+    host: config.host,
+    port: config.port,
+    dialect: config.dialect,
     logging: console.log,
     dialectOptions: {
         ssl: {

@@ -19,6 +19,7 @@
         "dev:migrate": "cross-env NODE_ENV=development npx sequelize-cli db:migrate",
         "dev:seed": "cross-env NODE_ENV=development npx sequelize-cli db:seed:all",
         "start": "cross-env NODE_ENV=production node server.js",
+        "start:heroku": "node server.js",
         "start:migrate": "cross-env NODE_ENV=production npx sequelize-cli db:migrate",
         "start:seed": "cross-env NODE_ENV=production npx sequelize-cli db:seed:all",
         "lint": "eslint . --ext .js",

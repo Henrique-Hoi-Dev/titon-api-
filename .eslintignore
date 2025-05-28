@@ -1,7 +1,0 @@
-node_modules
-bin
-public
-test
-tests/unit
-tests/integration
-tests/coverage

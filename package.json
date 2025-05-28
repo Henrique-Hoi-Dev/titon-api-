@@ -9,7 +9,7 @@
     },
     "scripts": {
         "test": "npm run test:unit && npm run test:integration",
-        "test:unit": "cross-env NODE_ENV=test jest --runInBand --detectOpenHandles --verbose",
+        "test:unit": "cross-env NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --verbose",
         "test:integration": "cross-env NODE_ENV=test jest --projects ./tests --runInBand --detectOpenHandles --verbose",
         "test:integration-silent": "cross-env NODE_ENV=test jest --projects ./tests --runInBand --silent",
         "single-test": "cross-env NODE_ENV=test jest -t",
@@ -18,7 +18,7 @@
         "dev:debug": "cross-env NODE_ENV=development node server.js",
         "dev:migrate": "cross-env NODE_ENV=development sequelize db:migrate",
         "dev:seed": "cross-env NODE_ENV=development sequelize db:seed:all",
-        "start": "npm run build && cross-env NODE_ENV=production node dist/server.js",
+        "start": "node server.js",
         "start:migrate": "cross-env NODE_ENV=production sequelize db:migrate",
         "start:seed": "cross-env NODE_ENV=production sequelize db:seed:all",
         "lint": "eslint . --ext .js",

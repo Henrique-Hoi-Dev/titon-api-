@@ -1,6 +1,12 @@
 /* eslint-disable no-console */
+import 'dotenv/config';
+import bootstrap from '../app/main/bootstrap.js';
+
 import { Sequelize } from 'sequelize';
 import Models from './models/index.js';
+
+bootstrap(process.env.NODE_ENV || 'development');
+console.log('🚀 ~ process.env.DATABASE_URL_DB:', process.env.DATABASE_URL_DB);
 
 const sequelize = new Sequelize(process.env.DATABASE_URL_DB, {
     dialect: 'postgres',

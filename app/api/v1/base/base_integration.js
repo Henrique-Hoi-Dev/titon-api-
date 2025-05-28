@@ -1,5 +1,5 @@
-const axios = require('axios');
-const logger = require('../../../utils/logger');
+import axios from 'axios';
+import logger from '../../../utils/logger.js';
 
 const EXTERNAL_SERVICES = {};
 
@@ -33,4 +33,4 @@ class BaseIntegration {
     }
 }
 
-module.exports = BaseIntegration;
+export default BaseIntegration;

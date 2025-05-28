@@ -1,9 +1,9 @@
-const HttpStatus = require('http-status');
-const ev = require('express-validation');
-const camelcaseKeys = require('camelcase-keys');
-const ValidationsErrorHandler = require('../../../main/validations_error_handler');
+import HttpStatus from 'http-status';
+import ev from 'express-validation';
+import camelcaseKeys from 'camelcase-keys';
+import ValidationsErrorHandler from '../../../main/validations_error_handler.js';
 const validationsErrorHandler = new ValidationsErrorHandler();
-const logger = require('../../../utils/logger');
+import logger from '../../../utils/logger.js';
 
 class BaseController {
     constructor(errorHandler) {
@@ -88,4 +88,4 @@ class BaseController {
     }
 }
 
-module.exports = BaseController;
+export default BaseController;

@@ -1,16 +1,11 @@
 import 'dotenv/config';
+import '../config/config.cjs';
 import Models from './models/index.js';
-import databaseConfig from '../config/config.cjs';
 
 import { Sequelize } from 'sequelize';
 
-const env = process.env.NODE_ENV;
-const config = databaseConfig[env];
-
-const sequelize = new Sequelize(config.database, config.username, config.password, {
-    host: config.host,
-    port: config.port,
-    dialect: config.dialect,
+const sequelize = new Sequelize(process.env.DATABASE_URL_DB, {
+    dialect: 'postgres',
     logging: console.log,
     dialectOptions: {
         ssl: {

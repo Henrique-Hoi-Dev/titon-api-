@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
-const supertest = require('supertest');
-const { app, server, closeServer } = require('../server');
+/* eslint-env jest */
+import supertest from 'supertest';
+import { app, server, closeServer } from '../server.js';
 
 jest.setTimeout(30000);
 

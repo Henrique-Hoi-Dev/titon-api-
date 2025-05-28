@@ -1,10 +1,11 @@
 /* eslint-disable no-undef */
-const BaseErrorontroller = require('../../app/api/v1/base/base_error_handler');
-const baseErrorontroller = new BaseErrorontroller();
+/* eslint-env jest */
+import BaseErrorHandler from '../../app/api/v1/base/base_error_handler.js';
+const baseErrorHandler = new BaseErrorHandler();
 
-describe('Test UNIT BaseErrorontroller', () => {
+describe('Test UNIT BaseErrorHandler', () => {
     it('default errrorResponse', async () => {
-        expect(baseErrorontroller.errorResponse()).toEqual({
+        expect(baseErrorHandler.errorResponse()).toEqual({
             errors: [
                 {
                     error_code: 1,
@@ -16,7 +17,7 @@ describe('Test UNIT BaseErrorontroller', () => {
     });
 
     it('errorResponse to match VALIDATION_ERROR', async () => {
-        expect(baseErrorontroller.errorResponse({ status: 422, key: 'VALIDATION_ERROR' })).toEqual({
+        expect(baseErrorHandler.errorResponse({ status: 422, key: 'VALIDATION_ERROR' })).toEqual({
             errors: [
                 {
                     error_code: 1,
@@ -28,7 +29,7 @@ describe('Test UNIT BaseErrorontroller', () => {
     });
     it('errorResponse to match CONFLICT_DUPLICATE_KEY_ERROR', async () => {
         expect(
-            baseErrorontroller.errorResponse({ status: 409, key: 'CONFLICT_DUPLICATE_KEY_ERROR' })
+            baseErrorHandler.errorResponse({ status: 409, key: 'CONFLICT_DUPLICATE_KEY_ERROR' })
         ).toEqual({
             errors: [
                 {

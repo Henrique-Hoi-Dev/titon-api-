@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
-const BaseController = require('../../app/api/v1/base/base_controller');
+/* eslint-env jest */
+import BaseController from '../../app/api/v1/base/base_controller.js';
 const baseController = new BaseController();
 
 describe('Test UNIT BaseController', () => {

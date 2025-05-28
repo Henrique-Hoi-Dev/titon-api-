@@ -169,7 +169,7 @@ export default {
     // timers: "real",
 
     // A map from regular expressions to paths to transformers
-    // transform: null,
+    transform: {},
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
     transformIgnorePatterns: ['<rootDir>/node_modules/'],
@@ -185,4 +185,6 @@ export default {
 
     // Whether to use watchman for file crawling
     // watchman: true,
+
+    // extensionsToTreatAsEsm: ['.js'],
 };

@@ -30,8 +30,8 @@ const router = Router();
 router.post('/signin', validator(validation.signin), driverController.signin);
 
 router
-    .post('/code-request', driverController.requestCodeValidation)
-    .post('/code-validation', driverController.validCodeForgotPassword);
+    .post('/code-request', driverController.requestCodeValidation.bind(driverController))
+    .post('/code-validation', driverController.validCodeForgotPassword.bind(driverController));
 
 router
     .get(
@@ -44,13 +44,13 @@ router
         '/update-profile',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        driverController.update
+        driverController.update.bind(driverController)
     )
     .put(
         '/forgot-password',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        driverController.forgotPassword
+        driverController.forgotPassword.bind(driverController)
     );
 
 router
@@ -58,19 +58,19 @@ router
         '/financial',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        financialStatementsController.update
+        financialStatementsController.updateDriver.bind(financialStatementsController)
     )
     .get(
         '/financial/current',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        financialStatementsController.getFinancialCurrent
+        financialStatementsController.getFinancialCurrent.bind(financialStatementsController)
     )
     .get(
         '/financial/finisheds',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        financialStatementsController.getAllFinished
+        financialStatementsController.getAllFinished.bind(financialStatementsController)
     );
 
 router
@@ -84,67 +84,79 @@ router
         '/freight/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        freightController.update
+        freightController.updateFreightDriver.bind(freightController)
     )
     .patch(
         '/freight/upload-documents/:id',
         upload.single('file'),
 
-        freightController.uploadDocuments
+        freightController.uploadDocuments.bind(freightController)
     )
-    .get('/freight/search-documents', freightController.getDocuments)
-    .patch('/freight/delete-documents/:id', freightController.deleteFile)
-    .get('/freight/:id/:financialId', freightController.getId)
-    .delete('/freight/:id', freightController.deleteDriver);
+    .get('/freight/search-documents', freightController.getDocuments.bind(freightController))
+    .patch('/freight/delete-documents/:id', freightController.deleteFile.bind(freightController))
+    .get('/freight/:id/:financialId', freightController.getId.bind(freightController))
+    .delete('/freight/:id', freightController.deleteFreightDriver.bind(freightController));
 
 router
-    .post('/deposit', depositMoneyController.create)
-    .get('/deposit/:id', depositMoneyController.getId)
+    .post('/deposit', depositMoneyController.create.bind(depositMoneyController))
+    .get('/deposit/:id', depositMoneyController.getId.bind(depositMoneyController))
     .patch(
         '/deposit/upload-documents/:id',
         upload.single('file'),
 
-        depositMoneyController.uploadDocuments
+        depositMoneyController.uploadDocuments.bind(depositMoneyController)
     )
-    .delete('/deposit/delete-documents/:id', depositMoneyController.deleteFile)
-    .get('/deposits', depositMoneyController.getAll);
+    .delete(
+        '/deposit/delete-documents/:id',
+        depositMoneyController.deleteFile.bind(depositMoneyController)
+    )
+    .get('/deposits', depositMoneyController.getAll.bind(depositMoneyController));
 
 router
-    .post('/travel', travelExpensesController.create)
-    .get('/travel/:id', travelExpensesController.getId)
+    .post('/travel', travelExpensesController.create.bind(travelExpensesController))
+    .get('/travel/:id', travelExpensesController.getId.bind(travelExpensesController))
     .patch(
         '/travel/upload-documents/:id',
         upload.single('file'),
-
-        travelExpensesController.uploadDocuments
+        travelExpensesController.uploadDocuments.bind(travelExpensesController)
     )
-    .delete('/travel/delete-documents/:id', travelExpensesController.deleteFile)
-    .get('/travels', travelExpensesController.getAll);
+    .delete(
+        '/travel/delete-documents/:id',
+        travelExpensesController.deleteFile.bind(travelExpensesController)
+    )
+    .get('/travels', travelExpensesController.getAll.bind(travelExpensesController));
 
 router
-    .post('/restock', restockController.create)
-    .get('/restock/:id', restockController.getId)
+    .post('/restock', restockController.create.bind(restockController))
+    .get('/restock/:id', restockController.getId.bind(restockController))
     .patch(
         '/restock/upload-documents/:id',
         upload.single('file'),
 
-        restockController.uploadDocuments
+        restockController.uploadDocuments.bind(restockController)
     )
-    .delete('/restock/delete-documents/:id', restockController.deleteFile)
-    .get('/restocks', restockController.getAll);
+    .delete('/restock/delete-documents/:id', restockController.deleteFile.bind(restockController))
+    .get('/restocks', restockController.getAll.bind(restockController));
 
 router.patch(
     '/activate/receive-notifications',
 
-    notificationController.activateReceiveNotifications
+    notificationController.activateReceiveNotifications.bind(notificationController)
 );
 
-router.get('/notifications', notificationController.getAll);
-router.put('/notifications/:id', notificationController.update);
-router.post('/notifications/allread', notificationController.markAllRead);
+router.get('/notifications', notificationController.getAll.bind(notificationController));
+router.put('/notifications/:id', notificationController.update.bind(notificationController));
+router.post(
+    '/notifications/allread',
+    notificationController.markAllRead.bind(notificationController)
+);
 
-router.get('/cities', citiesController.allCities);
-router.get('/states', statesController.allStates);
-router.post('/popular-city-state', upload.single('file'), statesController.popularCityStateData);
+router.get('/cities', citiesController.allCities.bind(citiesController));
+router.get('/states', statesController.allStates.bind(statesController));
+router.post(
+    '/popular-city-state',
+    upload.single('file'),
+    statesController.popularCityStateData.bind(statesController)
+);
 
 export default router;

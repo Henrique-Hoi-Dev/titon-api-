@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import bootstrap from './bootstrap.js';
 import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -16,8 +15,6 @@ import middleware from './middleware.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { pinoHttp } from 'pino-http';
-
-bootstrap(process.env.NODE_ENV || 'development');
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = dirname(currentFilePath);

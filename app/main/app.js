@@ -75,7 +75,8 @@ app.use(
 const routers = {};
 routers.v1 = express.Router();
 
-app.set('port', process.env.PORT_SERVER || 3000);
+// app.set('port', process.env.PORT_SERVER || 3000);
+
 app.use(i18n.init);
 
 app.disable('x-powered-by');

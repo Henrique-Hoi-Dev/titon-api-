@@ -4,7 +4,7 @@ const bootstrap = (environment = process.env.NODE_ENV) => {
     let path;
 
     if (environment === 'production') {
-        path = '.env'; // produção usa .env direto
+        path = '.env';
     } else if (environment === 'development') {
         path = '.env.development';
     } else if (environment === 'test') {

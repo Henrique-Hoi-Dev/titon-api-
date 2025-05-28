@@ -1,8 +1,8 @@
 const dotenv = require('dotenv');
 
 // Carrega o arquivo .env baseado no ambiente
-if (process.env.NODE_ENV !== 'production') {
-    dotenv.config({ path: `.env.${process.env.NODE_ENV || 'development'}` });
+if (process.env.NODE_ENV) {
+    dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 }
 
 // Verificação para debug

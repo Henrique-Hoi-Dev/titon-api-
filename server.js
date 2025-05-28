@@ -1,26 +1,25 @@
 import bootstrap from './app/main/bootstrap.js';
-bootstrap();
 import app from './app/main/app.js';
 import database from './database/sequelize.js';
 import logger from './app/utils/logger.js';
 
 let server;
 
+const PORT = process.env.PORT || 3001;
+
 const startServer = async () => {
     try {
+        bootstrap();
         await database.authenticate();
         await database.sync();
 
-        logger.info('Database connected and models synced.');
+        logger.info('✅ Database connected and models synced.');
 
-        // Inicia o servidor
-        server = app.listen(process.env.PORT_SERVER, () => {
-            logger.info(
-                `App running at port ${process.env.PORT_SERVER} on ${process.env.NODE_ENV}.`
-            );
+        server = app.listen(PORT, () => {
+            logger.info(`🚀 App running at port ${PORT} on ${process.env.NODE_ENV}.`);
         });
     } catch (error) {
-        logger.error(`Failed to connect to the database: ${error}`);
+        logger.error(`❌ Failed to connect to the database: ${error}`);
         process.exit(1);
     }
 };
@@ -34,14 +33,13 @@ const closeServer = async () => {
 
     await database.close();
 
-    logger.warn('All requests stopped, shutting down');
+    logger.warn('🛑 All requests stopped, shutting down');
 };
 
 const gracefulShutdownHandler = function gracefulShutdownHandler(signal) {
-    logger.warn(`Caught ${signal}, gracefully shutting down`);
+    logger.warn(`🛑 Caught ${signal}, gracefully shutting down`);
 
     setTimeout(() => {
-        logger.warn('Shutting down application');
         closeServer();
     }, 0);
 };
@@ -51,12 +49,12 @@ process.on('SIGTERM', gracefulShutdownHandler);
 process.on('SIGQUIT', gracefulShutdownHandler);
 
 process.on('unhandledRejection', (reason, promise) => {
-    logger.error(`App exiting due to an unhandled promise: ${promise} and reason: ${reason}`);
+    logger.error(`❗ Unhandled promise: ${promise}, reason: ${reason}`);
     throw reason;
 });
 
 process.on('uncaughtException', (error) => {
-    logger.error(`App exiting due to an uncaught exception: ${error}`);
+    logger.error(`❗ Uncaught exception: ${error}`);
     process.exit(1);
 });
 

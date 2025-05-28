@@ -8,10 +8,8 @@ class PermissionService extends BaseService {
     }
 
     async createPermission(body) {
-        let permission = body;
-
         const permissionExist = await this._permissionModel.findOne({
-            where: { role: permission.role }
+            where: { role: body.role }
         });
 
         if (permissionExist) {
@@ -20,13 +18,15 @@ class PermissionService extends BaseService {
             throw err;
         }
 
-        const resultPermission = await this._permissionModel.create(permission);
+        const resultPermission = await this._permissionModel.create(body);
 
-        return resultPermission;
+        return resultPermission.toJSON();
     }
 
-    async updatePermission(body, id) {
-        const permission = await this._permissionModel.findByPk(id);
+    async updatePermission(body, role) {
+        const permission = await this._permissionModel.findOne({
+            where: { role }
+        });
 
         if (!permission) {
             const err = new Error('PERMISSION_NOT_FOUND');
@@ -34,33 +34,17 @@ class PermissionService extends BaseService {
             throw err;
         }
 
-        const resultPermission = await permission.update(body);
+        const resultPermission = await permission.update({ actions: body.actions });
 
-        return resultPermission;
+        return resultPermission.toJSON();
     }
 
     async getAllPermission() {
-        const permissao = await this._permissionModel.findAll({
+        const permissions = await this._permissionModel.findAll({
             attributes: ['id', 'role', 'actions']
         });
 
-        return permissao;
-    }
-
-    _updateHours(numOfHours, date = new Date()) {
-        const dateCopy = new Date(date.getTime());
-
-        dateCopy.setHours(dateCopy.getHours() - numOfHours);
-
-        return dateCopy;
-    }
-
-    _handleMongoError(error) {
-        const keys = Object.keys(error.errors);
-        const err = new Error(error.errors[keys[0]].message);
-        err.field = keys[0];
-        err.status = 409;
-        throw err;
+        return permissions.map((permission) => permission.toJSON());
     }
 }
 

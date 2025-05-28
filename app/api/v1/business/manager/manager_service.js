@@ -135,77 +135,94 @@ class ManagerService extends BaseService {
     async getId(id) {
         const user = await this._managerModel.findByPk(id, {
             attributes: ['id', 'name', 'email', 'type_role'],
-            include: {
-                model: Permission,
-                as: 'permissions',
-                attributes: ['id', 'role', 'actions']
-            }
+            include: [
+                {
+                    model: this._permissionModel,
+                    as: 'permissions',
+                    attributes: ['id', 'role', 'actions']
+                }
+            ]
         });
 
-        if (!user) throw Error('User not found');
+        if (!user) {
+            const err = new Error('USER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        return { dataResult: user };
+        const userResult = {
+            ...user.toJSON(),
+            permissions: user.permissions ? user.permissions.toJSON() : null
+        };
+
+        return userResult;
     }
 
     async update(body, id) {
-        const { email, oldPassword } = body;
+        const { email, name } = body;
 
         const user = await this._managerModel.findByPk(id);
 
         if (email !== user.email) {
             const userExist = await this._managerModel.findOne({ where: { email } });
 
-            if (userExist) throw Error('This user email already exists.');
+            if (userExist) {
+                const err = new Error('THIS_USER_EMAIL_ALREADY_EXISTS');
+                err.status = 400;
+                throw err;
+            }
         }
 
-        if (oldPassword && !(await user.checkPassword(oldPassword)))
-            throw Error('Password does not match!');
-
         await user.update({
-            name: body.name,
-            password: body.password,
-            confirmPassword: body.confirmPassword
+            name: name
         });
 
         const userResult = await this._managerModel.findByPk(id, {
             attributes: ['id', 'name', 'email', 'type_role']
         });
 
-        return { dataResult: userResult };
+        return userResult.toJSON();
     }
 
     async addRole(body, id) {
         const user = await this._managerModel.findByPk(id);
 
-        if (!user) throw Error('User not found');
+        if (!user) {
+            const err = new Error('USER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        const permission = await this._permissionModel.findOne({
+            where: { role: body.role.toUpperCase() }
+        });
+
+        if (!permission) {
+            const err = new Error('ROLE_PERMISSION_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         await user.update({
-            type_role: body.role.toUpperCase()
+            type_role: body.role.toUpperCase(),
+            permission_id: permission.id
         });
 
-        const addPermissions = await this._permissionModel.findOne({
-            where: { role: user.type_role }
-        });
+        const { type_role, name, email, permission_id } = user.toJSON();
 
-        await user.update({
-            permission_id: addPermissions.id
-        });
-
-        return { msg: 'successful' };
+        return { id: user.id, type_role, name, email, permission_id };
     }
 
     async delete(id) {
-        const user = await this._managerModel.destroy({
-            where: {
-                id: id
-            }
-        });
+        const user = await this._managerModel.findByPk(id);
 
         if (!user) {
             const error = new Error('USER_NOT_FOUND');
             error.status = 404;
             throw error;
         }
+
+        await user.destroy();
 
         return { msg: 'Deleted user' };
     }

@@ -113,5 +113,7 @@
     "VERIFY_TOKEN_ERROR_DRIVER_INVALID_TOKEN": "Invalid driver token",
     "PERMISSION_NOT_FOUND": "Permission not found",
     "ERRO_EDIT_USER_PERMISSION": "Error on edit user permission",
-    "VERIFY_TOKEN_ERROR_EXPIRED": "Token expired"
+    "VERIFY_TOKEN_ERROR_EXPIRED": "Token expired",
+    "PASSWORD_DOES_NOT_MATCH_WITH_THE_CURRENT_PASSWORD": "Password does not match with the current password",
+    "THIS_TRIP_IS_NOT_IN_PROGRESS_TO_FINALIZE": "This trip is not in progress to finalize"
 }

@@ -4,7 +4,10 @@ class Permission extends Model {
     static init(sequelize) {
         super.init(
             {
-                role: Sequelize.STRING,
+                role: {
+                    type: Sequelize.STRING,
+                    unique: true
+                },
                 actions: {
                     type: Sequelize.ARRAY(Sequelize.STRING)
                 }

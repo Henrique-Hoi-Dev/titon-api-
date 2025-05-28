@@ -68,20 +68,33 @@ class DriverService extends BaseService {
             ]
         });
 
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         return driver.toJSON();
     }
 
     async update(id, body) {
-        const { oldPassword } = body;
+        const { oldPassword, cpf, ...updateData } = body;
 
         const driver = await this._driverModel.findByPk(id);
 
-        if (oldPassword && !(await driver.checkPassword(oldPassword)))
-            throw Error('PASSWORDS_NOT_MATCHED');
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        await driver.update({ ...body });
+        if (oldPassword && !(await driver.checkPassword(oldPassword))) {
+            const err = new Error('PASSWORDS_NOT_MATCHED');
+            err.status = 400;
+            throw err;
+        }
+
+        await driver.update(updateData);
 
         return await this._driverModel.findByPk(id);
     }
@@ -94,7 +107,11 @@ class DriverService extends BaseService {
                 }
             });
 
-            if (!user || !user.phone) throw Error('CELL_PHONE_DOES_NOT_EXIST');
+            if (!user || !user.phone) {
+                const err = new Error('CELL_PHONE_DOES_NOT_EXIST');
+                err.status = 404;
+                throw err;
+            }
 
             const verificationCode = generateRandomCode();
             const expirationDate = createExpirationDateFromNow(30);
@@ -155,7 +172,9 @@ class DriverService extends BaseService {
         if (!validCode) {
             // O código não foi encontrado ou não está disponível
             valid = false;
-            throw Error('VERIFICATION_CODE_NOT_FOUND');
+            const err = new Error('VERIFICATION_CODE_NOT_FOUND');
+            err.status = 404;
+            throw err;
         }
 
         // Verificar se o código expirou
@@ -195,7 +214,11 @@ class DriverService extends BaseService {
             where: { cpf }
         });
 
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (upValidOk) {
             return {
@@ -217,12 +240,10 @@ class DriverService extends BaseService {
 
             const driver = await this._driverModel.findOne({ where: { cpf } });
 
-            // if (oldPassword && !(await driver.checkPassword(oldPassword)))
-            //   throw Error('PASSWORDS_NOT_MATCHED');
-
-            // Verifica se a nova senha é diferente da antiga
             if (password && (await driver.checkPassword(password))) {
-                throw new Error('NEW_PASSWORD_SAME_AS_OLD');
+                const err = new Error('NEW_PASSWORD_SAME_AS_OLD');
+                err.status = 400;
+                throw err;
             }
 
             await driver.update({ password });
@@ -240,7 +261,9 @@ class DriverService extends BaseService {
         const validCpf = validateCpf(cpf);
 
         if (!body.value_fix && !body.percentage) {
-            throw new Error('NEED_SOME_PAYMENT');
+            const err = new Error('NEED_SOME_PAYMENT');
+            err.status = 400;
+            throw err;
         }
 
         const data = {
@@ -298,7 +321,8 @@ class DriverService extends BaseService {
                     [Op.notIn]: literal('(SELECT "driver_id" FROM "financial_statements")')
                 }
             },
-            attributes: ['id', 'name']
+            attributes: ['id', 'name'],
+            raw: true
         });
 
         const selectFinancial = await this._driverModel.findAll({
@@ -308,18 +332,18 @@ class DriverService extends BaseService {
                     model: this._financialStatementsModel,
                     as: 'financialStatements',
                     required: true,
-                    where: {
-                        status: false
-                    },
+                    where: { status: false },
                     attributes: ['id', 'driver_id', 'driver_name']
                 }
-            ]
+            ],
+            raw: true,
+            nest: true
         });
 
-        return [...select.concat(...selectFinancial)];
+        return [...select, ...selectFinancial];
     }
 
-    async getAll(query) {
+    async getAllManagerDriver(query) {
         const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
 
         const where = {};
@@ -357,14 +381,14 @@ class DriverService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            dataResult: drivers,
+            docs: drivers.map((driver) => driver.toJSON()),
             total,
             totalPages,
             currentPage
         };
     }
 
-    async getId(id) {
+    async getIdManagerDriver(id) {
         const driver = await this._driverModel.findByPk(id, {
             attributes: [
                 'id',
@@ -385,20 +409,27 @@ class DriverService extends BaseService {
             ]
         });
 
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        return driver;
+        return driver.toJSON();
     }
 
-    async updateDriver(body, id) {
-        const { oldPassword } = body;
-
+    async updateManagerDriver(body, id) {
         const driver = await this._driverModel.findByPk(id);
 
-        if (oldPassword && !(await driver.checkPassword(oldPassword)))
-            throw Error('PASSWORDS_NOT_MATCHED');
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        await driver.update(body);
+        const { cpf, phone, password, ...allowedUpdates } = body;
+
+        await driver.update(allowedUpdates);
 
         const driverResult = await this._driverModel.findByPk(id, {
             attributes: [
@@ -410,7 +441,6 @@ class DriverService extends BaseService {
                 'date_valid_mopp',
                 'date_valid_nr20',
                 'date_valid_nr35',
-                'cpf',
                 'date_admission',
                 'date_birthday',
                 'credit',
@@ -420,37 +450,35 @@ class DriverService extends BaseService {
             ]
         });
 
-        return driverResult;
+        return driverResult.toJSON();
     }
 
-    async delete(id) {
-        const driver = await this._driverModel.destroy({
+    async deleteManagerDriver(id) {
+        const driver = await this._driverModel.findByPk(id);
+
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        // Verifica se existe ficha financeira ativa
+        const activeFinancial = await this._financialStatementsModel.findOne({
             where: {
-                id: id
+                driver_id: id,
+                status: true
             }
         });
 
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
+        if (activeFinancial) {
+            const err = new Error('DRIVER_HAS_ACTIVE_FINANCIAL');
+            err.status = 400;
+            throw err;
+        }
 
-        return {
-            responseData: { msg: 'Deleted driver' }
-        };
-    }
+        await driver.destroy();
 
-    _updateHours(numOfHours, date = new Date()) {
-        const dateCopy = new Date(date.getTime());
-
-        dateCopy.setHours(dateCopy.getHours() - numOfHours);
-
-        return dateCopy;
-    }
-
-    _handleMongoError(error) {
-        const keys = Object.keys(error.errors);
-        const err = new Error(error.errors[keys[0]].message);
-        err.field = keys[0];
-        err.status = 409;
-        throw err;
+        return { msg: 'Deleted driver' };
     }
 }
 

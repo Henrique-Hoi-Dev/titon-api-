@@ -28,6 +28,7 @@ const cartController = new CartController();
 
 const router = Router();
 
+//Signup and Signin Manager
 router.post(
     '/signup',
     validator(validation.signup),
@@ -39,14 +40,16 @@ router.post(
     managerController.signin.bind(managerController)
 );
 
+//Signup and Signin Driver
 router.post(
     '/driver/signup',
     validator(validation.signupDriver),
     driverController.create.bind(driverController)
 );
 
+//User Manager
 router
-    .put(
+    .patch(
         '/user/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
@@ -59,6 +62,7 @@ router
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         verifyIfUserHasRole('MASTER'),
+        validator(validation.getId),
         managerController.getId.bind(managerController)
     )
     .get(
@@ -66,6 +70,7 @@ router
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         verifyIfUserHasRole('MASTER'),
+        validator(validation.getAll),
         managerController.getAll.bind(managerController)
     )
     .delete(
@@ -73,140 +78,272 @@ router
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         verifyIfUserHasRole('MASTER'),
+        validator(validation.delete),
         managerController.delete.bind(managerController)
     );
 
+//Permission Manager
 router
-    .put(
+    .post(
+        '/permission',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.createPermission),
+        permissionController.createPermission.bind(permissionController)
+    )
+    .patch(
+        '/permission/:role',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.updatePermission),
+        permissionController.updatePermission.bind(permissionController)
+    )
+    .get(
+        '/permissions',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        permissionController.getAllPermission.bind(permissionController)
+    );
+
+//Add Role Manager
+router.patch(
+    '/add-role/:id',
+    middleware.ensureAuthorization,
+    middleware.verifyManagerToken,
+    verifyIfUserHasRole('MASTER'),
+    validator(validation.addRole),
+    managerController.addRole.bind(managerController)
+);
+
+//Driver Manager
+router
+    .patch(
         '/driver/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
-        driverController.update.bind(driverController)
+        validator(validation.updateManagerDriver),
+        driverController.updateManagerDriver.bind(driverController)
     )
     .get(
         '/driver/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
-        driverController.getId.bind(driverController)
+        driverController.getIdManagerDriver.bind(driverController)
     )
-    .patch('/driver/reset-password/:cpf', driverController.resetPassword.bind(driverController))
-    .get('/drivers', driverController.getAll.bind(driverController))
-    .get('/drivers-select', driverController.getAllSelect.bind(driverController))
-    .delete('/driver/:id', driverController.delete.bind(driverController));
+    .patch(
+        '/driver/reset-password/:cpf',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        driverController.resetPassword.bind(driverController)
+    )
+    .get(
+        '/drivers',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        validator(validation.getAllDrivers),
+        driverController.getAllManagerDriver.bind(driverController)
+    )
+    .get(
+        '/drivers-select',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        driverController.getAllSelect.bind(driverController)
+    )
+    .delete(
+        '/driver/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        driverController.deleteManagerDriver.bind(driverController)
+    );
 
+//Credit Manager
+router
+    .post(
+        '/user/credit',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        creditController.create.bind(creditController)
+    )
+    .get(
+        '/credits',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        creditController.getAll.bind(creditController)
+    )
+    .get(
+        '/credit/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        creditController.getId.bind(creditController)
+    )
+    .delete(
+        '/credit/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        creditController.delete.bind(creditController)
+    );
+
+//Financial Statement Manager
 router
     .post(
         '/financialStatement',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         financialStatementsController.create.bind(financialStatementsController)
     )
     .patch(
         '/financialStatement/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         financialStatementsController.updateFinancial.bind(financialStatementsController)
     )
     .patch(
         '/financialStatement/finishing/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         financialStatementsController.finishing.bind(financialStatementsController)
     )
     .get(
         '/financialStatement/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         financialStatementsController.getId.bind(financialStatementsController)
     )
     .get(
         '/financialStatements',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         financialStatementsController.getAll.bind(financialStatementsController)
     )
     .delete(
         '/financialStatement/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         financialStatementsController.delete.bind(financialStatementsController)
     );
 
+//Freight Manager
 router
-    .post('/freight', freightController.create.bind(freightController))
+    .post(
+        '/freight',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        freightController.create.bind(freightController)
+    )
     .patch(
         '/freight/:id',
-        verifyIfUserHasRole('MASTER'),
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         freightController.updateFreightManager.bind(freightController)
     )
     .get(
         '/first-check/:id',
-        verifyIfUserHasRole('MASTER'),
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         freightController.firstCheckId.bind(freightController)
     )
-    .get('/freight/:id', freightController.getId.bind(freightController))
-    .delete('/freight/:id', freightController.deleteFreightManager.bind(freightController));
+    .get(
+        '/freight/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        freightController.getIdManagerFreight.bind(freightController)
+    )
+    .delete(
+        '/freight/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        freightController.deleteFreightManager.bind(freightController)
+    );
 
+//Notification Manager
 router.get(
     '/notifications',
-    verifyIfUserHasRole('MASTER'),
+    middleware.ensureAuthorization,
+    middleware.verifyManagerToken,
     notificationController.getAllUserNotifications.bind(notificationController)
 );
 
 router.put(
     '/notifications/:id',
-    verifyIfUserHasRole('MASTER'),
+    middleware.ensureAuthorization,
+    middleware.verifyManagerToken,
     notificationController.updateRead.bind(notificationController)
 );
 
+//Truck Manager
 router
     .post(
-        '/user/credit',
-        verifyIfUserHasRole('MASTER'),
-        creditController.create.bind(creditController)
+        '/truck',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        truckController.create.bind(truckController)
     )
-    .get('/credits', verifyIfUserHasRole('MASTER'), creditController.getAll.bind(creditController))
+    .put(
+        '/truck/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        truckController.update.bind(truckController)
+    )
     .get(
-        '/credit/:id',
-        verifyIfUserHasRole('MASTER'),
-        creditController.getId.bind(creditController)
+        '/truck/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        truckController.getId.bind(truckController)
     )
-    .delete(
-        '/credit/:id',
-        verifyIfUserHasRole('MASTER'),
-        creditController.delete.bind(creditController)
-    );
-
-router
-    .post('/truck', truckController.create.bind(truckController))
-    .put('/truck/:id', truckController.update.bind(truckController))
-    .get('/truck/:id', truckController.getId.bind(truckController))
-    .get('/trucks', truckController.getAll.bind(truckController))
-    .get('/trucks-select', truckController.getAllSelect.bind(truckController))
+    .get(
+        '/trucks',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        truckController.getAll.bind(truckController)
+    )
     .patch(
         '/truck/upload-image/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
         upload.single('file'),
         truckController.uploadImage.bind(truckController)
     )
-    .delete('/truck/:id', truckController.delete.bind(truckController));
-
-router
-    .post('/cart', cartController.create.bind(cartController))
-    .put('/cart/:id', cartController.update.bind(cartController))
-    .get('/cart/:id', cartController.getId.bind(cartController))
-    .get('/carts', cartController.getAll.bind(cartController))
-    .get('/carts-select', cartController.getAllSelect.bind(cartController))
-    .delete('/cart/:id', cartController.delete.bind(cartController));
-
-router
-    .post(
-        '/permission',
-        verifyIfUserHasRole('MASTER'),
-        permissionController.createPermission.bind(permissionController)
-    )
-    .put(
-        '/permission/:id',
-        verifyIfUserHasRole('MASTER'),
-        permissionController.updatePermission.bind(permissionController)
-    )
-    .get(
-        '/permissions',
-        verifyIfUserHasRole('MASTER'),
-        permissionController.getAllPermission.bind(permissionController)
+    .delete(
+        '/truck/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        truckController.delete.bind(truckController)
     );
 
-router.put(
-    '/add-role/:id',
-    verifyIfUserHasRole('MASTER'),
-    managerController.addRole.bind(managerController)
-);
+//Cart Manager
+router
+    .post(
+        '/cart',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        cartController.create.bind(cartController)
+    )
+    .put(
+        '/cart/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        cartController.update.bind(cartController)
+    )
+    .get(
+        '/cart/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        cartController.getId.bind(cartController)
+    )
+    .get(
+        '/carts',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        cartController.getAll.bind(cartController)
+    )
+    .get(
+        '/carts-select',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        cartController.getAllSelect.bind(cartController)
+    );
 
 export default router;

@@ -126,16 +126,24 @@ class FreightService extends BaseService {
         return result;
     }
 
-    async getIdDriver(freightId) {
+    async getIdManagerFreight(freightId) {
         const freight = await this._freightModel.findByPk(freightId);
 
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const financial = await this._financialStatementModel.findByPk(
             freight.financial_statements_id
         );
 
-        if (!financial) throw Error('FINANCIAL_NOT_FOUND');
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const driver = await this._driverModel.findByPk(financial.driver_id);
 
@@ -143,19 +151,31 @@ class FreightService extends BaseService {
             where: { freight_id: freightId }
         });
 
-        if (!restock) throw Error('RESTOCK_NOT_FOUND');
+        if (!restock) {
+            const err = new Error('RESTOCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const travelExpenses = await this._travelExpensesModel.findAll({
             where: { freight_id: freightId }
         });
 
-        if (!travelExpenses) throw Error('TRAVEL_EXPENSES_NOT_FOUND');
+        if (!travelExpenses) {
+            const err = new Error('TRAVEL_EXPENSES_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const depositMoney = await this._depositMoneyModel.findAll({
             where: { freight_id: freightId }
         });
 
-        if (!depositMoney) throw Error('DEPOSIT_MONEY_NOT_FOUND');
+        if (!depositMoney) {
+            const err = new Error('DEPOSIT_MONEY_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const kmTravel = await this._googleQuery(
             freight.start_freight_city,
@@ -254,20 +274,32 @@ class FreightService extends BaseService {
             currency: 'BRL'
         });
 
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const driver = await this._financialStatementModel.findByPk(
             freight.financial_statements_id
         );
 
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const kmTravel = await this._googleQuery(
             freight.start_freight_city,
             freight.final_freight_city
         );
 
-        if (!kmTravel) throw Error('Erro api google');
+        if (!kmTravel) {
+            const err = new Error('Erro api google');
+            err.status = 400;
+            throw err;
+        }
 
         function valuePerKm(distance, totalLiters, fuelValue) {
             const distanceInKm = distance / 1000;
@@ -334,9 +366,21 @@ class FreightService extends BaseService {
             this._driverModel.findByPk(body.driver_id)
         ]);
 
-        if (!user.type_role === 'MASTER') throw Error('THIS_USER_IS_NOT_MASTER');
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
+        if (!user.type_role === 'MASTER') {
+            const err = new Error('THIS_USER_IS_NOT_MASTER');
+            err.status = 400;
+            throw err;
+        }
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (freight.status === 'PENDING') {
             const result = await freight.update({
@@ -347,7 +391,11 @@ class FreightService extends BaseService {
                 where: { driver_id: driver.id, status: true }
             });
 
-            if (!financial) throw Error('FINANCIAL_NOT_FOUND');
+            if (!financial) {
+                const err = new Error('FINANCIAL_NOT_FOUND');
+                err.status = 404;
+                throw err;
+            }
 
             if (result.status === 'APPROVED') {
                 await this._notificationModel.create({
@@ -376,13 +424,15 @@ class FreightService extends BaseService {
     }
 
     async deleteFreightManager(id) {
-        const freight = await this._freightModel.destroy({
-            where: {
-                id: id
-            }
-        });
+        const freight = await this._freightModel.findByPk(id);
 
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        await freight.destroy();
 
         return { msg: 'Deleted freight' };
     }
@@ -390,7 +440,9 @@ class FreightService extends BaseService {
     async _financialDriver(id) {
         const financial = await this._financialService.getFinancialCurrent(id);
         if (!financial) {
-            throw Error('FINANCIAL_IN_PROGRESS');
+            const err = new Error('FINANCIAL_IN_PROGRESS');
+            err.status = 400;
+            throw err;
         }
         return financial;
     }
@@ -405,7 +457,9 @@ class FreightService extends BaseService {
         });
 
         if (!result) {
-            throw Error('ERRO_CREATE_FREIGHT');
+            const err = new Error('ERRO_CREATE_FREIGHT');
+            err.status = 400;
+            throw err;
         }
 
         return await this.getId(result.id, { driverId });
@@ -588,12 +642,24 @@ class FreightService extends BaseService {
 
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
-        if (!file) throw Error('FILE_NOT_FOUND');
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const freight = await this._freightModel.findByPk(id);
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        if (!body.category || !body.typeImg) throw Error('IMAGE_CATEGORY_OR_TYPE_NOT_FOUND');
+        if (!body.category || !body.typeImg) {
+            const err = new Error('IMAGE_CATEGORY_OR_TYPE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         const originalFilename = file.originalname;
 
@@ -667,9 +733,17 @@ class FreightService extends BaseService {
 
     async deleteFile({ id }, { typeImg }) {
         const freight = await this._freightModel.findByPk(id);
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        if (!typeImg) throw Error('IMAGE_TYPE_NOT_FOUND');
+        if (!typeImg) {
+            const err = new Error('IMAGE_TYPE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         let infoFreight;
 
@@ -729,10 +803,18 @@ class FreightService extends BaseService {
         const financial = await this._financialService.getFinancialCurrent(id);
 
         const freighStartTrip = financial.freight.find((item) => item.status === 'STARTING_TRIP');
-        if (freighStartTrip) throw Error('THERE_IS_ALREADY_A_TRIP_IN_PROGRESS');
+        if (freighStartTrip) {
+            const err = new Error('THERE_IS_ALREADY_A_TRIP_IN_PROGRESS');
+            err.status = 400;
+            throw err;
+        }
 
         const freight = await this._freightModel.findByPk(freight_id);
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (freight.status === 'APPROVED') {
             await freight.update({
@@ -750,9 +832,11 @@ class FreightService extends BaseService {
                 financial_statements_id: freight.financial_statements_id
             });
 
-            return { data: { msg: 'Starting Trip' } };
+            return { msg: 'Starting Trip' };
         } else {
-            throw Error('SHIPPING_WAS_NOT_APPROVED');
+            const err = new Error('SHIPPING_WAS_NOT_APPROVED');
+            err.status = 400;
+            throw err;
         }
     }
 
@@ -781,35 +865,26 @@ class FreightService extends BaseService {
                 financial_statements_id: freight.financial_statements_id
             });
         }
-        return { data: { msg: 'Finished Trip' } };
+        return { msg: 'Finished Trip' };
     }
 
-    async deleteFreightDriver(id, { driverId }) {
-        const financial = await this._financialDriver(driverId);
+    async deleteFreightDriver(freightId, driver) {
+        const financial = await this._financialDriver(driver.id);
+        const freight = await this._freightModel.findByPk(freightId);
 
-        const freight = await this._freightModel.destroy({
-            where: {
-                id: id,
-                financial_statements_id: financial.id
-            }
-        });
         if (!freight) {
             const err = new Error('FREIGHT_NOT_FOUND');
             err.status = 404;
             throw err;
         }
 
-        return { data: { msg: 'Deleted freight' } };
-    }
-
-    _handleError(error) {
-        if (error.name === 'SequelizeValidationError') {
-            const err = new Error(error.errors[0].message);
-            err.field = error.errors[0].path;
-            err.status = 400;
-            throw err;
+        if (freight.status === 'STARTING_TRIP') {
+            throw Error('THIS_TRIP_IS_NOT_IN_PROGRESS_TO_FINALIZE');
         }
-        throw error;
+
+        await freight.destroy();
+
+        return { msg: 'Deleted freight' };
     }
 }
 

@@ -19,7 +19,7 @@ class PermissionController extends BaseResourceController {
 
     updatePermission = async (req, res, next) => {
         try {
-            const data = await this._permissionService.updatePermission(req.body, req.params);
+            const data = await this._permissionService.updatePermission(req.body, req.params.role);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

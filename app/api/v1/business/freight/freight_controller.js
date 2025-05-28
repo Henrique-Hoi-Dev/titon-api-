@@ -92,7 +92,7 @@ class FreightController extends BaseResourceController {
 
     async deleteFreightDriver(req, res, next) {
         try {
-            const data = await this._freightService.deleteFreightDriver(req.params.id, req);
+            const data = await this._freightService.deleteFreightDriver(req.params.id, req.driver);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -108,9 +108,9 @@ class FreightController extends BaseResourceController {
         }
     }
 
-    async getIdDriver(req, res, next) {
+    async getIdManagerFreight(req, res, next) {
         try {
-            const data = await this._freightService.getIdDriver(req.params.id);
+            const data = await this._freightService.getIdManagerFreight(req.params.id);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -129,7 +129,7 @@ class FreightController extends BaseResourceController {
     async updateFreightManager(req, res, next) {
         try {
             const data = await this._freightService.updateFreightManager(
-                req.driver,
+                req.user,
                 req.body,
                 req.params.id
             );

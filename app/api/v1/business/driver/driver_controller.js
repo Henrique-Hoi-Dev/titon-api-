@@ -26,9 +26,18 @@ class DriverController extends BaseResourceController {
         }
     };
 
+    updateManagerDriver = async (req, res, next) => {
+        try {
+            const data = await this._driverService.updateManagerDriver(req.body, req.params.id);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    };
+
     update = async (req, res, next) => {
         try {
-            const data = await this._driverService.updateDriver(req.body, req.params.id);
+            const data = await this._driverService.update(req.body, req.params.id);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -80,9 +89,9 @@ class DriverController extends BaseResourceController {
         }
     };
 
-    getAll = async (req, res, next) => {
+    getAllManagerDriver = async (req, res, next) => {
         try {
-            const data = await this._driverService.getAll(req.query);
+            const data = await this._driverService.getAllManagerDriver(req.query);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -98,18 +107,18 @@ class DriverController extends BaseResourceController {
         }
     };
 
-    getId = async (req, res, next) => {
+    getIdManagerDriver = async (req, res, next) => {
         try {
-            const data = await this._driverService.getId(req.params.id);
+            const data = await this._driverService.getIdManagerDriver(req.params.id);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     };
 
-    delete = async (req, res, next) => {
+    deleteManagerDriver = async (req, res, next) => {
         try {
-            const data = await this._driverService.delete(req.params.id);
+            const data = await this._driverService.deleteManagerDriver(req.params.id);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

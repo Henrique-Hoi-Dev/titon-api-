@@ -23,18 +23,29 @@ class TravelExpensesService extends BaseService {
         this._freightModel = Freight;
     }
 
-    async create(driverId, body) {
+    async create(driver, body) {
         let { freight_id } = body;
 
-        const financial = await this._financialStatementsModel.findOne({
-            where: { driver_id: driverId, status: true }
-        });
-        if (!financial) throw new Error('FINANCIAL_NOT_FOUND');
+        const [financial, freight] = await Promise.all([
+            this._financialStatementsModel.findOne({
+                where: { driver_id: driver.id, status: true }
+            }),
+            this._freightModel.findByPk(freight_id)
+        ]);
 
-        const freight = await this._freightModel.findByPk(freight_id);
-        if (!freight) throw new Error('FREIGHT_NOT_FOUND');
+        if (!financial.dataValues) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        if (freight.status === 'STARTING_TRIP') {
+        if (!freight.dataValues) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (freight.dataValues.status === 'STARTING_TRIP') {
             const now = updateHours(dayjs().tz('America/Sao_Paulo').utcOffset() / 60);
 
             const result = await this._travelExpensesModel.create({
@@ -43,23 +54,33 @@ class TravelExpensesService extends BaseService {
                 financial_statements_id: financial.id
             });
 
-            return { data: result };
+            return result;
         }
 
-        throw new Error('This front is not traveling');
+        const err = new Error('TRIP_NOT_FOUND');
+        err.status = 404;
+        throw err;
     }
 
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
 
         const travelExpenses = await this._travelExpensesModel.findByPk(id);
-        if (!travelExpenses) throw Error('TRAVELEXPENSES_NOT_FOUND');
+        if (!travelExpenses.dataValues) {
+            const err = new Error('TRAVELEXPENSES_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (travelExpenses.img_receipt && travelExpenses.img_receipt.uuid) {
             await this.deleteFile({ id });
         }
 
-        if (!body.category) throw Error('CATEGORY_NOT_FOUND');
+        if (!body.category) {
+            const err = new Error('CATEGORY_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const originalFilename = file.originalname;
 
@@ -83,7 +104,11 @@ class TravelExpensesService extends BaseService {
 
     async deleteFile({ id }) {
         const travelExpenses = await this._travelExpensesModel.findByPk(id);
-        if (!travelExpenses) throw Error('FREIGHT_NOT_FOUND');
+        if (!travelExpenses.dataValues) {
+            const err = new Error('TRAVELEXPENSES_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         try {
             await this._deleteFileIntegration({
@@ -128,7 +153,7 @@ class TravelExpensesService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            data: travelExpenses,
+            docs: travelExpenses.map((travelExpense) => travelExpense.toJSON()),
             totalItems,
             totalPages,
             currentPage
@@ -136,21 +161,15 @@ class TravelExpensesService extends BaseService {
     }
 
     async getId(id) {
-        const travelExpense = await this._travelExpensesModel.findByPk(id, {});
+        const travelExpense = await this._travelExpensesModel.findByPk(id);
 
-        if (!travelExpense) throw Error('TRAVEL_NOT_FOUND');
+        if (!travelExpense.dataValues) {
+            const err = new Error('TRAVELEXPENSES_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        return {
-            data: travelExpense
-        };
-    }
-
-    _handleMongoError(error) {
-        const keys = Object.keys(error.errors);
-        const err = new Error(error.errors[keys[0]].message);
-        err.field = keys[0];
-        err.status = 409;
-        throw err;
+        return travelExpense.toJSON();
     }
 }
 

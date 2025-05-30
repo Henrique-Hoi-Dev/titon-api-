@@ -35,18 +35,6 @@ module.exports = {
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
-            percentage_commission: {
-                type: Sequelize.INTEGER,
-                defaultValue: 0
-            },
-            fixed_commission: {
-                type: Sequelize.INTEGER,
-                defaultValue: 0
-            },
-            daily: {
-                type: Sequelize.INTEGER,
-                defaultValue: 0
-            },
             status: {
                 type: Sequelize.BOOLEAN,
                 allowNull: false,
@@ -66,30 +54,6 @@ module.exports = {
             },
             final_date: {
                 type: Sequelize.DATE,
-                allowNull: true
-            },
-            driver_name: {
-                type: Sequelize.STRING,
-                allowNull: true
-            },
-            truck_models: {
-                type: Sequelize.STRING,
-                allowNull: true
-            },
-            truck_board: {
-                type: Sequelize.STRING,
-                allowNull: true
-            },
-            truck_avatar: {
-                type: Sequelize.STRING,
-                allowNull: true
-            },
-            cart_models: {
-                type: Sequelize.STRING,
-                allowNull: true
-            },
-            cart_board: {
-                type: Sequelize.STRING,
                 allowNull: true
             },
             invoicing_all: {

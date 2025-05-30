@@ -162,27 +162,35 @@ router
 //Credit Manager
 router
     .post(
-        '/user/credit',
+        '/credit',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.create),
         creditController.create.bind(creditController)
     )
     .get(
         '/credits',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.getAllCredit),
         creditController.getAll.bind(creditController)
     )
     .get(
         '/credit/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.getIdCredit),
         creditController.getId.bind(creditController)
     )
     .delete(
         '/credit/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.deleteCredit),
         creditController.delete.bind(creditController)
     );
 
@@ -192,36 +200,43 @@ router
         '/financialStatement',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.createFinancialStatement),
         financialStatementsController.create.bind(financialStatementsController)
     )
     .patch(
         '/financialStatement/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.updateFinancial),
         financialStatementsController.updateFinancial.bind(financialStatementsController)
     )
     .patch(
         '/financialStatement/finishing/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.finishing),
         financialStatementsController.finishing.bind(financialStatementsController)
     )
     .get(
         '/financialStatement/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.getIdFinancialStatement),
         financialStatementsController.getId.bind(financialStatementsController)
     )
     .get(
         '/financialStatements',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.getAllFinancialStatements),
         financialStatementsController.getAll.bind(financialStatementsController)
     )
     .delete(
         '/financialStatement/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.deleteFinancialStatement),
         financialStatementsController.delete.bind(financialStatementsController)
     );
 
@@ -231,30 +246,37 @@ router
         '/freight',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.createFreight),
         freightController.create.bind(freightController)
     )
     .patch(
-        '/freight/:id',
+        '/freight/approve/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
-        freightController.updateFreightManager.bind(freightController)
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.approveFreight),
+        freightController.approveFreightManager.bind(freightController)
     )
     .get(
         '/first-check/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.firstCheckId),
         freightController.firstCheckId.bind(freightController)
     )
     .get(
         '/freight/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.getIdManagerFreight),
         freightController.getIdManagerFreight.bind(freightController)
     )
     .delete(
         '/freight/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.deleteFreight),
         freightController.deleteFreightManager.bind(freightController)
     );
 
@@ -263,14 +285,26 @@ router.get(
     '/notifications',
     middleware.ensureAuthorization,
     middleware.verifyManagerToken,
+    verifyIfUserHasRole('MASTER'),
     notificationController.getAllUserNotifications.bind(notificationController)
 );
 
 router.put(
-    '/notifications/:id',
+    '/notifications/:id/read',
     middleware.ensureAuthorization,
     middleware.verifyManagerToken,
-    notificationController.updateRead.bind(notificationController)
+    verifyIfUserHasRole('MASTER'),
+    validator(validation.updateReadManager),
+    notificationController.updateReadManager.bind(notificationController)
+);
+
+router.post(
+    '/notification/create/:user_id',
+    middleware.ensureAuthorization,
+    middleware.verifyManagerToken,
+    verifyIfUserHasRole('MASTER'),
+    validator(validation.createNotification),
+    notificationController.createNotification.bind(notificationController)
 );
 
 //Truck Manager
@@ -279,37 +313,50 @@ router
         '/truck',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.createTruck),
         truckController.create.bind(truckController)
     )
-    .put(
+    .patch(
         '/truck/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.updateTruck),
         truckController.update.bind(truckController)
     )
     .get(
         '/truck/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        verifyIfUserHasRole('MASTER'),
+        validator(validation.getIdTruck),
         truckController.getId.bind(truckController)
     )
     .get(
         '/trucks',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.getAllTrucks),
         truckController.getAll.bind(truckController)
+    )
+    .get(
+        '/trucks-select',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        truckController.getAllSelect.bind(truckController)
     )
     .patch(
         '/truck/upload-image/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         upload.single('file'),
+        validator(validation.uploadImageTruck),
         truckController.uploadImage.bind(truckController)
     )
     .delete(
         '/truck/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.deleteTruck),
         truckController.delete.bind(truckController)
     );
 
@@ -319,24 +366,28 @@ router
         '/cart',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.createCart),
         cartController.create.bind(cartController)
     )
     .put(
         '/cart/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.updateCart),
         cartController.update.bind(cartController)
     )
     .get(
         '/cart/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.getIdCart),
         cartController.getId.bind(cartController)
     )
     .get(
         '/carts',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
+        validator(validation.getAllCarts),
         cartController.getAll.bind(cartController)
     )
     .get(

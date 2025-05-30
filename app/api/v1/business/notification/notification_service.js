@@ -1,6 +1,7 @@
 import BaseService from '../../base/base_service.js';
 import Notification from './notification_model.js';
 import Driver from '../driver/driver_model.js';
+import Manager from '../manager/manager_model.js';
 import OneSignalProvider from '../../../../providers/oneSignal/index.js';
 
 class NotificationService extends BaseService {
@@ -8,36 +9,81 @@ class NotificationService extends BaseService {
         super();
         this._notificationModel = Notification;
         this._driverModel = Driver;
-        this._oneSignalProvider = OneSignalProvider;
+        this._managerModel = Manager;
+        this._oneSignalProvider = new OneSignalProvider();
     }
 
-    async getAll(driverId, { page = 1, limit = 10 }) {
-        const checkIsDriver = await this._driverModel.findOne({
-            where: { id: driverId, type_positions: 'COLLABORATOR' }
-        });
-        if (!checkIsDriver) throw Error('User not is Driver');
+    async createNotification(user, user_id, body) {
+        const driver = await this._driverModel.findByPk(user_id);
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        const listOneSignal = await this._oneSignalProvider.listNotifications();
-        const oneSignalList = listOneSignal.notifications.map((item) => ({
-            title: item.headings,
-            name: item.name,
-            text: item.contents
-        }));
-        // eslint-disable-next-line no-console
-        console.log('OneSignal notifications:', oneSignalList);
+        const notification = await this._notificationModel.create({
+            driver_id: user_id,
+            user_id: user.id,
+            content: body.message,
+            read: false
+        });
+
+        if (!driver.player_id) {
+            const err = new Error('DRIVER_NOT_HAS_PLAYER_ID');
+            err.status = 404;
+            throw err;
+        }
+
+        // const getPlayerId = await this._oneSignalProvider.getPlayerId(driver.player_id);
+        // console.log('🚀 ~ NotificationService ~ getAll ~ getPlayerId:', getPlayerId);
+        // if (!getPlayerId.external_user_id) {
+        const bindExternalUserId = await this._oneSignalProvider.bindExternalUserId(
+            driver.player_id,
+            driver.cpf
+        );
+        console.log('🚀 ~ NotificationService ~ getAll ~ bindExternalUserId:', bindExternalUserId);
+        // }
+
+        const sendToAllOneSignal = await this._oneSignalProvider.sendToUsers({
+            title: body.title,
+            message: body.message,
+            externalUserIds: [driver.cpf]
+        });
+
+        return { notification: notification.toJSON(), sendToAllOneSignal };
+    }
+
+    async getAll(driver, { page = 1, limit = 10 }) {
+        const checkIsDriver = await this._driverModel.findOne({
+            where: { id: driver.id, type_positions: 'COLLABORATOR' }
+        });
+        if (!checkIsDriver) {
+            const err = new Error('USER_NOT_IS_DRIVER');
+            err.status = 400;
+            throw err;
+        }
+        // const listOneSignal = await this._oneSignalProvider.listNotifications();
+        // const oneSignalList = listOneSignal.notifications.map((item) => ({
+        //     title: item.headings,
+        //     name: item.name,
+        //     text: item.contents
+        // }));
+
+        // // eslint-disable-next-line no-console
+        // console.log('OneSignal notifications:', oneSignalList);
 
         // Busca notificações locais do banco com paginação
         const notifications = await this._notificationModel.findAll({
-            where: { driver_id: driverId },
+            where: { driver_id: driver.id },
             order: [['created_at', 'DESC']],
             limit,
             offset: page - 1 ? (page - 1) * limit : 0,
-            attributes: ['id', 'content', 'read', 'created_at']
+            attributes: ['id', 'content', 'read', 'created_at', 'driver_id']
         });
 
         // Conta o total de notificações para calcular as páginas
         const totalNotifications = await this._notificationModel.count({
-            where: { driver_id: driverId }
+            where: { driver_id: driver.id }
         });
         const totalPages = Math.ceil(totalNotifications / limit);
 
@@ -45,69 +91,72 @@ class NotificationService extends BaseService {
             total: totalNotifications,
             totalPages,
             currentPage: Number(page),
-            data: notifications
+            docs: notifications.map((res) => res.toJSON())
         };
     }
 
-    async update(id) {
-        const notification = await this._notificationModel.findByPk(id);
-        if (!notification) throw Error('NOTIFICATION_NOT_FOUND');
+    async updateReadDriver(driver, id) {
+        const notification = await this._notificationModel.findOne({
+            where: { id, driver_id: driver.id, read: false }
+        });
 
-        if (notification.driver_id === null)
-            throw Error('Do not have permission for this notification');
-
-        if (notification.read === true) throw Error('Has already been read.');
+        if (!notification) {
+            const err = new Error('NOTIFICATION_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         await notification.update({ read: true });
 
-        return { msg: 'successful' };
+        return { msg: 'READ NOTIFICATION SUCCESS' };
     }
 
-    async markAllRead(driverId) {
-        try {
-            if (!driverId) throw Error('DRIVERID_NOT_FOUND');
+    async markAllRead(driver) {
+        const notifications = await this._notificationModel.findAll({
+            where: { driver_id: driver.id, read: false }
+        });
 
-            const notifications = await this._notificationModel.findAll({
-                where: { driver_id: driverId }
-            });
-
-            if (!notifications || notifications.length === 0)
-                return { msg: 'NOTIFICATION_NOT_FOUND' };
-
-            // Atualiza todas as notificações para read: true de uma só vez
-            await this._notificationModel.update(
-                { read: true },
-                { where: { driver_id: driverId } }
-            );
-
-            return { msg: 'successful' };
-        } catch (error) {
-            throw Error(error);
+        if (!notifications || !notifications.length) {
+            const err = new Error('NO_NOTIFICATION_TO_MARK_AS_READ');
+            err.status = 404;
+            throw err;
         }
+
+        await this._notificationModel.update({ read: true }, { where: { driver_id: driver.id } });
+
+        return { msg: 'MARK ALL READ NOTIFICATION SUCCESS' };
     }
 
-    async activateReceiveNotifications(body, driverId) {
-        const driver = await this._driverModel.findByPk(driverId);
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
+    async activatePushReceiveNotifications(body, driver) {
+        const driverData = await this._driverModel.findByPk(driver.id);
+        if (!driverData) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const data = {
             player_id: body.player_id
         };
 
-        await driver.update(data);
+        await driverData.update(data);
 
-        return { msg: 'successful' };
+        return { msg: 'ACTIVATE RECEIVE PUSH NOTIFICATIONS SUCCESS' };
     }
 
-    async getAllUserNotifications(req) {
+    async getAllUserNotifications(user) {
         const checkIsMaster = await this._managerModel.findOne({
-            where: { id: req.userId, type_role: 'MASTER' }
+            where: { id: user.id, type_role: 'MASTER' }
         });
 
-        if (!checkIsMaster) throw Error('User not is Master');
+        if (!checkIsMaster) {
+            const err = new Error('USER_NOT_IS_MASTER');
+            err.status = 400;
+            throw err;
+        }
 
         const notifications = await this._notificationModel.findAll({
-            where: { user_id: req.userId, read: false },
+            where: { user_id: user.id, read: false },
             order: [['created_at', 'DESC']],
             attributes: [
                 'id',
@@ -122,7 +171,7 @@ class NotificationService extends BaseService {
         });
 
         const history = await this._notificationModel.findAll({
-            where: { user_id: req.userId, read: true },
+            where: { user_id: user.id, read: true },
             order: [['created_at', 'DESC']],
             attributes: [
                 'id',
@@ -136,38 +185,30 @@ class NotificationService extends BaseService {
             ]
         });
 
-        return { notifications, history };
+        return {
+            notifications: notifications.map((res) => res.toJSON()),
+            history: history.map((res) => res.toJSON())
+        };
     }
 
-    async updateRead(id) {
-        const notification = await this._notificationModel.findByPk(id);
+    async updateReadManager(user, id) {
+        const notification = await this._notificationModel.findOne({
+            where: { id, user_id: user.id, read: false }
+        });
 
-        if (!notification) throw Error('Notification not found');
-        if (notification.user_id === null)
-            throw Error('Do not have permission for this notification');
-        if (notification.read === true) throw Error('Has already been read.');
+        if (!notification) {
+            const err = new Error('NOTIFICATION_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         await notification.update({ read: true });
 
-        return await this._notificationModel.findByPk(id, {
-            attributes: ['id', 'content', 'read', 'freight_id', 'driver_id']
-        });
-    }
-
-    _updateHours(numOfHours, date = new Date()) {
-        const dateCopy = new Date(date.getTime());
-
-        dateCopy.setHours(dateCopy.getHours() - numOfHours);
-
-        return dateCopy;
-    }
-
-    _handleMongoError(error) {
-        const keys = Object.keys(error.errors);
-        const err = new Error(error.errors[keys[0]].message);
-        err.field = keys[0];
-        err.status = 409;
-        throw err;
+        return await this._notificationModel
+            .findByPk(id, {
+                attributes: ['id', 'content', 'read', 'freight_id', 'driver_id', 'user_id']
+            })
+            .then((res) => res.toJSON());
     }
 }
 

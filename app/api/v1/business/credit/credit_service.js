@@ -28,7 +28,11 @@ class CreditService extends BaseService {
             where: { driver_id: body.driver_id, status: true }
         });
 
-        if (!financialProps) throw Error('Fixa não encontrada.');
+        if (!financialProps) {
+            const err = new Error('FINANCIAL_STATEMENT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const freight = await Freight.findOne({
             where: {
@@ -37,7 +41,11 @@ class CreditService extends BaseService {
             }
         });
 
-        if (!freight) throw Error('Não existe frente em viagem!');
+        if (!freight) {
+            const err = new Error('TRIP_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const result = await this._creditModel.create({
             driver_id: body.driver_id,
@@ -115,7 +123,7 @@ class CreditService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            dataResult: credits,
+            docs: credits.map((credit) => credit.toJSON()),
             total,
             totalPages,
             currentPage
@@ -125,21 +133,25 @@ class CreditService extends BaseService {
     async getId(id) {
         let credit = await this._creditModel.findByPk(id);
 
-        if (!credit) throw Error('Credit not found');
+        if (!credit) {
+            const err = new Error('CREDIT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        return {
-            dataResult: credit
-        };
+        return credit.toJSON();
     }
 
     async delete(id) {
-        const credit = await this._creditModel.destroy({
-            where: {
-                id: id
-            }
-        });
+        const credit = await this._creditModel.findByPk(id);
 
-        if (!credit) throw Error('Credit not found');
+        if (!credit) {
+            const err = new Error('CREDIT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        await credit.destoy();
 
         return {
             msg: 'Deleted credit'
@@ -150,22 +162,14 @@ class CreditService extends BaseService {
         try {
             const credit = await this._creditModel.findByPk(id);
             if (!credit) {
-                throw new Error('Crédito não encontrado');
+                const err = new Error('CREDIT_NOT_FOUND');
+                err.status = 404;
+                throw err;
             }
             return await credit.update({ status });
         } catch (error) {
             this._handleError(error);
         }
-    }
-
-    _handleError(error) {
-        if (error.name === 'SequelizeValidationError') {
-            const err = new Error(error.errors[0].message);
-            err.field = error.errors[0].path;
-            err.status = 400;
-            throw err;
-        }
-        throw error;
     }
 }
 

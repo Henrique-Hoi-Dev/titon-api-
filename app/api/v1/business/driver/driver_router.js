@@ -71,12 +71,6 @@ router
 
 //Financial
 router
-    .patch(
-        '/financial',
-        middleware.ensureAuthorization,
-        middleware.verifyDriverToken,
-        financialStatementsController.updateDriver.bind(financialStatementsController)
-    )
     .get(
         '/financial/current',
         middleware.ensureAuthorization,
@@ -87,6 +81,7 @@ router
         '/financial/finisheds',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.getAllFinished),
         financialStatementsController.getAllFinished.bind(financialStatementsController)
     );
 
@@ -96,12 +91,14 @@ router
         '/freight',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        freightController.create.bind(freightController)
+        validator(validation.createFreight),
+        freightController.createFreightDriver.bind(freightController)
     )
     .patch(
         '/freight/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.updateFreight),
         freightController.updateFreightDriver.bind(freightController)
     )
     .patch(
@@ -109,30 +106,35 @@ router
         upload.single('file'),
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.uploadDocuments),
         freightController.uploadDocuments.bind(freightController)
-    )
-    .get(
-        '/freight/search-documents',
-        middleware.ensureAuthorization,
-        middleware.verifyDriverToken,
-        freightController.getDocuments.bind(freightController)
     )
     .patch(
         '/freight/delete-documents/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.deleteFile),
         freightController.deleteFile.bind(freightController)
+    )
+    .get(
+        '/freight/search-documents',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        validator(validation.getDocuments),
+        freightController.getDocuments.bind(freightController)
     )
     .get(
         '/freight/:id/:financialId',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.getIdFreight),
         freightController.getId.bind(freightController)
     )
     .delete(
         '/freight/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.deleteFreight),
         freightController.deleteFreightDriver.bind(freightController)
     );
 
@@ -142,12 +144,14 @@ router
         '/deposit',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.createDeposit),
         depositMoneyController.create.bind(depositMoneyController)
     )
     .get(
         '/deposit/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.getIdDeposit),
         depositMoneyController.getId.bind(depositMoneyController)
     )
     .patch(
@@ -155,18 +159,21 @@ router
         upload.single('file'),
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.uploadDocumentsDeposit),
         depositMoneyController.uploadDocuments.bind(depositMoneyController)
     )
     .delete(
         '/deposit/delete-documents/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.deleteFileDeposit),
         depositMoneyController.deleteFile.bind(depositMoneyController)
     )
     .get(
         '/deposits',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.getAllDeposits),
         depositMoneyController.getAll.bind(depositMoneyController)
     );
 
@@ -176,12 +183,14 @@ router
         '/travel',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.createTravel),
         travelExpensesController.create.bind(travelExpensesController)
     )
     .get(
         '/travel/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.getIdTravel),
         travelExpensesController.getId.bind(travelExpensesController)
     )
     .patch(
@@ -189,18 +198,21 @@ router
         upload.single('file'),
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.uploadDocumentsTravel),
         travelExpensesController.uploadDocuments.bind(travelExpensesController)
     )
     .delete(
         '/travel/delete-documents/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.deleteFileTravel),
         travelExpensesController.deleteFile.bind(travelExpensesController)
     )
     .get(
         '/travels',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.getAllTravels),
         travelExpensesController.getAll.bind(travelExpensesController)
     );
 
@@ -210,12 +222,14 @@ router
         '/restock',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.createRestock),
         restockController.create.bind(restockController)
     )
     .get(
         '/restock/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.getIdRestock),
         restockController.getId.bind(restockController)
     )
     .patch(
@@ -223,50 +237,69 @@ router
         upload.single('file'),
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.uploadDocumentsRestock),
         restockController.uploadDocuments.bind(restockController)
     )
     .delete(
         '/restock/delete-documents/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.deleteFileRestock),
         restockController.deleteFile.bind(restockController)
     )
-    .get('/restocks', restockController.getAll.bind(restockController));
+    .get(
+        '/restocks',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        validator(validation.getAllRestocks),
+        restockController.getAll.bind(restockController)
+    );
 
 //Notifications
-router.patch(
-    '/activate/receive-notifications',
-    middleware.ensureAuthorization,
-    middleware.verifyDriverToken,
-    notificationController.activateReceiveNotifications.bind(notificationController)
-);
-router.get(
-    '/notifications',
-    middleware.ensureAuthorization,
-    middleware.verifyDriverToken,
-    notificationController.getAll.bind(notificationController)
-);
-router.put(
-    '/notifications/:id',
-    middleware.ensureAuthorization,
-    middleware.verifyDriverToken,
-    notificationController.update.bind(notificationController)
-);
-router.post(
-    '/notifications/allread',
-    middleware.ensureAuthorization,
-    middleware.verifyDriverToken,
-    notificationController.markAllRead.bind(notificationController)
-);
+router
+    .patch(
+        '/activate/push-receive-notifications',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        notificationController.activatePushReceiveNotifications.bind(notificationController)
+    )
+    .get(
+        '/notifications',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        notificationController.getAll.bind(notificationController)
+    )
+    .put(
+        '/notifications/:id/read',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        notificationController.updateReadDriver.bind(notificationController)
+    )
+    .post(
+        '/notifications/allread',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        notificationController.markAllRead.bind(notificationController)
+    );
 
 //Cities and States
-router.get('/cities', citiesController.allCities.bind(citiesController));
-router.get('/states', statesController.allStates.bind(statesController));
+router
+    .get(
+        '/cities',
+        validator(validation.getAllCities),
+        citiesController.allCities.bind(citiesController)
+    )
+    .get(
+        '/states',
+        validator(validation.getAllStates),
+        statesController.allStates.bind(statesController)
+    );
 router.post(
     '/popular-city-state',
     upload.single('file'),
     middleware.ensureAuthorization,
     middleware.verifyDriverToken,
+    validator(validation.popularCityStateData),
     statesController.popularCityStateData.bind(statesController)
 );
 

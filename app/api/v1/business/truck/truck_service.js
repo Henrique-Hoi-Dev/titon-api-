@@ -3,7 +3,6 @@ import FinancialStatements from '../financialStatements/financialStatements_mode
 import BaseService from '../../base/base_service.js';
 
 import { Op, literal } from 'sequelize';
-
 import { generateRandomCode } from '../../../../utils/crypto.js';
 import { deleteFile, sendFile } from '../../../../providers/aws/index.js';
 
@@ -26,18 +25,24 @@ class TruckService extends BaseService {
             truck_avatar
         } = body;
 
-        const chassisExist = await this._truckModel.findOne({
-            where: { truck_chassis: truck_chassis }
-        });
-        if (chassisExist) throw Error('This chassis truck already exists.');
+        const [chassisExist, boardExist] = await Promise.all([
+            this._truckModel.findOne({ where: { truck_chassis: truck_chassis } }),
+            this._truckModel.findOne({ where: { truck_board: truck_board } })
+        ]);
 
-        const boardExist = await this._truckModel.findOne({
-            where: { truck_board: truck_board }
-        });
+        if (chassisExist) {
+            const err = new Error('CHASSIS_TRUCK_ALREADY_EXISTS');
+            err.status = 400;
+            throw err;
+        }
 
-        if (boardExist) throw Error('This board truck already exists.');
+        if (boardExist) {
+            const err = new Error('BOARD_TRUCK_ALREADY_EXISTS');
+            err.status = 400;
+            throw err;
+        }
 
-        const data = {
+        await this._truckModel.create({
             truck_models,
             truck_name_brand,
             truck_board,
@@ -46,24 +51,30 @@ class TruckService extends BaseService {
             truck_chassis,
             truck_year,
             truck_avatar
-        };
+        });
 
-        await this._truckModel.create(data);
-
-        return { msg: 'successful' };
+        return { msg: 'Truck created successfully' };
     }
 
     async uploadImage(payload, { id }) {
         const { file, body } = payload;
 
         const truck = await this._truckModel.findByPk(id);
-        if (!truck) throw Error('TRUCK_NOT_FOUND');
+        if (!truck) {
+            const err = new Error('TRUCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (truck.img_receipt && truck.img_receipt.uuid) {
             await this.deleteFile({ id });
         }
 
-        if (!body.category) throw Error('CATEGORY_OR_TYPE_NOT_FOUND');
+        if (!body.category) {
+            const err = new Error('CATEGORY_OR_TYPE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         const originalFilename = file.originalname;
 
@@ -73,8 +84,8 @@ class TruckService extends BaseService {
 
         await sendFile(payload);
 
-        const infoRestock = await truck.update({
-            img_receipt: {
+        const infoTruck = await truck.update({
+            image: {
                 uuid: file.name,
                 name: originalFilename,
                 mimetype: file.mimetype,
@@ -82,12 +93,16 @@ class TruckService extends BaseService {
             }
         });
 
-        return infoRestock;
+        return infoTruck;
     }
 
     async deleteFile({ id }) {
         const truck = await this._truckModel.findByPk(id);
-        if (!truck) throw Error('TRUCK_NOT_FOUND');
+        if (!truck) {
+            const err = new Error('TRUCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         try {
             await this._deleteFileIntegration({
@@ -124,27 +139,28 @@ class TruckService extends BaseService {
                     [Op.notIn]: literal('(SELECT "truck_id" FROM "financial_statements")')
                 }
             },
-            attributes: ['id', 'truck_models', 'truck_board']
+            attributes: ['id', 'truck_models', 'truck_board'],
+            raw: true
         });
 
         const selectFinancial = await this._truckModel.findAll({
             attributes: ['id', 'truck_models', 'truck_board'],
             include: [
                 {
-                    model: FinancialStatements,
+                    model: this._financialStatementsModel,
                     as: 'financialStatements',
                     required: true,
                     where: {
                         status: false
                     },
-                    attributes: ['id', 'truck_id', 'truck_models', 'truck_board']
+                    attributes: []
                 }
-            ]
+            ],
+            raw: true,
+            nest: true
         });
 
-        return {
-            dataResult: [...select.concat(...selectFinancial)]
-        };
+        return [...select, ...selectFinancial];
     }
 
     async getAll(query) {
@@ -195,7 +211,7 @@ class TruckService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            dataResult: trucks,
+            docs: trucks.map((result) => result.toJSON()),
             total,
             totalPages,
             currentPage
@@ -217,29 +233,44 @@ class TruckService extends BaseService {
             ]
         });
 
-        if (!truck) throw Error('Truck not found');
+        if (!truck) {
+            const err = new Error('TRUCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        return {
-            dataResult: truck
-        };
+        return truck.toJSON();
     }
 
     async update(body, id) {
-        const { truck_models, truck_name_brand, truck_color, truck_km, truck_year, truck_avatar } =
-            body;
+        const {
+            truck_models,
+            truck_name_brand,
+            truck_color,
+            truck_km,
+            truck_year,
+            truck_chassis,
+            truck_board
+        } = body;
 
-        // const chassisExist = await Truck.findOne({ where: { truck_chassis: truck_chassis } });
-        // const boardExist = await Truck.findOne({ where: { truck_board: truck_board } });
+        const chassisExist = await this._truckModel.findOne({
+            where: { truck_chassis: truck_chassis }
+        });
+        const boardExist = await this._truckModel.findOne({
+            where: { truck_board: truck_board }
+        });
 
-        // if (chassisExist) {
-        //   result = { httpStatus: httpStatus.CONFLICT, msg: 'This chassis truck already exists.' };
-        //   return result;
-        // }
+        if (chassisExist) {
+            const err = new Error('CHASSIS_TRUCK_ALREADY_EXISTS');
+            err.status = 400;
+            throw err;
+        }
 
-        // if (boardExist) {
-        //   result = { httpStatus: httpStatus.CONFLICT, msg: 'This board truck already exists.' };
-        //   return result;
-        // }
+        if (boardExist) {
+            const err = new Error('BOARD_TRUCK_ALREADY_EXISTS');
+            err.status = 400;
+            throw err;
+        }
 
         const data = {
             truck_models,
@@ -247,41 +278,35 @@ class TruckService extends BaseService {
             truck_color,
             truck_km,
             truck_year,
-            truck_avatar
+            truck_chassis,
+            truck_board
         };
 
         const truck = await this._truckModel.findByPk(id);
         await truck.update(data);
 
-        const truckResult = await this._truckModel.findByPk(id, {
-            attributes: [
-                'id',
-                'truck_models',
-                'truck_name_brand',
-                'truck_board',
-                'truck_km',
-                'truck_color',
-                'truck_chassis',
-                'truck_year',
-                'truck_avatar'
-            ]
-        });
-
-        return {
-            dataResult: truckResult
-        };
+        return truck.toJSON();
     }
 
     async delete(id) {
         const truck = await this._truckModel.findByPk(id);
-        if (!truck) throw Error('TRUCK_NOT_FOUND');
+
+        if (!truck) {
+            const err = new Error('TRUCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const isInUse = await this._financialStatementsModel.findAll({
             truck_board: truck.truck_board,
             status: true
         });
 
-        if (isInUse) throw Error('CANNOT_DELETE_TRUCK_IN_USE');
+        if (isInUse) {
+            const err = new Error('CANNOT_DELETE_TRUCK_IN_USE');
+            err.status = 400;
+            throw err;
+        }
 
         await this._trusckModel.destroy({
             where: {
@@ -289,17 +314,7 @@ class TruckService extends BaseService {
             }
         });
 
-        return {
-            responseData: { msg: 'Deleted truck' }
-        };
-    }
-
-    _handleMongoError(error) {
-        const keys = Object.keys(error.errors);
-        const err = new Error(error.errors[keys[0]].message);
-        err.field = keys[0];
-        err.status = 409;
-        throw err;
+        return { msg: 'Truck deleted successfully' };
     }
 }
 

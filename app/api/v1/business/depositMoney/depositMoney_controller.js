@@ -10,7 +10,7 @@ class DepositMoneyController extends BaseResourceController {
 
     async create(req, res, next) {
         try {
-            const data = await this._depositMoneyService.create(req.user, req.body);
+            const data = await this._depositMoneyService.create(req.driver, req.body);
             res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

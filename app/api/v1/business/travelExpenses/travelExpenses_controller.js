@@ -10,7 +10,7 @@ class TravelExpensesController extends BaseResourceController {
 
     async create(req, res, next) {
         try {
-            const data = await this._travelExpensesService.create(req.driverId, req.body);
+            const data = await this._travelExpensesService.create(req.driver, req.body);
             return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

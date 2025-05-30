@@ -10,18 +10,18 @@ class NotificationController extends BaseResourceController {
 
     async getAll(req, res, next) {
         try {
-            const data = await this._notificationService.getAll(req.driverId, req.query);
+            const data = await this._notificationService.getAll(req.driver, req.query);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async activateReceiveNotifications(req, res, next) {
+    async activatePushReceiveNotifications(req, res, next) {
         try {
-            const data = await this._notificationService.activateReceiveNotifications(
+            const data = await this._notificationService.activatePushReceiveNotifications(
                 req.body,
-                req.driverId
+                req.driver
             );
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
@@ -29,9 +29,12 @@ class NotificationController extends BaseResourceController {
         }
     }
 
-    async update(req, res, next) {
+    async updateReadDriver(req, res, next) {
         try {
-            const data = await this._notificationService.update(req.params.id);
+            const data = await this._notificationService.updateReadDriver(
+                req.driver,
+                req.params.id
+            );
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -40,7 +43,7 @@ class NotificationController extends BaseResourceController {
 
     async markAllRead(req, res, next) {
         try {
-            const data = await this._notificationService.markAllRead(req.driverId);
+            const data = await this._notificationService.markAllRead(req.driver);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -49,16 +52,32 @@ class NotificationController extends BaseResourceController {
 
     async getAllUserNotifications(req, res, next) {
         try {
-            const data = await this._notificationService.getAllUserNotifications(req, res);
+            const data = await this._notificationService.getAllUserNotifications(req.manager);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
     }
 
-    async updateRead(req, res, next) {
+    async updateReadManager(req, res, next) {
         try {
-            const data = await this._notificationService.updateRead(req.params.id);
+            const data = await this._notificationService.updateReadManager(
+                req.manager,
+                req.params.id
+            );
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async createNotification(req, res, next) {
+        try {
+            const data = await this._notificationService.createNotification(
+                req.manager,
+                req.params.user_id,
+                req.body
+            );
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

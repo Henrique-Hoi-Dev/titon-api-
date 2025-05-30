@@ -15,7 +15,12 @@ class Cart extends Model {
                 cart_chassis: Sequelize.DOUBLE,
                 cart_liter_capacity: Sequelize.DOUBLE,
                 cart_ton_capacity: Sequelize.DOUBLE,
-                cart_board: Sequelize.STRING
+                cart_board: Sequelize.STRING,
+                image_cart: {
+                    type: Sequelize.JSONB,
+                    allowNull: true,
+                    defaultValue: {}
+                }
             },
             {
                 sequelize,

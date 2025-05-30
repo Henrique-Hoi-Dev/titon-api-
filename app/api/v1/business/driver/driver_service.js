@@ -25,19 +25,42 @@ class DriverService extends BaseService {
             where: { cpf: cpf }
         });
 
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        if (!(driver.dataValues.type_positions === 'COLLABORATOR'))
-            throw Error('INSUFFICIENT_PERMISSIONS');
+        if (!(driver.dataValues.type_positions === 'COLLABORATOR')) {
+            const err = new Error('INSUFFICIENT_PERMISSIONS');
+            err.status = 403;
+            throw err;
+        }
 
-        if (!(await driver.checkPassword(password))) throw Error('INVALID_DRIVER_PASSWORD');
+        if (!(await driver.checkPassword(password))) {
+            const err = new Error('INVALID_DRIVER_PASSWORD');
+            err.status = 401;
+            throw err;
+        }
 
-        const { id, credit, value_fix, percentage, type_positions, status, name } = driver;
+        const {
+            id,
+            credit,
+            value_fix,
+            percentage,
+            type_positions,
+            status,
+            external_user_id,
+            player_id,
+            name
+        } = driver;
 
         const token = generateDriverToken({
             id,
             cpf,
             type_positions,
+            external_user_id,
+            player_id,
             status,
             credit,
             value_fix,
@@ -182,8 +205,6 @@ class DriverService extends BaseService {
         const now = new Date();
 
         if (expirationTime < now) {
-            // Código expirou
-            // eslint-disable-next-line no-unused-vars
             valid = false;
 
             await this._validateCodeModel.update(
@@ -223,7 +244,7 @@ class DriverService extends BaseService {
         if (upValidOk) {
             return {
                 token: generateDriverToken({
-                    valid: true,
+                    valid,
                     name: driver.name,
                     phone: driver.phone,
                     cpf: driver.cpf
@@ -248,11 +269,9 @@ class DriverService extends BaseService {
 
             await driver.update({ password });
 
-            return {
-                mgs: 'update success'
-            };
+            return { msg: 'Password updated successfully' };
         } catch (error) {
-            return error;
+            throw error;
         }
     }
 
@@ -283,17 +302,25 @@ class DriverService extends BaseService {
             where: { cpf: validCpf }
         });
 
-        if (driverExist) throw new Error('THIS_CPF_ALREADY_EXISTS');
+        if (driverExist) {
+            const err = new Error('THIS_CPF_ALREADY_EXISTS');
+            err.status = 400;
+            throw err;
+        }
 
         await this._driverModel.create(data);
 
-        return { msg: 'successful' };
+        return { msg: 'Driver created successfully' };
     }
 
     async resetPassword({ cpf }) {
         try {
             const driver = await this._driverModel.findOne({ where: { cpf } });
-            if (!driver) throw new Error('DRIVER_NOT_FOUND');
+            if (!driver) {
+                const err = new Error('DRIVER_NOT_FOUND');
+                err.status = 404;
+                throw err;
+            }
 
             const newToke = generateDriverToken({ cpf: cpf });
             const resetUrl = `${

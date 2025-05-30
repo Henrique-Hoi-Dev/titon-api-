@@ -28,7 +28,7 @@ class CartController extends BaseResourceController {
 
     async getAllSelect(req, res, next) {
         try {
-            const data = await this._cartService.getAllSelect(req.query);
+            const data = await this._cartService.getAllSelect();
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -37,7 +37,7 @@ class CartController extends BaseResourceController {
 
     async getId(req, res, next) {
         try {
-            const data = await CartService.getId(req.params.id);
+            const data = await this._cartService.getId(req.params.id);
             return res.status(HttpStatus.OK).json(JSON.parse(JSON.stringify(data)));
         } catch (error) {
             next(res.status(HttpStatus.BAD_REQUEST).json({ mgs: error.message }));
@@ -46,7 +46,7 @@ class CartController extends BaseResourceController {
 
     async update(req, res, next) {
         try {
-            const data = await CartService.update(req.body, req.params.id);
+            const data = await this._cartService.update(req.body, req.params.id);
             return res.status(HttpStatus.OK).json(JSON.parse(JSON.stringify(data)));
         } catch (error) {
             next(res.status(HttpStatus.BAD_REQUEST).json({ mgs: error.message }));

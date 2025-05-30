@@ -96,12 +96,27 @@ class FreightService extends BaseService {
         }
     }
 
-    async create(body) {
-        let result = {};
-        let freightBody = body;
+    async createFreightDriver(driver, body) {
+        const financial = await this._financialDriver(driver.id);
 
+        const result = await this._freightModel.create({
+            ...body,
+            status: 'DRAFT',
+            financial_statements_id: financial.id
+        });
+
+        if (!result) {
+            const err = new Error('ERRO_CREATE_FREIGHT');
+            err.status = 400;
+            throw err;
+        }
+
+        return await this.getId(result.id, { id: driver.id });
+    }
+
+    async create(body) {
         const financial = await this._financialStatementModel.findByPk(
-            freightBody.financial_statements_id
+            body.financial_statements_id
         );
         if (!financial) {
             const err = new Error('FINANCIAL_NOT_FOUND');
@@ -119,7 +134,7 @@ class FreightService extends BaseService {
         await this._freightModel.create(body);
 
         await this._notificationModel.create({
-            content: `${userFinancial.name}, Requisitou Um Novo Frete Para Você!`,
+            content: `${userFinancial.name}, Esta indicando um novo frete!`,
             driver_id: financial.driver_id
         });
 
@@ -360,13 +375,13 @@ class FreightService extends BaseService {
         };
     }
 
-    async updateFreightManager(user, body, id) {
+    async approveFreightManager(user, body, id) {
         const [freight, driver] = await Promise.all([
             this._freightModel.findByPk(id),
             this._driverModel.findByPk(body.driver_id)
         ]);
 
-        if (!user.type_role === 'MASTER') {
+        if (user.type_role !== 'MASTER') {
             const err = new Error('THIS_USER_IS_NOT_MASTER');
             err.status = 400;
             throw err;
@@ -401,7 +416,7 @@ class FreightService extends BaseService {
                 await this._notificationModel.create({
                     content: `${
                         user.name
-                    }, Aceitou Seu Check Frete, DE ${freight.start_freight_city.toUpperCase()} PARA ${freight.final_freight_city.toUpperCase()} Tenha uma BOA VIAGEM`,
+                    }, Aprovou seu check frete, de ${freight.start_freight_city.toUpperCase()} para ${freight.final_freight_city.toUpperCase()}!`,
                     driver_id: driver.id,
                     financial_statements_id: financial.id
                 });
@@ -410,21 +425,27 @@ class FreightService extends BaseService {
                     await this._oneSignalProvider.sendToUsers({
                         externalUserIds: [driver.player_id],
                         title: 'Gerenciador',
-                        message: 'Aceitou Seu Check Frete'
+                        message: 'Aprovou seu check frete'
                     });
                     const mobilesids = await this._oneSignalProvider.getPlayers();
                     // eslint-disable-next-line no-console
                     console.log('log de test para pegar usuarios', mobilesids);
                 }
-                return { status: 'APPROVED' };
+                return { status: 'check frete aprovado' };
             }
         }
 
-        return {};
+        return { status: 'check frete reprovado' };
     }
 
     async deleteFreightManager(id) {
         const freight = await this._freightModel.findByPk(id);
+
+        if (freight.status === 'STARTING_TRIP') {
+            const err = new Error('TRIP_IN_PROGRESS');
+            err.status = 400;
+            throw err;
+        }
 
         if (!freight) {
             const err = new Error('FREIGHT_NOT_FOUND');
@@ -447,38 +468,20 @@ class FreightService extends BaseService {
         return financial;
     }
 
-    async createFreightDriver(driverId, body) {
-        const financial = await this._financialDriver(driverId);
-
-        const result = await Freight.create({
-            ...body,
-            status: 'DRAFT',
-            financial_statements_id: financial.id
-        });
-
-        if (!result) {
-            const err = new Error('ERRO_CREATE_FREIGHT');
-            err.status = 400;
-            throw err;
-        }
-
-        return await this.getId(result.id, { driverId });
-    }
-
-    async getId(id, { driverId, changedDestiny = false }, financialId) {
-        let financial = await this._financialDriver(driverId);
+    async getId(freightId, { id, changedDestiny = false }, financialId) {
+        let financial = await this._financialDriver(id);
 
         if (!financial && financialId) {
             financial = await this._financialStatementModel.findByPk(financialId);
         }
 
         let freight = await this._freightModel.findOne({
-            where: { id: id, financial_statements_id: financial.id },
+            where: { id: freightId, financial_statements_id: financial.id },
             attributes: { exclude: ['createdAt', 'updatedAt'] },
             rejectOnEmpty: true,
             include: [
                 {
-                    model: Restock,
+                    model: this._restockModel,
                     as: 'restock',
                     attributes: [
                         'id',
@@ -493,7 +496,7 @@ class FreightService extends BaseService {
                     ]
                 },
                 {
-                    model: TravelExpenses,
+                    model: this._travelExpensesModel,
                     as: 'travel_expense',
                     attributes: [
                         'id',
@@ -507,7 +510,7 @@ class FreightService extends BaseService {
                     ]
                 },
                 {
-                    model: DepositMoney,
+                    model: this._depositMoneyModel,
                     as: 'deposit_money',
                     attributes: [
                         'id',
@@ -523,7 +526,11 @@ class FreightService extends BaseService {
             ]
         });
 
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (!financialId && changedDestiny) {
             const origin = freight.start_freight_city;
@@ -541,7 +548,7 @@ class FreightService extends BaseService {
             });
         }
 
-        return freight;
+        return freight.toJSON();
     }
 
     async _calculate(values) {
@@ -580,14 +587,18 @@ class FreightService extends BaseService {
         });
     }
 
-    async updateFreightDriver(body, id, { user, driverId }) {
+    async updateFreightDriver(body, freightId, { id, name }) {
         let changedDestiny = false;
-        const financial = await this._financialDriver(driverId);
+        const financial = await this._financialDriver(id);
 
         const freight = await this._freightModel.findOne({
             where: { id: id, financial_statements_id: financial.id }
         });
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const normalize = (s) => s.toLowerCase().trim();
 
@@ -610,10 +621,10 @@ class FreightService extends BaseService {
 
         if (body.status === 'PENDING') {
             await Notification.create({
-                content: `${user.name}, Requisitou um novo check frete!`,
+                content: `${name}, Requisitou um novo check frete!`,
                 user_id: financial.creator_user_id,
-                freight_id: id,
-                driver_id: driverId,
+                freight_id: freightId,
+                driver_id: id,
                 financial_statements_id: financial.id
             });
         }
@@ -634,8 +645,8 @@ class FreightService extends BaseService {
             return result;
         }
 
-        return await this.getId(id, {
-            driverId,
+        return await this.getId(freightId, {
+            id,
             changedDestiny
         });
     }
@@ -868,8 +879,7 @@ class FreightService extends BaseService {
         return { msg: 'Finished Trip' };
     }
 
-    async deleteFreightDriver(freightId, driver) {
-        const financial = await this._financialDriver(driver.id);
+    async deleteFreightDriver(freightId) {
         const freight = await this._freightModel.findByPk(freightId);
 
         if (!freight) {
@@ -884,7 +894,7 @@ class FreightService extends BaseService {
 
         await freight.destroy();
 
-        return { msg: 'Deleted freight' };
+        return { msg: 'Freight deleted' };
     }
 }
 

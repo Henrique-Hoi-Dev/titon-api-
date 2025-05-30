@@ -1,7 +1,7 @@
 import CartModel from './cart_model.js';
 import BaseService from '../../base/base_service.js';
-import { literal, Op } from 'sequelize';
 import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import { literal, Op } from 'sequelize';
 
 class CartService extends BaseService {
     constructor() {
@@ -11,19 +11,26 @@ class CartService extends BaseService {
     }
 
     async create(body) {
-        const chassisExist = await this._cartModel.findOne({
-            where: { cart_chassis: body.cart_chassis }
-        });
-        if (chassisExist) throw Error('This chassis cart already exists.');
+        const [chassisExist, boardExist] = await Promise.all([
+            this._cartModel.findOne({ where: { cart_chassis: body.cart_chassis } }),
+            this._cartModel.findOne({ where: { cart_board: body.cart_board } })
+        ]);
 
-        const boardExist = await this._cartModel.findOne({
-            where: { cart_board: body.cart_board }
-        });
-        if (boardExist) throw Error('This board cart already exists.');
+        if (chassisExist) {
+            const err = new Error('CHASSIS_CART_ALREADY_EXISTS');
+            err.status = 400;
+            throw err;
+        }
+
+        if (boardExist) {
+            const err = new Error('BOARD_CART_ALREADY_EXISTS');
+            err.status = 400;
+            throw err;
+        }
 
         await this._cartModel.create(body);
 
-        return { msg: 'successful' };
+        return { msg: 'Cart created successfully' };
     }
 
     async getAll(query) {
@@ -69,7 +76,7 @@ class CartService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            dataResult: carts,
+            dataResult: carts.map((cart) => cart.toJSON()),
             total,
             totalPages,
             currentPage
@@ -83,7 +90,8 @@ class CartService extends BaseService {
                     [Op.notIn]: literal('(SELECT "cart_id" FROM "financial_statements")')
                 }
             },
-            attributes: ['id', 'cart_models']
+            attributes: ['id', 'cart_models'],
+            raw: true
         });
 
         const selectFinancial = await this._cartModel.findAll({
@@ -96,14 +104,14 @@ class CartService extends BaseService {
                     where: {
                         status: false
                     },
-                    attributes: ['id', 'cart_id', 'cart_models']
+                    attributes: []
                 }
-            ]
+            ],
+            raw: true,
+            nest: true
         });
 
-        return {
-            dataResult: [...select.concat(...selectFinancial)]
-        };
+        return [...select, ...selectFinancial];
     }
 
     async getId(id) {
@@ -123,58 +131,54 @@ class CartService extends BaseService {
             ]
         });
 
-        if (!cart) throw Error('Cart not found');
+        if (!cart) {
+            const err = new Error('CART_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        return {
-            dataResult: cart
-        };
+        return cart.toJSON();
     }
 
     async update(body, id) {
         const cart = await this._cartModel.findByPk(id);
 
+        if (!cart) {
+            const err = new Error('CART_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
         await cart.update(body);
 
-        const cartResult = await this._cartModel.findByPk(id, {
-            attributes: [
-                'id',
-                'cart_models',
-                'cart_brand',
-                'cart_tara',
-                'cart_color',
-                'cart_bodyworks',
-                'cart_year',
-                'cart_chassis',
-                'cart_liter_capacity',
-                'cart_ton_capacity',
-                'cart_board'
-            ]
-        });
-
-        return {
-            dataResult: cartResult
-        };
+        return cart.toJSON();
     }
 
     async delete(id) {
         const cart = await this._cartModel.findByPk(id);
-        if (!cart) throw Error('CART_NOT_FOUND');
+        if (!cart) {
+            const err = new Error('CART_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const isInUse = await FinancialStatements.findAll({
             cart_board: cart.cart_board,
             status: true
         });
 
-        if (isInUse) throw Error('CANNOT_DELETE_CART_IN_USE');
+        if (isInUse) {
+            const err = new Error('CANNOT_DELETE_CART_IN_USE');
+            err.status = 400;
+            throw err;
+        }
 
         await this._cartModel.destroy({
             where: {
                 id: id
             }
         });
-        return {
-            responseData: { msg: 'Deleted cart' }
-        };
+        return { msg: 'Cart deleted successfully' };
     }
 }
 

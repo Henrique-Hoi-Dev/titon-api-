@@ -10,7 +10,7 @@ class RestockController extends BaseResourceController {
 
     async create(req, res, next) {
         try {
-            const data = await this._restockService.create(req.driverId, req.body);
+            const data = await this._restockService.create(req.driver, req.body);
             res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

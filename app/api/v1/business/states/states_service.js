@@ -19,7 +19,7 @@ class StatesService extends BaseService {
             },
             attributes: ['id', 'name', 'uf']
         });
-        return states;
+        return states.map((state) => state.toJSON());
     }
 
     async popularCityStateData(props) {
@@ -48,14 +48,6 @@ class StatesService extends BaseService {
         // fs.writeFileSync(path.join(__dirname, 'citiesArray.js'), output);
 
         return jsonData;
-    }
-
-    _handleMongoError(error) {
-        const keys = Object.keys(error.errors);
-        const err = new Error(error.errors[keys[0]].message);
-        err.field = keys[0];
-        err.status = 409;
-        throw err;
     }
 }
 

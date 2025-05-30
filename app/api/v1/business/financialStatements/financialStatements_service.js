@@ -28,32 +28,52 @@ class FinancialStatementService extends BaseService {
         this._notificationModel = Notification;
     }
 
-    async getFinancialCurrent(id) {
+    async getFinancialCurrent(driver) {
         const financialStatement = await this._financialStatementModel.findOne({
-            where: { driver_id: id, status: true },
-            include: {
-                model: this._freightModel,
-                as: 'freight'
-            }
+            where: { driver_id: driver.id, status: true },
+            include: [
+                {
+                    model: this._freightModel,
+                    as: 'freight'
+                },
+                {
+                    model: this._truckModel,
+                    as: 'truck',
+                    attributes: ['truck_models', 'truck_board', 'image_truck']
+                },
+                {
+                    model: this._cartModel,
+                    as: 'cart',
+                    attributes: ['cart_models', 'cart_board']
+                },
+                {
+                    model: this._driverModel,
+                    as: 'driver',
+                    attributes: ['credit', 'commission', 'daily', 'value_fix', 'percentage']
+                }
+            ]
         });
 
-        if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
-        return financialStatement;
+        if (!financialStatement) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        return financialStatement.toJSON();
     }
 
-    async getAllFinished(id, query) {
+    async getAllFinished(driver, query) {
         const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id' } = query;
 
-        const totalItems = (
-            await this._financialStatementModel.findAll({
-                where: { driver_id: id, status: false }
-            })
-        ).length;
+        const totalItems = await this._financialStatementModel.count({
+            where: { driver_id: driver.id, status: false }
+        });
 
         const totalPages = Math.ceil(totalItems / limit);
 
         const financialStatements = await this._financialStatementModel.findAll({
-            where: { driver_id: id, status: false },
+            where: { driver_id: driver.id, status: false },
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0,
@@ -66,58 +86,25 @@ class FinancialStatementService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            data: financialStatements,
+            docs: financialStatements.map((res) => res.toJSON()),
             totalItems,
             totalPages,
             currentPage
         };
     }
 
-    async updateDriverFinancial(body, driverId) {
-        const financialStatement = await this._financialStatementModel.findOne({
-            where: { driver_id: driverId, status: true }
-        });
-        if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
-
-        const { id, truck_models, total_value, cart_models, driver_id } =
-            await financialStatement.update(body);
-
-        const driverFinancial = await this._driverModel.findByPk(driver_id);
-        if (!driverFinancial) throw Error('DRIVER_NOT_FOUND');
-
-        await driverFinancial.update({
-            credit: total_value,
-            truck: truck_models,
-            cart: cart_models
-        });
-
-        const driver = await this._driverModel.findByPk(driver_id, {
-            attributes: ['credit', 'truck', 'cart']
-        });
-
-        const financial = await this._financialStatementModel.findByPk(id);
-
-        return { data: driver, financial: financial };
-    }
-
     async updateFinancial(body, id) {
         const financialStatement = await this._financialStatementModel.findByPk(id);
 
-        if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
+        if (!financialStatement) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const result = await financialStatement.update(body);
 
-        const driverFinancial = await Driver.findByPk(result.driver_id);
-
-        const { truck_models, cart_models, total_value } = result;
-
-        await driverFinancial.update({
-            credit: total_value,
-            truck: truck_models,
-            cart: cart_models
-        });
-
-        return result;
+        return result.toJSON();
     }
 
     async _updateValorFinancial(props) {
@@ -161,31 +148,65 @@ class FinancialStatementService extends BaseService {
         const previousDate = new Date(currentDate.getTime());
         previousDate.setDate(currentDate.getDate() - 1);
 
-        if (!isAfter(parseISO(start_date), previousDate.setDate(currentDate.getDate() - 1)))
-            throw Error('CANNOT_CREATE_FIXED_IN_THE_PAST');
+        if (!isAfter(parseISO(start_date), previousDate.setDate(currentDate.getDate() - 1))) {
+            const err = new Error('CANNOT_CREATE_FIXED_IN_THE_PAST');
+            err.status = 400;
+            throw err;
+        }
 
-        if (!userAdm) throw Error('USER_NOT_FOUND');
-        if (!driver) throw Error('DRIVER_NOT_FOUND');
-        if (!truck) throw Error('TRUCK_NOT_FOUND');
-        if (!cart) throw Error('CART_NOT_FOUND');
+        if (!userAdm) {
+            const err = new Error('USER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (!truck) {
+            const err = new Error('TRUCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (!cart) {
+            const err = new Error('CART_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const existFileOpen = await this._financialStatementModel.findAll({
             where: { driver_id: driver_id, status: true }
         });
 
-        if (existFileOpen.length > 0) throw Error('DRIVER_ALREADY_HAS_AN_OPEN_FILE');
+        if (existFileOpen.length > 0) {
+            const err = new Error('DRIVER_ALREADY_HAS_AN_OPEN_FILE');
+            err.status = 400;
+            throw err;
+        }
 
         const truckOnSheet = await this._financialStatementModel.findAll({
             where: { truck_id: truck_id, status: true }
         });
 
-        if (truckOnSheet.length > 0) throw Error('TRUCK_ALREADY_HAS_AN_OPEN_FILE');
+        if (truckOnSheet.length > 0) {
+            const err = new Error('TRUCK_ALREADY_HAS_AN_OPEN_FILE');
+            err.status = 400;
+            throw err;
+        }
 
         const cartOnSheet = await this._financialStatementModel.findAll({
             where: { cart_id: cart_id, status: true }
         });
 
-        if (cartOnSheet.length > 0) throw Error('CART_ALREADY_HAS_AN_OPEN_FILE');
+        if (cartOnSheet.length > 0) {
+            const err = new Error('CART_ALREADY_HAS_AN_OPEN_FILE');
+            err.status = 400;
+            throw err;
+        }
 
         const { name, value_fix, percentage, daily } = driver.dataValues;
         const { truck_models, truck_board, truck_avatar } = truck.dataValues;
@@ -209,16 +230,11 @@ class FinancialStatementService extends BaseService {
         });
 
         await this._notificationModel.create({
-            content: `${user.name}, Criou Uma Nova Ficha!`,
+            content: `${user.name}, Criou Uma Nova Ficha para você ${driver.name}!`,
             driver_id: driver_id
         });
 
-        await driver.update({
-            truck: truck_models,
-            cart: cart_bodyworks
-        });
-
-        return { msg: 'SUCCESSFUL' };
+        return { msg: 'SUCCESSFUL CREATED FINANCIAL STATEMENT' };
     }
 
     async getAll(query) {
@@ -271,7 +287,7 @@ class FinancialStatementService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            dataResult: financialStatements,
+            docs: financialStatements.map((res) => res.toJSON()),
             total,
             totalPages,
             currentPage
@@ -301,12 +317,20 @@ class FinancialStatementService extends BaseService {
             }
         });
 
-        if (!financial) throw Error('FINANCIAL_NOT_FOUN');
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const freight = await this._freightModel.findAll({
             where: { financial_statements_id: financial.id }
         });
-        if (!freight) throw Error('Freight not found');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         const notifications = await this._notificationModel.findAll({
             where: {
@@ -339,11 +363,19 @@ class FinancialStatementService extends BaseService {
                 as: 'freight'
             }
         });
-        if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
+        if (!financialStatement) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         for (const item of financialStatement.freight) {
             const freight = await this._freightModel.findByPk(item.id);
-            if (freight.status === 'STARTING_TRIP') throw Error('TRIP_IN_PROGRESS');
+            if (freight.status === 'STARTING_TRIP') {
+                const err = new Error('TRIP_IN_PROGRESS');
+                err.status = 400;
+                throw err;
+            }
         }
 
         const result = await financialStatement.update({
@@ -351,14 +383,30 @@ class FinancialStatementService extends BaseService {
             status: body.status
         });
 
-        return result;
+        return result.toJSON();
     }
 
     async delete(id) {
-        const financial = await this._financialStatementModel.findByPk(id);
+        const financial = await this._financialStatementModel.findByPk(id, {
+            include: {
+                model: this._freightModel,
+                as: 'freight'
+            }
+        });
+
         if (!financial) {
             const err = new Error('FINANCIAL_NOT_FOUND');
             err.status = 404;
+            throw err;
+        }
+
+        // Verifica se existem fretes em andamento
+        const hasActiveFreight = financial.freight.some(
+            (freight) => freight.status === 'STARTING_TRIP'
+        );
+        if (hasActiveFreight) {
+            const err = new Error('CANNOT_DELETE_FINANCIAL_WITH_ACTIVE_FREIGHT');
+            err.status = 400;
             throw err;
         }
 
@@ -369,45 +417,18 @@ class FinancialStatementService extends BaseService {
             throw err;
         }
 
-        const retult = await this._financialStatementModel.destroy({
+        await this._financialStatementModel.destroy({
             where: {
                 id: id
             }
         });
 
         await this._notificationModel.create({
-            content: `${user.name}, Excluio Sua Ficha!`,
+            content: `${user.name}, Excluiu Sua Ficha!`,
             driver_id: financial.driver_id
         });
 
-        return retult;
-    }
-
-    async updateDriver(body, driverId) {
-        const financialStatement = await this._financialStatementModel.findOne({
-            where: { driver_id: driverId, status: true }
-        });
-        if (!financialStatement) throw Error('FINANCIAL_NOT_FOUND');
-
-        const { id, truck_models, total_value, cart_models, driver_id } =
-            await financialStatement.update(body);
-
-        const driverFinancial = await this._driverModel.findByPk(driver_id);
-        if (!driverFinancial) throw Error('DRIVER_NOT_FOUND');
-
-        await driverFinancial.update({
-            credit: total_value,
-            truck: truck_models,
-            cart: cart_models
-        });
-
-        const driver = await this._driverModel.findByPk(driver_id, {
-            attributes: ['credit', 'truck', 'cart']
-        });
-
-        const financial = await this._financialStatementModel.findByPk(id);
-
-        return { data: driver, financial: financial };
+        return { msg: 'SUCCESSFUL DELETED FINANCIAL STATEMENT' };
     }
 
     _calculate(values) {

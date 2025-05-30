@@ -67,7 +67,7 @@ class FinancialStatementController extends BaseResourceController {
 
     async getFinancialCurrent(req, res, next) {
         try {
-            const data = await this._financialStatementService.getFinancialCurrent(req.driverId);
+            const data = await this._financialStatementService.getFinancialCurrent(req.driver);
             return res.status(HttpStatus.OK).json(JSON.parse(JSON.stringify({ data })));
         } catch (error) {
             next(res.status(HttpStatus.BAD_REQUEST).json({ mgs: error.message }));
@@ -77,18 +77,9 @@ class FinancialStatementController extends BaseResourceController {
     async getAllFinished(req, res, next) {
         try {
             const data = await this._financialStatementService.getAllFinished(
-                req.driverId,
+                req.driver,
                 req.query
             );
-            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
-    async updateDriver(req, res, next) {
-        try {
-            const data = await this._financialStatementService.updateDriver(req.body, req.driverId);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

@@ -97,5 +97,211 @@ export default {
             sort_field: Joi.string(),
             search: Joi.string()
         })
+    },
+    getAllCredit: {
+        query: Joi.object({
+            page: Joi.number(),
+            limit: Joi.number(),
+            sort_order: Joi.string(),
+            sort_field: Joi.string()
+        })
+    },
+    getIdCredit: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    deleteCredit: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    create: {
+        body: Joi.object({
+            driver_id: Joi.string().required(),
+            value: Joi.number().required(),
+            description: Joi.string().required(),
+            type_method: Joi.string().required()
+        })
+    },
+    getAllFinancialStatements: {
+        query: Joi.object({
+            page: Joi.number(),
+            limit: Joi.number(),
+            sort_order: Joi.string(),
+            sort_field: Joi.string(),
+            status_check: Joi.string(),
+            status: Joi.string(),
+            search: Joi.string()
+        })
+    },
+    getIdFinancialStatement: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    finishing: {
+        params: Joi.object({
+            id: Joi.string().required()
+        }),
+        body: Joi.object({
+            final_km: Joi.number().required(),
+            status: Joi.string().required()
+        })
+    },
+    updateFinancial: {
+        params: Joi.object({
+            id: Joi.string().required()
+        }),
+        body: Joi.object({
+            final_km: Joi.number().required(),
+            status: Joi.string().required()
+        })
+    },
+    createFinancialStatement: {
+        body: Joi.object({
+            driver_id: Joi.string().required(),
+            truck_id: Joi.string().required(),
+            cart_id: Joi.string().required(),
+            start_date: Joi.date().required()
+        })
+    },
+    deleteFinancialStatement: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    createFreight: {
+        body: Joi.object({
+            driver_id: Joi.string(),
+            truck_id: Joi.string(),
+            cart_id: Joi.string(),
+            start_date: Joi.date()
+        })
+    },
+    approveFreight: {
+        params: Joi.object({
+            id: Joi.string().required()
+        }),
+        body: Joi.object({
+            driver_id: Joi.string().required(),
+            status: Joi.string().required()
+        })
+    },
+    firstCheckId: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    getIdManagerFreight: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    deleteFreight: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    updateReadManager: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    createNotification: {
+        params: Joi.object({
+            user_id: Joi.string().required()
+        }),
+        body: Joi.object({
+            title: Joi.string().required(),
+            message: Joi.string().required()
+        })
+    },
+    createTruck: {
+        body: Joi.object({
+            truck_models: Joi.string(),
+            truck_name_brand: Joi.string(),
+            truck_board: Joi.string(),
+            truck_color: Joi.string(),
+            truck_km: Joi.number(),
+            truck_chassis: Joi.string(),
+            truck_year: Joi.number()
+        })
+    },
+    updateTruck: {
+        params: Joi.object({
+            id: Joi.string().required()
+        }),
+        body: Joi.object({
+            truck_models: Joi.string(),
+            truck_name_brand: Joi.string(),
+            truck_board: Joi.string(),
+            truck_color: Joi.string(),
+            truck_km: Joi.number(),
+            truck_year: Joi.number(),
+            truck_chassis: Joi.string()
+        })
+    },
+    getAllTrucks: {
+        query: Joi.object({
+            page: Joi.number(),
+            limit: Joi.number(),
+            sort_order: Joi.string(),
+            sort_field: Joi.string(),
+            search: Joi.string()
+        })
+    },
+    getIdTruck: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    uploadImageTruck: {
+        params: Joi.object({
+            id: Joi.string().required()
+        }),
+        body: Joi.object({
+            file: Joi.string().required()
+        })
+    },
+    deleteTruck: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    createCart: {
+        body: Joi.object({
+            cart_chassis: Joi.string(),
+            cart_board: Joi.string(),
+            cart_color: Joi.string(),
+            cart_km: Joi.number(),
+            cart_year: Joi.number()
+        })
+    },
+    updateCart: {
+        params: Joi.object({
+            id: Joi.string().required()
+        }),
+        body: Joi.object({
+            cart_chassis: Joi.string(),
+            cart_board: Joi.string(),
+            cart_color: Joi.string(),
+            cart_km: Joi.number(),
+            cart_year: Joi.number()
+        })
+    },
+    getIdCart: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    getAllCarts: {
+        query: Joi.object({
+            page: Joi.number(),
+            limit: Joi.number(),
+            sort_order: Joi.string(),
+            sort_field: Joi.string(),
+            search: Joi.string()
+        })
     }
 };

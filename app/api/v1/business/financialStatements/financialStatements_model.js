@@ -8,18 +8,6 @@ class FinancialStatements extends Model {
                 driver_id: Sequelize.INTEGER,
                 truck_id: Sequelize.INTEGER,
                 cart_id: Sequelize.INTEGER,
-                percentage_commission: {
-                    type: Sequelize.INTEGER,
-                    defaultValue: 0
-                },
-                fixed_commission: {
-                    type: Sequelize.INTEGER,
-                    defaultValue: 0
-                },
-                daily: {
-                    type: Sequelize.INTEGER,
-                    defaultValue: 0
-                },
                 status: {
                     type: Boolean,
                     defaultValue: true
@@ -28,12 +16,6 @@ class FinancialStatements extends Model {
                 final_km: Sequelize.INTEGER,
                 start_date: Sequelize.DATE,
                 final_date: Sequelize.DATE,
-                driver_name: Sequelize.STRING,
-                truck_models: Sequelize.STRING,
-                truck_board: Sequelize.STRING,
-                truck_avatar: Sequelize.STRING,
-                cart_models: Sequelize.STRING,
-                cart_board: Sequelize.STRING,
                 invoicing_all: Sequelize.INTEGER,
                 medium_fuel_all: Sequelize.INTEGER,
                 total_value: {

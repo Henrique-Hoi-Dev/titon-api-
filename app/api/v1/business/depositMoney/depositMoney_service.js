@@ -24,17 +24,27 @@ class DepositMoneyService extends BaseService {
         this._freightModel = Freight;
     }
 
-    async create(user, body) {
+    async create(driver, body) {
         const { freight_id } = body;
 
-        const financial = await this._financialStatementsModel.findOne({
-            where: { driver_id: user.id, status: true }
-        });
-        if (!financial) throw new Error('FINANCIAL_NOT_FOUND');
+        const [financial, freight] = await Promise.all([
+            this._financialStatementsModel.findOne({
+                where: { driver_id: driver.id, status: true }
+            }),
+            this._freightModel.findByPk(freight_id)
+        ]);
 
-        const freight = await this._freightModel.findByPk(freight_id);
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        if (!freight) throw new Error('FREIGHT_NOT_FOUND');
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (freight.status === 'STARTING_TRIP') {
             const now = updateHours(dayjs().tz('America/Sao_Paulo').utcOffset() / 60);
@@ -60,23 +70,33 @@ class DepositMoneyService extends BaseService {
                 credit: total
             });
 
-            return { data: result };
+            return result.toJSON();
         }
 
-        throw new Error('This front is not traveling');
+        const err = new Error('THIS_FRONT_IS_NOT_TRAVELING');
+        err.status = 400;
+        throw err;
     }
 
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
 
         const depositMoney = await this._depositMoneyModel.findByPk(id);
-        if (!depositMoney) throw Error('DEPOSIT_MONEY_NOT_FOUND');
+        if (!depositMoney) {
+            const err = new Error('DEPOSIT_MONEY_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (depositMoney.img_receipt && depositMoney.img_receipt.uuid) {
             await this.deleteFile({ id });
         }
 
-        if (!body.category) throw Error('CATEGORY_OR_TYPE_NOT_FOUND');
+        if (!body.category) {
+            const err = new Error('CATEGORY_OR_TYPE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         const originalFilename = file.originalname;
 
@@ -95,12 +115,22 @@ class DepositMoneyService extends BaseService {
             }
         });
 
-        return infoDepositMoney;
+        return infoDepositMoney.toJSON();
     }
 
     async deleteFile({ id }) {
         const depositMoney = await this._depositMoneyModel.findByPk(id);
-        if (!depositMoney) throw Error('FREIGHT_NOT_FOUND');
+        if (!depositMoney) {
+            const err = new Error('DEPOSIT_MONEY_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (!depositMoney.img_receipt) {
+            const err = new Error('DEPOSIT_MONEY_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         try {
             await this._deleteFileIntegration({
@@ -112,7 +142,7 @@ class DepositMoneyService extends BaseService {
                 img_receipt: {}
             });
 
-            return infoDepositMoney;
+            return infoDepositMoney.toJSON();
         } catch (error) {
             const err = new Error(error);
             err.status = 400;
@@ -145,7 +175,7 @@ class DepositMoneyService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            data: depositMoney,
+            docs: depositMoney.map((res) => res.toJSON()),
             totalItems,
             totalPages,
             currentPage
@@ -153,11 +183,15 @@ class DepositMoneyService extends BaseService {
     }
 
     async getId(id) {
-        const depositMoney = await this._depositMoneyModel.findByPk(id, {});
+        const depositMoney = await this._depositMoneyModel.findByPk(id);
 
-        if (!depositMoney) throw Error('DEPOSIT_NOT_FOUND');
+        if (!depositMoney) {
+            const err = new Error('DEPOSIT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        return { data: depositMoney };
+        return depositMoney.toJSON();
     }
 }
 

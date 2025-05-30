@@ -42,10 +42,6 @@ class Driver extends Model {
                 date_admission: Sequelize.DATE,
                 date_birthday: Sequelize.DATE,
 
-                // walking data
-                cart: Sequelize.STRING,
-                truck: Sequelize.STRING,
-
                 // financial data
                 credit: { type: Sequelize.INTEGER, defaultValue: 0 },
                 transactions: {

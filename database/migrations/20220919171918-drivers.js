@@ -69,12 +69,6 @@ module.exports = {
             player_id: {
                 type: Sequelize.STRING
             },
-            cart: {
-                type: Sequelize.STRING
-            },
-            truck: {
-                type: Sequelize.STRING
-            },
             credit: {
                 type: Sequelize.INTEGER,
                 defaultValue: 0

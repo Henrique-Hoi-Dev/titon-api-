@@ -48,6 +48,11 @@ module.exports = {
                 type: Sequelize.STRING,
                 allowNull: true
             },
+            image_cart: {
+                type: Sequelize.JSONB,
+                allowNull: true,
+                defaultValue: {}
+            },
             created_at: {
                 type: Sequelize.DATE,
                 allowNull: false

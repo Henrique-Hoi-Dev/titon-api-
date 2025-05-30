@@ -1,5 +1,6 @@
 import { deleteFile, sendFile } from '../../../../providers/aws/index.js';
 import { generateRandomCode } from '../../../../utils/crypto.js';
+import { updateHours } from '../../../../utils/updateHours.js';
 
 import RestockModel from './restock_model.js';
 import FreightModel from '../freight/freight_model.js';
@@ -21,21 +22,32 @@ class RestockService extends BaseService {
         this._financialStatementsModel = FinancialStatements;
         this._freightModel = FreightModel;
     }
-    async create(driverId, body) {
+    async create(driver, body) {
         let { freight_id, value_fuel, liters_fuel } = body;
 
-        const financial = await this._financialStatementsModel.findOne({
-            where: { driver_id: driverId, status: true }
-        });
-        if (!financial) throw new Error('FINANCIAL_NOT_FOUND');
+        const [financial, freight] = await Promise.all([
+            this._financialStatementsModel.findOne({
+                where: { driver_id: driver.id, status: true }
+            }),
+            this._freightModel.findByPk(freight_id)
+        ]);
 
-        const freight = await this._freightModel.findByPk(freight_id);
-        if (!freight) throw new Error('FREIGHT_NOT_FOUND');
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (freight.status === 'STARTING_TRIP') {
             const total_value_fuel = value_fuel * liters_fuel;
 
-            const now = this._updateHours(dayjs().tz('America/Sao_Paulo').utcOffset() / 60);
+            const now = updateHours(dayjs().tz('America/Sao_Paulo').utcOffset() / 60);
 
             const result = await this._restockModel.create({
                 ...body,
@@ -44,23 +56,33 @@ class RestockService extends BaseService {
                 financial_statements_id: financial.id
             });
 
-            return { data: result };
+            return result;
         }
 
-        throw new Error('This front is not traveling');
+        const err = new Error('TRIP_NOT_STARTED');
+        err.status = 400;
+        throw err;
     }
 
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
 
         const restock = await this._restockModel.findByPk(id);
-        if (!restock) throw new Error('RESTOCK_NOT_FOUND');
+        if (!restock) {
+            const err = new Error('RESTOCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         if (restock.img_receipt && restock.img_receipt.uuid) {
             await this.deleteFile({ id });
         }
 
-        if (!body.category) throw Error('CATEGORY_OR_TYPE_NOT_FOUND');
+        if (!body.category) {
+            const err = new Error('CATEGORY_OR_TYPE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         const originalFilename = file.originalname;
 
@@ -95,7 +117,11 @@ class RestockService extends BaseService {
 
     async deleteFile({ id }) {
         const restock = await this._restockModel.findByPk(id);
-        if (!restock) throw Error('FREIGHT_NOT_FOUND');
+        if (!restock) {
+            const err = new Error('RESTOCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
         try {
             await this._deleteFileIntegration({
@@ -107,7 +133,7 @@ class RestockService extends BaseService {
                 img_receipt: {}
             });
 
-            return infoRestock;
+            return infoRestock.toJSON();
         } catch {
             const err = new Error('ERROR_DELETE_FILE');
             err.status = 400;
@@ -140,7 +166,7 @@ class RestockService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            data: restocks,
+            docs: restocks.map((res) => res.toJSON()),
             totalItems,
             totalPages,
             currentPage
@@ -149,27 +175,13 @@ class RestockService extends BaseService {
 
     async getId(id) {
         const restock = await this._restockModel.findByPk(id);
-        if (!restock) throw Error('RESTOCK_NOT_FOUND');
+        if (!restock) {
+            const err = new Error('RESTOCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
 
-        return {
-            data: restock
-        };
-    }
-
-    _updateHours(numOfHours, date = new Date()) {
-        const dateCopy = new Date(date.getTime());
-
-        dateCopy.setHours(dateCopy.getHours() - numOfHours);
-
-        return dateCopy;
-    }
-
-    _handleMongoError(error) {
-        const keys = Object.keys(error.errors);
-        const err = new Error(error.errors[keys[0]].message);
-        err.field = keys[0];
-        err.status = 409;
-        throw err;
+        return restock.toJSON();
     }
 }
 

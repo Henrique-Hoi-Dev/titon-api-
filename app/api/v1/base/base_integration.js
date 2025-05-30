@@ -1,13 +1,19 @@
 import axios from 'axios';
 import logger from '../../../utils/logger.js';
+import dotenv from 'dotenv';
 
-const EXTERNAL_SERVICES = {};
+dotenv.config();
+
+const EXTERNAL_SERVICES = {
+    oneSignal: process.env.ONESIGNAL_URL || 'https://onesignal.com/api/v1'
+};
 
 class BaseIntegration {
     constructor(serviceName) {
         this.serviceName = serviceName;
         this.externalServices = EXTERNAL_SERVICES;
         this.logger = logger;
+        console.log('🚀 ~ BaseIntegration ~ constructor ~ EXTERNAL_SERVICES:', EXTERNAL_SERVICES);
 
         this.httpClient = axios.create({
             baseURL: this.externalServices[this.serviceName]

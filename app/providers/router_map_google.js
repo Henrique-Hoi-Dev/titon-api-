@@ -1,7 +1,4 @@
 import https from 'https';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 export default {
     async getRoute(origin, destination, mode) {

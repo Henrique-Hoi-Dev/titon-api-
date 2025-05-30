@@ -1,4 +1,4 @@
-import Sequelize, { DataTypes, Model } from 'sequelize';
+import Sequelize, { Model } from 'sequelize';
 
 class Truck extends Model {
     static init(sequelize) {
@@ -11,9 +11,8 @@ class Truck extends Model {
                 truck_km: Sequelize.DOUBLE,
                 truck_chassis: Sequelize.DOUBLE,
                 truck_year: Sequelize.STRING,
-                truck_avatar: Sequelize.STRING,
-                image: {
-                    type: DataTypes.JSONB,
+                image_truck: {
+                    type: Sequelize.JSONB,
                     allowNull: true,
                     defaultValue: {}
                 }

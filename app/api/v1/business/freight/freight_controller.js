@@ -11,7 +11,16 @@ class FreightController extends BaseResourceController {
 
     async createFreightDriver(req, res, next) {
         try {
-            const data = await this._freightService.createFreightDriver(req.driverId, req.body);
+            const data = await this._freightService.createFreightDriver(req.driver, req.body);
+            return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async create(req, res, next) {
+        try {
+            const data = await this._freightService.create(req.body);
             return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -22,7 +31,7 @@ class FreightController extends BaseResourceController {
         try {
             const data = await this._freightService.getId(
                 req.params.id,
-                req,
+                req.driver,
                 req.params.financialId
             );
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
@@ -36,7 +45,7 @@ class FreightController extends BaseResourceController {
             const data = await this._freightService.updateFreightDriver(
                 req.body,
                 req.params.id,
-                req
+                req.driver
             );
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
@@ -92,17 +101,8 @@ class FreightController extends BaseResourceController {
 
     async deleteFreightDriver(req, res, next) {
         try {
-            const data = await this._freightService.deleteFreightDriver(req.params.id, req.driver);
+            const data = await this._freightService.deleteFreightDriver(req.params.id);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
-        } catch (error) {
-            next(this.handleError(error));
-        }
-    }
-
-    async create(req, res, next) {
-        try {
-            const data = await this._freightService.create(req.body);
-            return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
         }
@@ -126,9 +126,9 @@ class FreightController extends BaseResourceController {
         }
     }
 
-    async updateFreightManager(req, res, next) {
+    async approveFreightManager(req, res, next) {
         try {
-            const data = await this._freightService.updateFreightManager(
+            const data = await this._freightService.approveFreightManager(
                 req.user,
                 req.body,
                 req.params.id

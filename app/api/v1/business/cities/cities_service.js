@@ -36,17 +36,7 @@ class CitiesService extends BaseService {
             ]
         });
 
-        return cities;
-    }
-
-    _handleError(error) {
-        if (error.name === 'SequelizeValidationError') {
-            const err = new Error(error.errors[0].message);
-            err.field = error.errors[0].path;
-            err.status = 400;
-            throw err;
-        }
-        throw error;
+        return cities.map((city) => city.toJSON());
     }
 }
 

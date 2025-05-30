@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import '../config/config.cjs';
+import '../config/config.mjs';
 import Models from './models/index.js';
 
 import { Sequelize } from 'sequelize';

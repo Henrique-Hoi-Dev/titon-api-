@@ -1,4 +1,4 @@
-const dotenv = require('dotenv');
+import dotenv from 'dotenv';
 
 // Carrega o arquivo .env baseado no ambiente
 if (process.env.NODE_ENV) {
@@ -9,7 +9,7 @@ if (process.env.NODE_ENV) {
 console.log('🌍 ENV NODE_ENV =', process.env.NODE_ENV);
 console.log('📦 DATABASE =', process.env.DB_DATABASE);
 
-module.exports = {
+const config = {
     development: {
         username: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
@@ -55,3 +55,5 @@ module.exports = {
         }
     }
 };
+
+export default config;

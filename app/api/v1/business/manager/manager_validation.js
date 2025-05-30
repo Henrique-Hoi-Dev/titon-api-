@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import validateCpf from '../../../../utils/validateCpf.js';
+import { enumSchemas } from '../../../../utils/validations/enums.js';
 
 export default {
     signup: {
@@ -14,9 +15,12 @@ export default {
         body: Joi.object({
             name: Joi.string().required(),
             cpf: Joi.string().replace(/\D/g, '').custom(validateCpf).required(),
-            email: Joi.string().email().required(),
+            email: Joi.string().email(),
             phone: Joi.string().required(),
-            password: Joi.string().required().min(8)
+            password: Joi.string().required().min(8),
+            daily: Joi.number().required(),
+            value_fix: Joi.number(),
+            percentage: Joi.number()
         })
     },
     signin: {
@@ -27,8 +31,11 @@ export default {
     },
     update: {
         body: Joi.object({
-            name: Joi.string().required(),
-            email: Joi.string().email().required()
+            name: Joi.string(),
+            email: Joi.string().email(),
+            password: Joi.string().min(6),
+            type_role: enumSchemas.userRole,
+            permission_id: Joi.number().integer()
         })
     },
     getId: {
@@ -78,7 +85,8 @@ export default {
             credit: Joi.number(),
             value_fix: Joi.number(),
             percentage: Joi.number(),
-            daily: Joi.number()
+            daily: Joi.number(),
+            status: enumSchemas.driverStatus
         })
     },
     addRole: {
@@ -118,10 +126,11 @@ export default {
     },
     create: {
         body: Joi.object({
-            driver_id: Joi.string().required(),
-            value: Joi.number().required(),
-            description: Joi.string().required(),
-            type_method: Joi.string().required()
+            name: Joi.string().required(),
+            email: Joi.string().email().required(),
+            password: Joi.string().min(6).required(),
+            type_role: enumSchemas.userRole,
+            permission_id: Joi.number().integer()
         })
     },
     getAllFinancialStatements: {
@@ -146,7 +155,7 @@ export default {
         }),
         body: Joi.object({
             final_km: Joi.number().required(),
-            status: Joi.string().required()
+            status: Joi.boolean().required()
         })
     },
     updateFinancial: {
@@ -155,14 +164,14 @@ export default {
         }),
         body: Joi.object({
             final_km: Joi.number().required(),
-            status: Joi.string().required()
+            status: Joi.boolean().required()
         })
     },
     createFinancialStatement: {
         body: Joi.object({
-            driver_id: Joi.string().required(),
-            truck_id: Joi.string().required(),
-            cart_id: Joi.string().required(),
+            driver_id: Joi.number().required(),
+            truck_id: Joi.number().required(),
+            cart_id: Joi.number().required(),
             start_date: Joi.date().required()
         })
     },
@@ -173,9 +182,9 @@ export default {
     },
     createFreight: {
         body: Joi.object({
-            driver_id: Joi.string(),
-            truck_id: Joi.string(),
-            cart_id: Joi.string(),
+            driver_id: Joi.number(),
+            truck_id: Joi.number(),
+            cart_id: Joi.number(),
             start_date: Joi.date()
         })
     },
@@ -184,8 +193,8 @@ export default {
             id: Joi.string().required()
         }),
         body: Joi.object({
-            driver_id: Joi.string().required(),
-            status: Joi.string().required()
+            driver_id: Joi.number().required(),
+            status: enumSchemas.freightStatus.required()
         })
     },
     firstCheckId: {
@@ -275,7 +284,13 @@ export default {
             cart_board: Joi.string(),
             cart_color: Joi.string(),
             cart_km: Joi.number(),
-            cart_year: Joi.number()
+            cart_year: Joi.number(),
+            cart_models: Joi.string(),
+            cart_brand: Joi.string(),
+            cart_tara: Joi.string(),
+            cart_bodyworks: enumSchemas.cartBodyworks,
+            cart_liter_capacity: Joi.number(),
+            cart_ton_capacity: Joi.number()
         })
     },
     updateCart: {
@@ -302,6 +317,12 @@ export default {
             sort_order: Joi.string(),
             sort_field: Joi.string(),
             search: Joi.string()
+        })
+    },
+    changePassword: {
+        body: Joi.object({
+            oldPassword: Joi.string().required(),
+            newPassword: Joi.string().min(6).required()
         })
     }
 };

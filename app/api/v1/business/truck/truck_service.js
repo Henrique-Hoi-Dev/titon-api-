@@ -201,7 +201,7 @@ class TruckService extends BaseService {
                 'truck_color',
                 'truck_chassis',
                 'truck_year',
-                'truck_avatar'
+                'image_truck'
             ]
         });
 

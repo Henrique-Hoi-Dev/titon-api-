@@ -2,6 +2,8 @@ import BaseService from '../../base/base_service.js';
 import Driver from './driver_model.js';
 import ValidateCode from '../validateCode/validateCode_model.js';
 import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import Truck from '../truck/truck_model.js';
+import Cart from '../cart/cart_model.js';
 import validateCpf from '../../../../utils/validateCpf.js';
 
 import { createExpirationDateFromNow } from '../../../../utils/date.js';
@@ -16,6 +18,8 @@ class DriverService extends BaseService {
         this._driverModel = Driver;
         this._validateCodeModel = ValidateCode;
         this._financialStatementsModel = FinancialStatements;
+        this._truckModel = Truck;
+        this._cartModel = Cart;
     }
 
     async signin(body) {
@@ -81,6 +85,8 @@ class DriverService extends BaseService {
                 'date_valid_mopp',
                 'date_valid_nr20',
                 'date_valid_nr35',
+                'phone',
+                'email',
                 'cpf',
                 'date_admission',
                 'date_birthday',
@@ -389,16 +395,26 @@ class DriverService extends BaseService {
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0,
-            attributes: [
-                'id',
-                'name',
-                'cpf',
-                'credit',
-                'value_fix',
-                'percentage',
-                'daily',
-                'cart',
-                'truck'
+            attributes: ['id', 'name', 'cpf', 'credit', 'value_fix', 'percentage', 'daily'],
+            include: [
+                {
+                    model: this._financialStatementsModel,
+                    as: 'financialStatements',
+                    where: { status: true },
+                    required: false,
+                    include: [
+                        {
+                            model: this._truckModel,
+                            as: 'truck',
+                            attributes: ['truck_models', 'truck_board']
+                        },
+                        {
+                            model: this._cartModel,
+                            as: 'cart',
+                            attributes: ['cart_models', 'cart_board']
+                        }
+                    ]
+                }
             ]
         });
 
@@ -408,7 +424,18 @@ class DriverService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            docs: drivers.map((driver) => driver.toJSON()),
+            docs: drivers.map((driver) => {
+                const driverData = driver.toJSON();
+                const activeFinancial = driverData.financialStatements?.[0];
+
+                const { financialStatements, ...driverInfo } = driverData;
+
+                return {
+                    ...driverInfo,
+                    truck: activeFinancial?.truck || {},
+                    cart: activeFinancial?.cart || {}
+                };
+            }),
             total,
             totalPages,
             currentPage
@@ -433,6 +460,26 @@ class DriverService extends BaseService {
                 'percentage',
                 'daily',
                 'transactions'
+            ],
+            include: [
+                {
+                    model: this._financialStatementsModel,
+                    as: 'financialStatements',
+                    where: { status: true },
+                    required: false,
+                    include: [
+                        {
+                            model: this._truckModel,
+                            as: 'truck',
+                            attributes: ['truck_models', 'truck_board']
+                        },
+                        {
+                            model: this._cartModel,
+                            as: 'cart',
+                            attributes: ['cart_models', 'cart_board']
+                        }
+                    ]
+                }
             ]
         });
 
@@ -442,7 +489,16 @@ class DriverService extends BaseService {
             throw err;
         }
 
-        return driver.toJSON();
+        const driverData = driver.toJSON();
+        const activeFinancial = driverData.financialStatements?.[0];
+
+        const { financialStatements, ...driverInfo } = driverData;
+
+        return {
+            ...driverInfo,
+            truck: activeFinancial?.truck || {},
+            cart: activeFinancial?.cart || {}
+        };
     }
 
     async updateManagerDriver(body, id) {

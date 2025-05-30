@@ -134,11 +134,11 @@ class FinancialStatementService extends BaseService {
         });
     }
 
-    async create(user, body) {
+    async create(manager, body) {
         const { driver_id, truck_id, cart_id, start_date } = body;
 
         const [userAdm, driver, truck, cart] = await Promise.all([
-            this._managerModel.findByPk(user.id),
+            this._managerModel.findByPk(manager.id),
             this._driverModel.findByPk(driver_id),
             this._truckModel.findByPk(truck_id),
             this._cartModel.findByPk(cart_id)
@@ -148,7 +148,10 @@ class FinancialStatementService extends BaseService {
         const previousDate = new Date(currentDate.getTime());
         previousDate.setDate(currentDate.getDate() - 1);
 
-        if (!isAfter(parseISO(start_date), previousDate.setDate(currentDate.getDate() - 1))) {
+        // Converte a data de entrada para Date se for string
+        const startDate = typeof start_date === 'string' ? new Date(start_date) : start_date;
+
+        if (!isAfter(startDate, previousDate)) {
             const err = new Error('CANNOT_CREATE_FIXED_IN_THE_PAST');
             err.status = 400;
             throw err;
@@ -213,11 +216,11 @@ class FinancialStatementService extends BaseService {
         const { cart_bodyworks, cart_board } = cart.dataValues;
 
         await this._financialStatementModel.create({
-            creator_user_id: user.id,
+            creator_user_id: userAdm.id,
             driver_id,
             truck_id,
             cart_id,
-            start_date,
+            start_date: startDate,
             percentage_commission: percentage,
             fixed_commission: value_fix,
             daily: daily,
@@ -230,7 +233,7 @@ class FinancialStatementService extends BaseService {
         });
 
         await this._notificationModel.create({
-            content: `${user.name}, Criou Uma Nova Ficha para você ${driver.name}!`,
+            content: `${userAdm.name}, Criou Uma Nova Ficha para você ${driver.name}!`,
             driver_id: driver_id
         });
 
@@ -269,14 +272,24 @@ class FinancialStatementService extends BaseService {
             offset: page - 1 ? (page - 1) * limit : 0,
             include: [
                 {
-                    model: Driver,
+                    model: this._driverModel,
                     as: 'driver',
-                    attributes: ['credit']
+                    attributes: ['name', 'email', 'credit', 'value_fix', 'percentage', 'daily']
                 },
                 {
-                    model: Freight,
+                    model: this._freightModel,
                     where: status_check ? whereStatus : null,
                     as: 'freight'
+                },
+                {
+                    model: this._truckModel,
+                    as: 'truck',
+                    attributes: ['truck_models', 'truck_board', 'image_truck']
+                },
+                {
+                    model: this._cartModel,
+                    as: 'cart',
+                    attributes: ['cart_models', 'cart_board', 'cart_bodyworks', 'image_cart']
                 }
             ]
         });
@@ -310,11 +323,23 @@ class FinancialStatementService extends BaseService {
 
     async getId(id) {
         const financial = await this._financialStatementModel.findByPk(id, {
-            include: {
-                model: this._driverModel,
-                as: 'driver',
-                attributes: ['credit']
-            }
+            include: [
+                {
+                    model: this._driverModel,
+                    as: 'driver',
+                    attributes: ['name', 'email', 'credit', 'value_fix', 'percentage', 'daily']
+                },
+                {
+                    model: this._truckModel,
+                    as: 'truck',
+                    attributes: ['truck_models', 'truck_board', 'image_truck']
+                },
+                {
+                    model: this._cartModel,
+                    as: 'cart',
+                    attributes: ['cart_models', 'cart_board', 'cart_bodyworks', 'image_cart']
+                }
+            ]
         });
 
         if (!financial) {
@@ -326,6 +351,7 @@ class FinancialStatementService extends BaseService {
         const freight = await this._freightModel.findAll({
             where: { financial_statements_id: financial.id }
         });
+
         if (!freight) {
             const err = new Error('FREIGHT_NOT_FOUND');
             err.status = 404;
@@ -340,19 +366,19 @@ class FinancialStatementService extends BaseService {
             attributes: ['id', 'content', 'createdAt', 'driver_id', 'freight_id']
         });
 
+        const financialData = financial.get({ plain: true });
+
         return {
-            dataResult: {
-                ...financial.dataValues,
-                freight: freight.map((res) => ({
-                    id: res.id,
-                    date: res.createdAt,
-                    status: res.status,
-                    locationTruck: res.location_of_the_truck,
-                    finalFreightCity: res.final_freight_city,
-                    totalFreight: this._valueTotalTonne(res.preview_tonne, res.value_tonne)
-                })),
-                notifications: notifications.map((res) => res.dataValues)
-            }
+            ...financialData,
+            freight: freight.map((res) => ({
+                id: res.id,
+                date: res.createdAt,
+                status: res.status,
+                locationTruck: res.location_of_the_truck,
+                finalFreightCity: res.final_freight_city,
+                totalFreight: this._valueTotalTonne(res.preview_tonne, res.value_tonne)
+            })),
+            notifications: notifications.map((res) => res.get({ plain: true }))
         };
     }
 

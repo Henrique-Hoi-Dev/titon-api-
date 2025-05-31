@@ -366,7 +366,7 @@ class DriverService extends BaseService {
                     as: 'financialStatements',
                     required: true,
                     where: { status: false },
-                    attributes: ['id', 'driver_id', 'driver_name']
+                    attributes: []
                 }
             ],
             raw: true,

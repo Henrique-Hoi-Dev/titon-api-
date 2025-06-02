@@ -324,5 +324,10 @@ export default {
             oldPassword: Joi.string().required(),
             newPassword: Joi.string().min(6).required()
         })
+    },
+    deleteCart: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
     }
 };

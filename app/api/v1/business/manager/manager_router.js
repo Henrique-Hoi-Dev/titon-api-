@@ -395,6 +395,13 @@ router
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         cartController.getAllSelect.bind(cartController)
+    )
+    .delete(
+        '/cart/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        validator(validation.deleteCart),
+        cartController.delete.bind(cartController)
     );
 
 export default router;

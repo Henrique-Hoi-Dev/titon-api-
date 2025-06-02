@@ -163,7 +163,7 @@ class CartService extends BaseService {
             throw err;
         }
 
-        const isInUse = await FinancialStatements.findAll({
+        const isInUse = await this._financialStatementsModel.findAll({
             cart_board: cart.cart_board,
             status: true
         });

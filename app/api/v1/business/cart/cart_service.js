@@ -2,6 +2,8 @@ import CartModel from './cart_model.js';
 import BaseService from '../../base/base_service.js';
 import FinancialStatements from '../financialStatements/financialStatements_model.js';
 import { literal, Op } from 'sequelize';
+import { generateRandomCode } from '../../../../utils/crypto.js';
+import { deleteFile, getFile, sendFile } from '../../../../providers/aws/index.js';
 
 class CartService extends BaseService {
     constructor() {
@@ -141,6 +143,25 @@ class CartService extends BaseService {
         return cart.toJSON();
     }
 
+    async getIdAvatar(id) {
+        const cart = await this._cartModel.findByPk(id, {
+            attributes: ['image_cart']
+        });
+
+        if (!cart) {
+            const err = new Error('CART_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        const { Body, ContentType } = await getFile({
+            filename: cart.image_cart.uuid,
+            category: cart.image_cart.category
+        });
+        const fileData = Buffer.from(Body);
+        return { contentType: ContentType, fileData };
+    }
+
     async update(body, id) {
         const cart = await this._cartModel.findByPk(id);
 
@@ -153,6 +174,82 @@ class CartService extends BaseService {
         await cart.update(body);
 
         return cart.toJSON();
+    }
+
+    async uploadImage(payload, id) {
+        const { file, body } = payload;
+
+        if (!file || !body.category) {
+            const err = new Error('INVALID_PAYLOAD');
+            err.status = 400;
+            throw err;
+        }
+
+        const cart = await this._cartModel.findByPk(id);
+        if (!cart) {
+            const err = new Error('CART_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (cart.image_cart && cart.image_cart.uuid) {
+            await this.deleteFile({ id });
+        }
+
+        const originalFilename = file.originalname;
+
+        const code = generateRandomCode(9);
+
+        file.name = code;
+
+        await sendFile(payload);
+
+        const infoCart = await cart.update({
+            image_cart: {
+                uuid: file.name,
+                name: originalFilename,
+                mimetype: file.mimetype,
+                category: body.category
+            }
+        });
+
+        return infoCart.toJSON();
+    }
+
+    async deleteFile({ id }) {
+        const cart = await this._cartModel.findByPk(id);
+        if (!cart) {
+            const err = new Error('CART_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        try {
+            await this._deleteFileIntegration({
+                filename: cart.image_cart.uuid,
+                category: cart.image_cart.category
+            });
+
+            const infoCart = await cart.update({
+                image_cart: {}
+            });
+
+            return infoCart;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    async _deleteFileIntegration({ filename, category }) {
+        try {
+            return await deleteFile({ filename, category });
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
+        }
     }
 
     async delete(id) {

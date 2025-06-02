@@ -4,7 +4,7 @@ import BaseService from '../../base/base_service.js';
 
 import { Op, literal } from 'sequelize';
 import { generateRandomCode } from '../../../../utils/crypto.js';
-import { deleteFile, sendFile } from '../../../../providers/aws/index.js';
+import { deleteFile, getFile, sendFile } from '../../../../providers/aws/index.js';
 
 class TruckService extends BaseService {
     constructor() {
@@ -56,8 +56,14 @@ class TruckService extends BaseService {
         return { msg: 'Truck created successfully' };
     }
 
-    async uploadImage(payload, { id }) {
+    async uploadImage(payload, id) {
         const { file, body } = payload;
+
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         const truck = await this._truckModel.findByPk(id);
         if (!truck) {
@@ -85,7 +91,7 @@ class TruckService extends BaseService {
         await sendFile(payload);
 
         const infoTruck = await truck.update({
-            image: {
+            image_truck: {
                 uuid: file.name,
                 name: originalFilename,
                 mimetype: file.mimetype,
@@ -93,7 +99,7 @@ class TruckService extends BaseService {
             }
         });
 
-        return infoTruck;
+        return infoTruck.toJSON();
     }
 
     async deleteFile({ id }) {
@@ -106,12 +112,12 @@ class TruckService extends BaseService {
 
         try {
             await this._deleteFileIntegration({
-                filename: truck.img_receipt.uuid,
-                category: truck.img_receipt.category
+                filename: truck.image_truck.uuid,
+                category: truck.image_truck.category
             });
 
             const infoTruck = await truck.update({
-                img_receipt: {}
+                image_truck: {}
             });
 
             return infoTruck;
@@ -130,6 +136,25 @@ class TruckService extends BaseService {
             err.status = 400;
             throw err;
         }
+    }
+
+    async getIdAvatar(id) {
+        const truck = await this._truckModel.findByPk(id, {
+            attributes: ['image_truck']
+        });
+
+        if (!truck) {
+            const err = new Error('TRUCK_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        const { Body, ContentType } = await getFile({
+            filename: truck.image_truck.uuid,
+            category: truck.image_truck.category
+        });
+
+        return { contentType: ContentType, fileData: Body };
     }
 
     async getAllSelect() {

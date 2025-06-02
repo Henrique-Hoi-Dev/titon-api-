@@ -1,6 +1,7 @@
 import BaseResourceController from '../../base/base_resource_controller.js';
 import HttpStatus from 'http-status';
 import CartService from './cart_service.js';
+import validateAndReturn from '../../../../utils/validFile.js';
 
 class CartController extends BaseResourceController {
     constructor() {
@@ -38,18 +39,37 @@ class CartController extends BaseResourceController {
     async getId(req, res, next) {
         try {
             const data = await this._cartService.getId(req.params.id);
-            return res.status(HttpStatus.OK).json(JSON.parse(JSON.stringify(data)));
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
-            next(res.status(HttpStatus.BAD_REQUEST).json({ mgs: error.message }));
+            next(this.handleError(error));
+        }
+    }
+
+    async getIdAvatar(req, res, next) {
+        try {
+            const data = await this._cartService.getIdAvatar(req.params.id);
+            res.set('Content-Type', validateAndReturn(data.contentType));
+            return res.send(data.fileData);
+        } catch (error) {
+            next(this.handleError(error));
         }
     }
 
     async update(req, res, next) {
         try {
             const data = await this._cartService.update(req.body, req.params.id);
-            return res.status(HttpStatus.OK).json(JSON.parse(JSON.stringify(data)));
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
-            next(res.status(HttpStatus.BAD_REQUEST).json({ mgs: error.message }));
+            next(this.handleError(error));
+        }
+    }
+
+    async uploadImage(req, res, next) {
+        try {
+            const data = await this._cartService.uploadImage(req, req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
         }
     }
 

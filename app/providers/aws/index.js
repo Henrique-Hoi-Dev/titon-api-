@@ -1,4 +1,5 @@
 import AWS from 'aws-sdk';
+import '../../../config/config.mjs';
 
 AWS.config.update({
     region: process.env.S3_REGION,
@@ -42,6 +43,7 @@ export const sendFile = async ({ file, body }) => {
         return Location;
     } catch {
         const err = new Error('ERROR_UPLOAD_FILE');
+        console.log(err);
         err.status = 400;
         throw err;
     }

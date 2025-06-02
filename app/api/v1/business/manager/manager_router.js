@@ -344,6 +344,13 @@ router
         middleware.verifyManagerToken,
         truckController.getAllSelect.bind(truckController)
     )
+    .get(
+        '/truck/:id/avatar',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        validator(validation.getIdTruck),
+        truckController.getIdAvatar.bind(truckController)
+    )
     .patch(
         '/truck/upload-image/:id',
         middleware.ensureAuthorization,
@@ -369,12 +376,28 @@ router
         validator(validation.createCart),
         cartController.create.bind(cartController)
     )
-    .put(
+    .patch(
         '/cart/:id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         validator(validation.updateCart),
         cartController.update.bind(cartController)
+    );
+router
+    .patch(
+        '/cart/upload-image/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        upload.single('file'),
+        validator(validation.uploadImageCart),
+        cartController.uploadImage.bind(cartController)
+    )
+    .get(
+        '/cart/:id/avatar',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        validator(validation.getIdCart),
+        cartController.getIdAvatar.bind(cartController)
     )
     .get(
         '/cart/:id',

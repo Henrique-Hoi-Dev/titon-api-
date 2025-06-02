@@ -268,9 +268,6 @@ export default {
     uploadImageTruck: {
         params: Joi.object({
             id: Joi.string().required()
-        }),
-        body: Joi.object({
-            file: Joi.string().required()
         })
     },
     deleteTruck: {
@@ -326,6 +323,11 @@ export default {
         })
     },
     deleteCart: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    uploadImageCart: {
         params: Joi.object({
             id: Joi.string().required()
         })

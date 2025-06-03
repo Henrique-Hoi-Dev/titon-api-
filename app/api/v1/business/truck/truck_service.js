@@ -4,7 +4,7 @@ import BaseService from '../../base/base_service.js';
 
 import { Op, literal } from 'sequelize';
 import { generateRandomCode } from '../../../../utils/crypto.js';
-import { deleteFile, getFile, sendFile } from '../../../../providers/aws/index.js';
+import { deleteFile, getFile, sendFilePublic } from '../../../../providers/aws/index.js';
 
 class TruckService extends BaseService {
     constructor() {
@@ -88,7 +88,7 @@ class TruckService extends BaseService {
 
         file.name = code;
 
-        await sendFile(payload);
+        await sendFilePublic(payload);
 
         const infoTruck = await truck.update({
             image_truck: {

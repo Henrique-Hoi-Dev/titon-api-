@@ -3,7 +3,7 @@ import BaseService from '../../base/base_service.js';
 import FinancialStatements from '../financialStatements/financialStatements_model.js';
 import { literal, Op } from 'sequelize';
 import { generateRandomCode } from '../../../../utils/crypto.js';
-import { deleteFile, getFile, sendFile } from '../../../../providers/aws/index.js';
+import { deleteFile, getFile, sendFilePublic } from '../../../../providers/aws/index.js';
 
 class CartService extends BaseService {
     constructor() {
@@ -202,7 +202,7 @@ class CartService extends BaseService {
 
         file.name = code;
 
-        await sendFile(payload);
+        await sendFilePublic(payload);
 
         const infoCart = await cart.update({
             image_cart: {

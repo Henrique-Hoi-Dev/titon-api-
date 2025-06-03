@@ -291,18 +291,6 @@ class DriverService extends BaseService {
             throw err;
         }
 
-        const data = {
-            cpf: validCpf,
-            password: body.password,
-            name: body.name,
-            phone: `+55${body.phone}`,
-            email: body.email,
-            type_position: 'COLLABORATOR',
-            value_fix: body.value_fix,
-            percentage: body.percentage,
-            daily: body.daily
-        };
-
         // doing name user verification
         const driverExist = await this._driverModel.findOne({
             where: { cpf: validCpf }
@@ -313,6 +301,18 @@ class DriverService extends BaseService {
             err.status = 400;
             throw err;
         }
+
+        const data = {
+            cpf: validCpf,
+            password: body.password,
+            name: body.name,
+            phone: `+55${body.phone}`,
+            email: body.email,
+            type_position: 'COLLABORATOR',
+            value_fix: body?.value_fix,
+            percentage: body?.percentage,
+            daily: body?.daily
+        };
 
         await this._driverModel.create(data);
 

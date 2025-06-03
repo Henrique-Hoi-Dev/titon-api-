@@ -49,6 +49,28 @@ export const sendFile = async ({ file, body }) => {
     }
 };
 
+export const sendFilePublic = async ({ file, body }) => {
+    try {
+        const { buffer: data, mimetype, name } = file;
+        const { Location } = await s3
+            .upload({
+                Body: data,
+                Key: `${body.category}/${name}`,
+                ContentType: mimetype,
+                ACL: 'public-read',
+                Bucket: process.env.S3_BUCKET_NAME
+            })
+            .promise();
+
+        return Location;
+    } catch {
+        const err = new Error('ERROR_UPLOAD_FILE');
+        console.log(err);
+        err.status = 400;
+        throw err;
+    }
+};
+
 export const getFile = ({ filename, category }) => {
     return s3
         .getObject({

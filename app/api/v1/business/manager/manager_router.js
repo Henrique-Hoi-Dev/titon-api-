@@ -43,6 +43,8 @@ router.post(
 //Signup and Signin Driver
 router.post(
     '/driver/signup',
+    middleware.ensureAuthorization,
+    middleware.verifyManagerToken,
     validator(validation.signupDriver),
     driverController.create.bind(driverController)
 );
@@ -166,7 +168,7 @@ router
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         verifyIfUserHasRole('MASTER'),
-        validator(validation.create),
+        validator(validation.createCredit),
         creditController.create.bind(creditController)
     )
     .get(

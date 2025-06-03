@@ -109,9 +109,15 @@ class CreditService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id' } = query;
+        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', driver_id } = query;
+
+        const where = {};
+        if (driver_id) {
+            where.driver_id = driver_id;
+        }
 
         const credits = await this._creditModel.findAll({
+            where,
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0

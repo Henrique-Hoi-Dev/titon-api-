@@ -1,6 +1,6 @@
 import Freight from './freight_model.js';
 import BaseService from '../../base/base_service.js';
-import ApiGoogle from '../../../../providers/router_map_google.js';
+import ApiGoogle from '../../../../providers/google/router_map_google.js';
 import FinancialStatements from '../financialStatements/financialStatements_model.js';
 import Driver from '../driver/driver_model.js';
 import Restock from '../restock/restock_model.js';

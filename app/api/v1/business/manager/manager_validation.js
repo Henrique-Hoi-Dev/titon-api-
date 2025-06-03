@@ -108,10 +108,19 @@ export default {
     },
     getAllCredit: {
         query: Joi.object({
+            driver_id: Joi.number().integer(),
             page: Joi.number(),
             limit: Joi.number(),
             sort_order: Joi.string(),
             sort_field: Joi.string()
+        })
+    },
+    createCredit: {
+        body: Joi.object({
+            description: Joi.string(),
+            driver_id: Joi.number().integer(),
+            type_method: Joi.string().valid('CREDIT', 'DEBIT'),
+            value: Joi.number()
         })
     },
     getIdCredit: {

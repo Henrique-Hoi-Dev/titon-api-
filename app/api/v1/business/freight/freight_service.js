@@ -219,61 +219,59 @@ class FreightService extends BaseService {
         );
 
         return {
-            dataResult: {
-                status: freight.status,
-                freightTotal: totalFreight,
-                totalDriver: totalDriver,
-                fuelValueTotal: totalAmountSpent,
-                totalNetFreight: totalNetFreight,
-                expenses: 0,
-                totalLiters: totalLiters,
-                driverCommission: driver.percentage > 0 ? driver.percentage : driver.value_fix,
-                startCity: freight.start_freight_city,
-                finalCity: freight.final_freight_city,
-                restock: restock
-                    .sort((a, b) => new Date(b.registration_date) - new Date(a.registration_date))
-                    .map((res) => ({
-                        date: formatWithTimezone(res.registration_date, 'yyyy-MM-dd'),
-                        time: formatWithTimezone(res.registration_date, 'HH:mm'),
-                        local: res.city,
-                        liters_fuel: res.liters_fuel,
-                        value_fuel: this._formatRealValue(res.value_fuel / 100),
-                        payment: {
-                            flag: res.payment.flag,
-                            modo: res.payment.modo,
-                            value: this._formatRealValue(res.payment.value / 100),
-                            parcels: res.payment.parcels
-                        }
-                    })),
-                travelExpenses: travelExpenses
-                    .sort((a, b) => new Date(b.registration_date) - new Date(a.registration_date))
-                    .map((res) => ({
-                        date: formatWithTimezone(res.registration_date, 'yyyy-MM-dd'),
-                        time: formatWithTimezone(res.registration_date, 'HH:mm'),
-                        local: res.city,
-                        expenseDescription: res.expense_description,
-                        payment: {
-                            flag: res.payment.flag,
-                            modo: res.payment.modo,
-                            value: this._formatRealValue(res.payment.value / 100),
-                            parcels: res.payment.parcels
-                        }
-                    })),
-                depositMoney: depositMoney
-                    .sort((a, b) => new Date(b.registration_date) - new Date(a.registration_date))
-                    .map((res) => ({
-                        date: formatWithTimezone(res.registration_date, 'yyyy-MM-dd'),
-                        time: formatWithTimezone(res.registration_date, 'HH:mm'),
-                        local: res.local,
-                        typeBank: res.type_bank,
-                        payment: {
-                            flag: res.payment.flag,
-                            modo: res.payment.modo,
-                            value: this._formatRealValue(res.payment.value / 100),
-                            parcels: res.payment.parcels
-                        }
-                    }))
-            }
+            status: freight.status,
+            freightTotal: totalFreight,
+            totalDriver: totalDriver,
+            fuelValueTotal: totalAmountSpent,
+            totalNetFreight: totalNetFreight,
+            expenses: 0,
+            totalLiters: totalLiters,
+            driverCommission: driver.percentage > 0 ? driver.percentage : driver.value_fix,
+            startCity: freight.start_freight_city,
+            finalCity: freight.final_freight_city,
+            restock: restock
+                .sort((a, b) => new Date(b.registration_date) - new Date(a.registration_date))
+                .map((res) => ({
+                    date: formatWithTimezone(res.registration_date, 'yyyy-MM-dd'),
+                    time: formatWithTimezone(res.registration_date, 'HH:mm'),
+                    local: res.city,
+                    liters_fuel: res.liters_fuel,
+                    value_fuel: this._formatRealValue(res.value_fuel / 100),
+                    payment: {
+                        flag: res.payment.flag,
+                        modo: res.payment.modo,
+                        value: this._formatRealValue(res.payment.value / 100),
+                        parcels: res.payment.parcels
+                    }
+                })),
+            travelExpenses: travelExpenses
+                .sort((a, b) => new Date(b.registration_date) - new Date(a.registration_date))
+                .map((res) => ({
+                    date: formatWithTimezone(res.registration_date, 'yyyy-MM-dd'),
+                    time: formatWithTimezone(res.registration_date, 'HH:mm'),
+                    local: res.city,
+                    expenseDescription: res.expense_description,
+                    payment: {
+                        flag: res.payment.flag,
+                        modo: res.payment.modo,
+                        value: this._formatRealValue(res.payment.value / 100),
+                        parcels: res.payment.parcels
+                    }
+                })),
+            depositMoney: depositMoney
+                .sort((a, b) => new Date(b.registration_date) - new Date(a.registration_date))
+                .map((res) => ({
+                    date: formatWithTimezone(res.registration_date, 'yyyy-MM-dd'),
+                    time: formatWithTimezone(res.registration_date, 'HH:mm'),
+                    local: res.local,
+                    typeBank: res.type_bank,
+                    payment: {
+                        flag: res.payment.flag,
+                        modo: res.payment.modo,
+                        value: this._formatRealValue(res.payment.value / 100),
+                        parcels: res.payment.parcels
+                    }
+                }))
         };
     }
 
@@ -358,20 +356,18 @@ class FreightService extends BaseService {
         );
 
         return {
-            responseData: {
-                status: freight.status,
-                start_freight_city: freight.start_freight_city,
-                final_freight_city: freight.final_freight_city,
-                previous_average: `${freight.liter_of_fuel_per_km / 100} M`,
-                distance: kmTravel.distance.text,
-                consumption: `${totalLiters} L`,
-                KM_price: totalValuePerKm,
-                fuel_estimate: totalAmountSpent,
-                full_freight: totalFreight,
-                driver_commission: totalDriver,
-                net_freight: totalNetFreight,
-                leftover_liquid: totalleftoverLiquid
-            }
+            status: freight.status,
+            start_freight_city: freight.start_freight_city,
+            final_freight_city: freight.final_freight_city,
+            previous_average: `${freight.liter_of_fuel_per_km / 100} M`,
+            distance: kmTravel.distance.text,
+            consumption: `${totalLiters} L`,
+            KM_price: totalValuePerKm,
+            fuel_estimate: totalAmountSpent,
+            full_freight: totalFreight,
+            driver_commission: totalDriver,
+            net_freight: totalNetFreight,
+            leftover_liquid: totalleftoverLiquid
         };
     }
 

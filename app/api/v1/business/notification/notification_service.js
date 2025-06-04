@@ -215,7 +215,16 @@ class NotificationService extends BaseService {
 
         return await this._notificationModel
             .findByPk(id, {
-                attributes: ['id', 'content', 'read', 'freight_id', 'driver_id', 'user_id']
+                attributes: [
+                    'id',
+                    'content',
+                    'read',
+                    'freight_id',
+                    'driver_id',
+                    'user_id',
+                    'created_at',
+                    'financial_statements_id'
+                ]
             })
             .then((res) => res.toJSON());
     }

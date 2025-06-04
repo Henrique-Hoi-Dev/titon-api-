@@ -340,5 +340,11 @@ export default {
         params: Joi.object({
             id: Joi.string().required()
         })
+    },
+    getAllUserNotifications: {
+        query: Joi.object({
+            page: Joi.number(),
+            limit: Joi.number()
+        })
     }
 };

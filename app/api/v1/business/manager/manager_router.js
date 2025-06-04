@@ -288,6 +288,7 @@ router.get(
     middleware.ensureAuthorization,
     middleware.verifyManagerToken,
     verifyIfUserHasRole('MASTER'),
+    validator(validation.getAllUserNotifications),
     notificationController.getAllUserNotifications.bind(notificationController)
 );
 

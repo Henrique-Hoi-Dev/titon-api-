@@ -52,7 +52,10 @@ class NotificationController extends BaseResourceController {
 
     async getAllUserNotifications(req, res, next) {
         try {
-            const data = await this._notificationService.getAllUserNotifications(req.manager);
+            const data = await this._notificationService.getAllUserNotifications(
+                req.manager,
+                req.query
+            );
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

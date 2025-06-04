@@ -144,9 +144,11 @@ class NotificationService extends BaseService {
         return { msg: 'ACTIVATE RECEIVE PUSH NOTIFICATIONS SUCCESS' };
     }
 
-    async getAllUserNotifications(user) {
+    async getAllUserNotifications(user, query) {
+        const { page = 1, limit = 10 } = query;
+
         const checkIsMaster = await this._managerModel.findOne({
-            where: { id: user.id, type_role: 'MASTER' }
+            where: { id: user.id }
         });
 
         if (!checkIsMaster) {
@@ -155,23 +157,15 @@ class NotificationService extends BaseService {
             throw err;
         }
 
-        const notifications = await this._notificationModel.findAll({
-            where: { user_id: user.id, read: false },
-            order: [['created_at', 'DESC']],
-            attributes: [
-                'id',
-                'content',
-                'read',
-                'created_at',
-                'freight_id',
-                'driver_id',
-                'user_id',
-                'financial_statements_id'
-            ]
+        const totalItems = await this._notificationModel.count({
+            where: { user_id: user.id }
         });
 
-        const history = await this._notificationModel.findAll({
-            where: { user_id: user.id, read: true },
+        const totalPages = Math.ceil(totalItems / limit);
+        const offset = (page - 1) * limit;
+
+        const notifications = await this._notificationModel.findAll({
+            where: { user_id: user.id },
             order: [['created_at', 'DESC']],
             attributes: [
                 'id',
@@ -182,12 +176,16 @@ class NotificationService extends BaseService {
                 'driver_id',
                 'user_id',
                 'financial_statements_id'
-            ]
+            ],
+            limit: Number(limit),
+            offset: Number(offset)
         });
 
         return {
-            notifications: notifications.map((res) => res.toJSON()),
-            history: history.map((res) => res.toJSON())
+            docs: notifications.map((res) => res.toJSON()),
+            totalItems,
+            totalPages,
+            currentPage: Number(page)
         };
     }
 

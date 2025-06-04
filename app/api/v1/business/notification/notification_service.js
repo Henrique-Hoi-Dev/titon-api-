@@ -157,15 +157,25 @@ class NotificationService extends BaseService {
             throw err;
         }
 
+        const where = { user_id: user.id };
+
         const totalItems = await this._notificationModel.count({
-            where: { user_id: user.id }
+            where
+        });
+
+        // Conta total de mensagens não lidas
+        const totalUnread = await this._notificationModel.count({
+            where: {
+                ...where,
+                read: false
+            }
         });
 
         const totalPages = Math.ceil(totalItems / limit);
         const offset = (page - 1) * limit;
 
         const notifications = await this._notificationModel.findAll({
-            where: { user_id: user.id },
+            where,
             order: [['created_at', 'DESC']],
             attributes: [
                 'id',
@@ -185,7 +195,8 @@ class NotificationService extends BaseService {
             docs: notifications.map((res) => res.toJSON()),
             totalItems,
             totalPages,
-            currentPage: Number(page)
+            currentPage: Number(page),
+            totalUnread
         };
     }
 

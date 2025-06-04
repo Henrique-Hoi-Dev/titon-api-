@@ -124,7 +124,7 @@ router
         freightController.getDocuments.bind(freightController)
     )
     .get(
-        '/freight/:id/:financialId',
+        '/freight/:freightId/:financialId',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
         validator(validation.getIdFreight),

@@ -29,11 +29,7 @@ class FreightController extends BaseResourceController {
 
     async getId(req, res, next) {
         try {
-            const data = await this._freightService.getId(
-                req.params.id,
-                req.driver,
-                req.params.financialId
-            );
+            const data = await this._freightService.getId(req.params, req.driver);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

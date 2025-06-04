@@ -35,7 +35,7 @@ export default {
     },
     getIdFreight: {
         params: Joi.object({
-            id: Joi.number().required(),
+            freightId: Joi.number().required(),
             financialId: Joi.number().required()
         })
     },
@@ -49,12 +49,20 @@ export default {
     },
     createFreight: {
         body: Joi.object({
-            start_freight_city: Joi.string().required(),
-            final_freight_city: Joi.string().required(),
-            distance: Joi.string().required(),
-            duration: Joi.string().required(),
-            total_freight: Joi.number().required(),
-            total_freight_driver: Joi.number().required()
+            start_freight_city: Joi.string(),
+            final_freight_city: Joi.string(),
+            distance: Joi.string(),
+            duration: Joi.string(),
+            total_freight: Joi.number(),
+            total_freight_driver: Joi.number(),
+            status: Joi.string(),
+            truck_current_km: Joi.number(),
+            liter_of_fuel_per_km: Joi.number(),
+            preview_tonne: Joi.number(),
+            preview_value_diesel: Joi.number(),
+            value_tonne: Joi.number(),
+            tons_loaded: Joi.number(),
+            toll_value: Joi.number()
         })
     },
     uploadDocuments: {
@@ -71,10 +79,22 @@ export default {
             id: Joi.number().required()
         }),
         body: Joi.object({
-            start_freight_city: Joi.string().required(),
-            final_freight_city: Joi.string().required(),
-            distance: Joi.string().required(),
-            duration: Joi.string().required()
+            start_freight_city: Joi.string(),
+            final_freight_city: Joi.string(),
+            distance: Joi.string(),
+            duration: Joi.string(),
+            total_freight: Joi.number(),
+            total_freight_driver: Joi.number(),
+            location_of_the_truck: Joi.string(),
+            contractor: Joi.string(),
+            status: Joi.string(),
+            truck_current_km: Joi.number(),
+            liter_of_fuel_per_km: Joi.number(),
+            preview_tonne: Joi.number(),
+            preview_value_diesel: Joi.number(),
+            value_tonne: Joi.number(),
+            tons_loaded: Joi.number(),
+            toll_value: Joi.number()
         })
     },
     deleteFile: {

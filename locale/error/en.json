@@ -65,5 +65,6 @@
     "DEPOSIT_NOT_FOUND": "Deposit not found",
     "NEED_SOME_PAYMENT": "Need some payment",
     "TRIP_NOT_STARTED": "Trip not started",
-    "RESTOCK_NOT_FOUND": "Restock not found"
+    "RESTOCK_NOT_FOUND": "Restock not found",
+    "FINANCIAL_NOT_FOUND_NO_FREIGHT_ID_OR_FINANCIAL_ID": "Financial not found no freight id or financial id"
 }

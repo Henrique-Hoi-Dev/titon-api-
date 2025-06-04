@@ -45,6 +45,12 @@ module.exports = {
                 type: Sequelize.ENUM,
                 values: ['PENDING', 'APPROVED', 'STARTING_TRIP', 'DENIED', 'FINISHED']
             },
+            distance: {
+                type: Sequelize.STRING
+            },
+            duration: {
+                type: Sequelize.STRING
+            },
 
             // level two
             tons_loaded: {

@@ -44,12 +44,20 @@ class FinancialStatementService extends BaseService {
                 {
                     model: this._cartModel,
                     as: 'cart',
-                    attributes: ['cart_models', 'cart_board']
+                    attributes: ['cart_models', 'cart_board', 'image_cart']
                 },
                 {
                     model: this._driverModel,
                     as: 'driver',
-                    attributes: ['credit', 'commission', 'daily', 'value_fix', 'percentage']
+                    attributes: [
+                        'name',
+                        'email',
+                        'phone',
+                        'credit',
+                        'percentage',
+                        'daily',
+                        'value_fix'
+                    ]
                 }
             ]
         });

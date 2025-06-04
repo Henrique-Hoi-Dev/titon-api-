@@ -14,6 +14,8 @@ class Freight extends Model {
                 preview_tonne: Sequelize.INTEGER, // previa de tonelada
                 preview_value_diesel: Sequelize.INTEGER, // previa de valor de combustivel
                 value_tonne: Sequelize.INTEGER, // valor por tonelada
+                distance: Sequelize.STRING, // distância da rota
+                duration: Sequelize.STRING, // duração da rota
 
                 status: Sequelize.ENUM({
                     values: ['DRAFT', 'PENDING', 'APPROVED', 'STARTING_TRIP', 'DENIED', 'FINISHED'],

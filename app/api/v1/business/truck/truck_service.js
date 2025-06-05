@@ -284,11 +284,13 @@ class TruckService extends BaseService {
         }
 
         const isInUse = await this._financialStatementsModel.findAll({
-            truck_board: truck.truck_board,
-            status: true
+            where: {
+                truck_id: truck.id,
+                status: true
+            }
         });
 
-        if (isInUse) {
+        if (isInUse?.length > 0) {
             const err = new Error('CANNOT_DELETE_TRUCK_IN_USE');
             err.status = 400;
             throw err;

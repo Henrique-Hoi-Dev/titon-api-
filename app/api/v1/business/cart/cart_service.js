@@ -262,11 +262,13 @@ class CartService extends BaseService {
         }
 
         const isInUse = await this._financialStatementsModel.findAll({
-            cart_board: cart.cart_board,
-            status: true
+            where: {
+                cart_id: cart.id,
+                status: true
+            }
         });
 
-        if (isInUse) {
+        if (isInUse?.length > 0) {
             const err = new Error('CANNOT_DELETE_CART_IN_USE');
             err.status = 400;
             throw err;

@@ -42,7 +42,7 @@ class TruckService extends BaseService {
             throw err;
         }
 
-        await this._truckModel.create({
+        const truck = await this._truckModel.create({
             truck_models,
             truck_name_brand,
             truck_board,
@@ -53,7 +53,7 @@ class TruckService extends BaseService {
             truck_avatar
         });
 
-        return { msg: 'Truck created successfully' };
+        return truck.toJSON();
     }
 
     async uploadImage(payload, id) {

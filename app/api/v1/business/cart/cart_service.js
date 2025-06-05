@@ -30,9 +30,9 @@ class CartService extends BaseService {
             throw err;
         }
 
-        await this._cartModel.create(body);
+        const cart = await this._cartModel.create(body);
 
-        return { msg: 'Cart created successfully' };
+        return cart.toJSON();
     }
 
     async getAll(query) {

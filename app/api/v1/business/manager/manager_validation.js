@@ -308,7 +308,13 @@ export default {
             cart_board: Joi.string(),
             cart_color: Joi.string(),
             cart_km: Joi.number(),
-            cart_year: Joi.number()
+            cart_year: Joi.number(),
+            cart_models: Joi.string(),
+            cart_brand: Joi.string(),
+            cart_tara: Joi.string(),
+            cart_bodyworks: enumSchemas.cartBodyworks,
+            cart_liter_capacity: Joi.number(),
+            cart_ton_capacity: Joi.number()
         })
     },
     getIdCart: {

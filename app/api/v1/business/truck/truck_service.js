@@ -268,47 +268,8 @@ class TruckService extends BaseService {
     }
 
     async update(body, id) {
-        const {
-            truck_models,
-            truck_name_brand,
-            truck_color,
-            truck_km,
-            truck_year,
-            truck_chassis,
-            truck_board
-        } = body;
-
-        const chassisExist = await this._truckModel.findOne({
-            where: { truck_chassis: truck_chassis }
-        });
-        const boardExist = await this._truckModel.findOne({
-            where: { truck_board: truck_board }
-        });
-
-        if (chassisExist) {
-            const err = new Error('CHASSIS_TRUCK_ALREADY_EXISTS');
-            err.status = 400;
-            throw err;
-        }
-
-        if (boardExist) {
-            const err = new Error('BOARD_TRUCK_ALREADY_EXISTS');
-            err.status = 400;
-            throw err;
-        }
-
-        const data = {
-            truck_models,
-            truck_name_brand,
-            truck_color,
-            truck_km,
-            truck_year,
-            truck_chassis,
-            truck_board
-        };
-
         const truck = await this._truckModel.findByPk(id);
-        await truck.update(data);
+        await truck.update(body);
 
         return truck.toJSON();
     }

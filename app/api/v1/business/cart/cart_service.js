@@ -67,7 +67,8 @@ class CartService extends BaseService {
                 'cart_chassis',
                 'cart_liter_capacity',
                 'cart_ton_capacity',
-                'cart_board'
+                'cart_board',
+                'image_cart'
             ]
         });
         /* eslint-enable indent */

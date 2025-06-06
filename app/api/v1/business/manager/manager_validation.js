@@ -8,7 +8,9 @@ export default {
             name: Joi.string().required(),
             email: Joi.string().email().required(),
             password: Joi.string().required().min(8),
-            typeRole: Joi.string().required()
+            type_role: Joi.string(),
+            phone: Joi.string(),
+            cpf: Joi.string().replace(/\D/g, '').custom(validateCpf)
         })
     },
     signupDriver: {

@@ -16,14 +16,24 @@ module.exports = {
                 allowNull: false,
                 unique: true
             },
+            phone: {
+                type: Sequelize.STRING
+            },
+            cpf: {
+                type: Sequelize.STRING
+            },
+            gender: {
+                type: Sequelize.STRING
+            },
             type_role: {
                 type: Sequelize.ENUM,
                 values: ['MASTER', 'USER', 'MANAGER', 'DIRECTOR', 'COLLABORATOR'],
                 defaultValue: 'USER'
             },
-            img_receipt: {
+            avatar: {
                 type: Sequelize.JSONB,
-                allowNull: true
+                allowNull: true,
+                defaultValue: {}
             },
             permission_id: {
                 type: Sequelize.INTEGER,

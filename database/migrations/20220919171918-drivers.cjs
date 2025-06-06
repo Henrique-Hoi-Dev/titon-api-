@@ -25,7 +25,17 @@ module.exports = {
                 allowNull: false,
                 unique: true
             },
-
+            gender: {
+                type: Sequelize.STRING
+            },
+            birth_date: {
+                type: Sequelize.DATE
+            },
+            avatar: {
+                type: Sequelize.JSONB,
+                allowNull: true,
+                defaultValue: {}
+            },
             password_hash: {
                 type: Sequelize.STRING,
                 allowNull: false
@@ -94,6 +104,16 @@ module.exports = {
             daily: {
                 type: Sequelize.INTEGER,
                 defaultValue: 0
+            },
+            address: {
+                type: Sequelize.JSONB,
+                defaultValue: {
+                    street: Sequelize.STRING,
+                    number: Sequelize.STRING,
+                    complement: Sequelize.STRING,
+                    state: Sequelize.STRING,
+                    city: Sequelize.STRING
+                }
             },
             created_at: {
                 type: Sequelize.DATE,

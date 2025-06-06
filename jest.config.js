@@ -83,7 +83,9 @@ export default {
     // ],
 
     // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
-    // moduleNameMapper: {},
+    moduleNameMapper: {
+        '^(\\.{1,2}/.*)\\.js$': '$1'
+    },
 
     // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
     // modulePathIgnorePatterns: [],
@@ -146,8 +148,7 @@ export default {
     // testLocationInResults: false,
 
     // The glob patterns Jest uses to detect test files
-    // testMatch: ['**/tests/**/*.spec.js?(x)'],
-    testMatch: ['**/tests/unit/*.spec.js?(x)'],
+    testMatch: ['**/tests/**/*.spec.js?(x)'],
     // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
     // testPathIgnorePatterns: [
     //   "/node_modules/"
@@ -169,10 +170,12 @@ export default {
     // timers: "real",
 
     // A map from regular expressions to paths to transformers
-    transform: {},
+    transform: {
+        '^.+\\.js$': 'babel-jest'
+    },
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
-    transformIgnorePatterns: ['<rootDir>/node_modules/'],
+    transformIgnorePatterns: ['/node_modules/(?!(supertest)/)'],
 
     // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
     // unmockedModulePathPatterns: undefined,
@@ -185,6 +188,4 @@ export default {
 
     // Whether to use watchman for file crawling
     // watchman: true,
-
-    // extensionsToTreatAsEsm: ['.js'],
 };

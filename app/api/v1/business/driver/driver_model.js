@@ -16,6 +16,13 @@ class Driver extends Model {
                     type: Sequelize.STRING,
                     unique: true
                 },
+                avatar: {
+                    type: Sequelize.JSONB,
+                    allowNull: true,
+                    defaultValue: {}
+                },
+                gender: { type: Sequelize.STRING, defaultValue: null },
+                birth_date: { type: Sequelize.DATE, defaultValue: null },
                 password: Sequelize.VIRTUAL,
                 password_hash: Sequelize.STRING,
                 status: {
@@ -56,7 +63,19 @@ class Driver extends Model {
                 },
                 value_fix: { type: Sequelize.INTEGER, defaultValue: 0 },
                 percentage: { type: Sequelize.INTEGER, defaultValue: 0 },
-                daily: { type: Sequelize.INTEGER, defaultValue: 0 }
+                daily: { type: Sequelize.INTEGER, defaultValue: 0 },
+
+                // address
+                address: {
+                    type: Sequelize.JSONB,
+                    defaultValue: {
+                        street: Sequelize.STRING,
+                        number: Sequelize.STRING,
+                        complement: Sequelize.STRING,
+                        state: Sequelize.STRING,
+                        city: Sequelize.STRING
+                    }
+                }
             },
             {
                 sequelize,

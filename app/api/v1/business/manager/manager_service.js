@@ -48,7 +48,7 @@ class ManagerService extends BaseService {
     }
 
     async signup(body) {
-        let { email, name, password, typeRole } = body;
+        let { email, name, password, type_role } = body;
 
         const userExist = await this._managerModel.findOne({ where: { email: email } });
 
@@ -62,12 +62,12 @@ class ManagerService extends BaseService {
             name,
             email,
             password,
-            type_role: typeRole
+            type_role: type_role
         });
 
         const addPermissions = await this._permissionModel
             .findOne({
-                where: { role: typeRole }
+                where: { role: type_role }
             })
             .then((permission) => permission.toJSON());
 
@@ -80,13 +80,13 @@ class ManagerService extends BaseService {
             err.status = 404;
             throw err;
         }
-        const { type_role, id } = resultUser.toJSON();
+        const { id } = resultUser.toJSON();
 
         const userData = {
             id,
             name,
             email,
-            type_role
+            type_role: resultUser.dataValues.type_role
         };
         const token = this._generateToken(userData);
 

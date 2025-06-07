@@ -54,6 +54,11 @@ jobs:
               with:
                   node-version: ${{ env.NODE_VERSION }}
             - run: yarn install --frozen-lockfile
+            - name: Debug env
+              run: |
+                  echo "DB_PASSWORD is set? ${#DB_PASSWORD}"
+                  echo "DATABASE_URL_DB: $DATABASE_URL_DB"
+
             - run: yarn coverage
 
     check-code-quality:

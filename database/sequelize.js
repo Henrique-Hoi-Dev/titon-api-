@@ -4,15 +4,19 @@ import Models from './models/index.js';
 
 import { Sequelize } from 'sequelize';
 
+const isSSL = process.env.DB_SSL === 'true';
+
 const sequelize = new Sequelize(process.env.DATABASE_URL_DB, {
     dialect: 'postgres',
     logging: console.log,
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
-        }
-    },
+    dialectOptions: isSSL
+        ? {
+              ssl: {
+                  require: true,
+                  rejectUnauthorized: false
+              }
+          }
+        : {},
     define: {
         timestamps: true,
         underscored: true,

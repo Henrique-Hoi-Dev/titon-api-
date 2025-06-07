@@ -1,0 +1,112 @@
+name: CI/CD Pipeline
+
+on:
+    push:
+        branches:
+            - dev
+            - staging
+            - master
+    pull_request:
+        branches:
+            - dev
+
+env:
+    NODE_VERSION: 20
+    DB_USER: postgres
+    DB_PASSWORD: postgres
+    DB_NAME: test_db
+    DB_PORT: 5432
+    DB_HOST: localhost
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+            - run: npm ci
+            - run: npm run lint
+
+    style:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+            - run: npm install -g prettier
+            - run: npm run style:check
+
+    test:
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:20
+                env:
+                    POSTGRES_USER: ${{ env.DB_USER }}
+                    POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+                    POSTGRES_DB: ${{ env.DB_NAME }}
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+            - run: npm ci
+            - run: npm run coverage
+
+    build:
+        needs: [lint, style, test]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Login to Amazon ECR
+              uses: aws-actions/amazon-ecr-login@v1
+            - name: Build, Tag, Push
+              run: |
+                  docker build -t $DOCKER_IMAGE_NAME:${{ github.sha }} .
+                  docker tag $DOCKER_IMAGE_NAME:${{ github.sha }} $ECR_REGISTRY/$DOCKER_IMAGE_NAME:${{ github.sha }}
+                  docker push $ECR_REGISTRY/$DOCKER_IMAGE_NAME:${{ github.sha }}
+              env:
+                  DOCKER_IMAGE_NAME: your-app-name
+                  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+
+    # deploy-staging:
+    #     if: github.ref == 'refs/heads/staging'
+    #     needs: [build]
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: Configure AWS Credentials
+    #           uses: aws-actions/configure-aws-credentials@v2
+    #           with:
+    #               aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #               aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #               aws-region: us-east-1
+    #         - name: Deploy to EKS Staging
+    #           run: |
+    #               aws eks update-kubeconfig --region us-east-1 --name asics-eks-stg
+    #               kubectl apply -f deployment.yaml
+
+    # deploy-prod:
+    #     if: github.ref == 'refs/heads/master'
+    #     needs: [build]
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: Configure AWS Credentials
+    #           uses: aws-actions/configure-aws-credentials@v2
+    #           with:
+    #               aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #               aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #               aws-region: us-east-1
+    #         - name: Deploy to EKS Prod
+    #           run: |
+    #               aws eks update-kubeconfig --region us-east-1 --name asics-eks-prd
+    #               kubectl apply -f deployment.yaml

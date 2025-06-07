@@ -3,18 +3,20 @@ import bcrypt from 'bcryptjs';
 
 class Driver extends Model {
     static init(sequelize) {
-        super.init(
+        const driver = super.init(
             {
                 // info base
-                name: Sequelize.STRING,
-                phone: { type: Sequelize.STRING, unique: true },
+                name: { type: Sequelize.STRING, allowNull: false },
+                phone: { type: Sequelize.STRING, unique: true, allowNull: false },
                 email: {
                     type: Sequelize.STRING,
-                    unique: true
+                    unique: true,
+                    allowNull: false
                 },
                 cpf: {
                     type: Sequelize.STRING,
-                    unique: true
+                    unique: true,
+                    allowNull: false
                 },
                 avatar: {
                     type: Sequelize.JSONB,
@@ -24,7 +26,7 @@ class Driver extends Model {
                 gender: { type: Sequelize.STRING, defaultValue: null },
                 birth_date: { type: Sequelize.DATE, defaultValue: null },
                 password: Sequelize.VIRTUAL,
-                password_hash: Sequelize.STRING,
+                password_hash: { type: Sequelize.STRING, allowNull: false },
                 status: {
                     type: Sequelize.ENUM,
                     values: ['ACTIVE', 'INACTIVE', 'INCOMPLETE'],
@@ -52,14 +54,9 @@ class Driver extends Model {
                 // financial data
                 credit: { type: Sequelize.INTEGER, defaultValue: 0 },
                 transactions: {
-                    type: Sequelize.ARRAY(
-                        Sequelize.JSONB({
-                            typeTransactions: Sequelize.STRING,
-                            value: Sequelize.INTEGER,
-                            date: Sequelize.DATE
-                        })
-                    ),
-                    defaultValue: null
+                    type: Sequelize.JSONB,
+                    allowNull: false,
+                    defaultValue: []
                 },
                 value_fix: { type: Sequelize.INTEGER, defaultValue: 0 },
                 percentage: { type: Sequelize.INTEGER, defaultValue: 0 },
@@ -69,16 +66,17 @@ class Driver extends Model {
                 address: {
                     type: Sequelize.JSONB,
                     defaultValue: {
-                        street: Sequelize.STRING,
-                        number: Sequelize.STRING,
-                        complement: Sequelize.STRING,
-                        state: Sequelize.STRING,
-                        city: Sequelize.STRING
+                        street: '',
+                        number: '',
+                        complement: '',
+                        state: '',
+                        city: ''
                     }
                 }
             },
             {
                 sequelize,
+                modelName: 'Driver',
                 timestamps: true
             }
         );
@@ -89,7 +87,13 @@ class Driver extends Model {
             }
         });
 
-        return this;
+        this.addHook('beforeCreate', (driver) => {
+            if (!driver.transactions) {
+                driver.transactions = [];
+            }
+        });
+
+        return driver;
     }
 
     static associate(models) {
@@ -108,15 +112,22 @@ class Driver extends Model {
     }
 
     addTransaction(transaction) {
-        const transactions = this.transactions || [];
-        transactions.push(transaction);
-        this.transactions = transactions;
+        if (!Array.isArray(this.transactions)) {
+            this.transactions = [];
+        }
+
+        this.transactions.push(transaction);
     }
 
     removeTransaction(index) {
-        const transactions = this.transactions || [];
-        transactions.splice(index, 1);
-        this.transactions = transactions;
+        if (!Array.isArray(this.transactions)) {
+            this.transactions = [];
+            return;
+        }
+
+        if (index >= 0 && index < this.transactions.length) {
+            this.transactions.splice(index, 1);
+        }
     }
 }
 

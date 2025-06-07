@@ -1,5 +1,15 @@
 module.exports = {
-    up: (queryInterface, Sequelize) => {
+    up: async (queryInterface, Sequelize) => {
+        // Primeiro, cria o enum
+        await queryInterface.sequelize.query(`
+            DO $$ BEGIN
+                CREATE TYPE "public"."enum_Drivers_status" AS ENUM('ACTIVE', 'INACTIVE', 'INCOMPLETE');
+            EXCEPTION
+                WHEN duplicate_object THEN null;
+            END $$;
+        `);
+
+        // Depois, cria a tabela
         return queryInterface.createTable('drivers', {
             id: {
                 type: Sequelize.INTEGER,
@@ -18,7 +28,8 @@ module.exports = {
             },
             email: {
                 type: Sequelize.STRING,
-                unique: true
+                unique: true,
+                allowNull: false
             },
             cpf: {
                 type: Sequelize.STRING,
@@ -62,13 +73,13 @@ module.exports = {
                 type: Sequelize.DATE
             },
             status: {
-                type: Sequelize.ENUM,
-                values: ['ACTIVE', 'INACTIVE', 'INCOMPLETE'],
-                defaultValue: 'ACTIVE'
+                type: Sequelize.ENUM('ACTIVE', 'INACTIVE', 'INCOMPLETE'),
+                defaultValue: 'INCOMPLETE'
             },
             type_positions: {
                 type: Sequelize.STRING,
-                allowNull: false
+                allowNull: false,
+                defaultValue: 'COLLABORATOR'
             },
             permission_id: {
                 type: Sequelize.INTEGER
@@ -84,13 +95,8 @@ module.exports = {
                 defaultValue: 0
             },
             transactions: {
-                type: Sequelize.ARRAY({
-                    type: Sequelize.JSONB,
-                    defaultValue: {
-                        typeTransactions: Sequelize.STRING,
-                        value: Sequelize.INTEGER
-                    }
-                }),
+                type: Sequelize.JSONB,
+                allowNull: false,
                 defaultValue: []
             },
             value_fix: {
@@ -108,11 +114,11 @@ module.exports = {
             address: {
                 type: Sequelize.JSONB,
                 defaultValue: {
-                    street: Sequelize.STRING,
-                    number: Sequelize.STRING,
-                    complement: Sequelize.STRING,
-                    state: Sequelize.STRING,
-                    city: Sequelize.STRING
+                    street: '',
+                    number: '',
+                    complement: '',
+                    state: '',
+                    city: ''
                 }
             },
             created_at: {
@@ -126,7 +132,8 @@ module.exports = {
         });
     },
 
-    down: (queryInterface) => {
-        return queryInterface.dropTable('drivers');
+    down: async (queryInterface) => {
+        await queryInterface.dropTable('drivers');
+        // Não podemos remover o enum, então apenas deixamos ele existir
     }
 };

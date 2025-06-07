@@ -4,7 +4,7 @@ on:
     pull_request:
         branches: [staging, master]
     push:
-        branches: [staging, master]
+        branches: [staging, master, 'feat/**']
 
 env:
     NODE_VERSION: 20.12.2

@@ -14,6 +14,7 @@ const startServer = async () => {
         await database.sync();
 
         logger.info('✅ Database connected and models synced.');
+        logger.info('✅ NODE_ENV: ', process.env.NODE_ENV);
 
         // Evita subir o servidor nos testes
         if (process.env.NODE_ENV !== 'test') {

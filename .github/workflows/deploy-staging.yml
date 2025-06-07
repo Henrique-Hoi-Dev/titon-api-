@@ -1,12 +1,14 @@
 name: Deploy to Heroku (Staging)
 
 on:
-    push:
+    pull_request:
+        types: [closed]
         branches:
             - staging
 
 jobs:
     build-and-deploy:
+        if: github.event.pull_request.merged == true
         runs-on: ubuntu-latest
 
         steps:
@@ -28,11 +30,11 @@ jobs:
               run: yarn style:check
 
             - name: Run tests
-              run: yarn test
+              run: yarn coverage
 
             - name: Deploy to Heroku (Staging)
               uses: akhileshns/heroku-deploy@v3.12.12
               with:
                   heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-                  heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+                  heroku_app_name: ${{ secrets.HEROKU_APP_NAME_STAGING }}
                   heroku_email: ${{ secrets.HEROKU_EMAIL }}

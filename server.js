@@ -15,12 +15,19 @@ const startServer = async () => {
 
         logger.info('✅ Database connected and models synced.');
 
-        server = app.listen(PORT, () => {
-            logger.info(`🚀 App running at port ${PORT} on ${process.env.NODE_ENV}.`);
-        });
+        // Evita subir o servidor nos testes
+        if (process.env.NODE_ENV !== 'test') {
+            server = app.listen(PORT, () => {
+                logger.info(`🚀 App running at port ${PORT} on ${process.env.NODE_ENV}.`);
+            });
+        }
     } catch (error) {
         logger.error(`❌ Failed to connect to the database: ${error}`);
-        process.exit(1);
+
+        // Evita matar a pipeline se for ambiente de teste
+        if (process.env.NODE_ENV !== 'test') {
+            process.exit(1);
+        }
     }
 };
 

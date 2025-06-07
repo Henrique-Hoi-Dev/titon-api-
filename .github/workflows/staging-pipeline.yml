@@ -4,7 +4,25 @@ on:
     pull_request:
         branches: [staging, master]
     push:
-        branches: [staging, master, 'feat/**']
+        branches:
+            [
+                staging,
+                master,
+                'feat/**',
+                'fix/**',
+                'docs/**',
+                'refactor/**',
+                'test/**',
+                'chore/**',
+                'style/**',
+                'perf/**',
+                'build/**',
+                'ci/**',
+                'revert/**',
+                'release/**',
+                'hotfix/**',
+                'feature/**'
+            ]
 
 env:
     NODE_VERSION: 20.12.2

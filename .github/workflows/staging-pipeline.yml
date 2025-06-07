@@ -1,0 +1,95 @@
+name: CI/CD Staging
+
+on:
+    pull_request:
+        branches: [staging, master]
+    push:
+        branches: [staging, master]
+
+env:
+    NODE_VERSION: 20.12.2
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+            - run: yarn install --frozen-lockfile
+            - run: yarn lint
+
+    style:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+            - run: yarn install --frozen-lockfile
+            - run: yarn style:check
+
+    test:
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    POSTGRES_USER: ${{ secrets.DB_USER }}
+                    POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                    POSTGRES_DB: ${{ secrets.DB_NAME }}
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+        env:
+            DB_USER: ${{ secrets.DB_USER }}
+            DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+            DB_NAME: ${{ secrets.DB_NAME }}
+            DB_HOST: localhost
+            DB_PORT: 5432
+            DATABASE_URL_DB: postgres://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ secrets.DB_NAME }}
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+            - run: yarn install --frozen-lockfile
+            - name: Debug env
+              run: |
+                  echo "DB_PASSWORD is set? ${#DB_PASSWORD}"
+                  echo "DATABASE_URL_DB: $DATABASE_URL_DB"
+
+            - run: yarn coverage
+
+    check-code-quality:
+        runs-on: ubuntu-latest
+        needs: [lint, style, test]
+        steps:
+            - run: echo "✔️ Código validado com sucesso"
+
+    deploy:
+        needs: check-code-quality
+        if: github.event_name == 'push' && contains('refs/heads/staging,refs/heads/master', github.ref)
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+
+            - name: Deploy to Staging
+              run: |
+                  echo "🚀 Fazendo deploy para staging..."
+                  # Exemplo real:
+                  # yarn deploy:staging

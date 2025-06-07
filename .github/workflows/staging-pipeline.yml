@@ -4,7 +4,25 @@ on:
     pull_request:
         branches: [staging, master]
     push:
-        branches: [staging, master]
+        branches:
+            [
+                staging,
+                master,
+                'feat/**',
+                'fix/**',
+                'docs/**',
+                'refactor/**',
+                'test/**',
+                'chore/**',
+                'style/**',
+                'perf/**',
+                'build/**',
+                'ci/**',
+                'revert/**',
+                'release/**',
+                'hotfix/**',
+                'feature/**'
+            ]
 
 env:
     NODE_VERSION: 20.12.2
@@ -88,8 +106,9 @@ jobs:
             - name: Install dependencies
               run: yarn install --frozen-lockfile
 
-            - name: Deploy to Staging
-              run: |
-                  echo "🚀 Fazendo deploy para staging..."
-                  # Exemplo real:
-                  # yarn deploy:staging
+            - name: Deploy to Heroku (Staging)
+              uses: akhileshns/heroku-deploy@v3.12.12
+              with:
+                  heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+                  heroku_app_name: ${{ secrets.HEROKU_APP_NAME_STAGING }}
+                  heroku_email: ${{ secrets.HEROKU_EMAIL }}

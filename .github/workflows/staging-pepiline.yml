@@ -1,10 +1,10 @@
-name: CI/CD Pipeline
+name: CI/CD Staging
 
 on:
+    pull_request:
+        branches: [staging, master]
     push:
         branches: [staging, master]
-    pull_request:
-        branches: [staging]
 
 env:
     NODE_VERSION: 20.12.2
@@ -52,6 +52,8 @@ jobs:
                     --health-interval 10s
                     --health-timeout 5s
                     --health-retries 5
+        env:
+            DATABASE_URL_DB: postgres://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@localhost:${{ env.DB_PORT }}/test
         steps:
             - uses: actions/checkout@v3
             - uses: actions/setup-node@v3
@@ -59,3 +61,30 @@ jobs:
                   node-version: ${{ env.NODE_VERSION }}
             - run: yarn install --frozen-lockfile
             - run: yarn coverage
+
+    check-code-quality:
+        runs-on: ubuntu-latest
+        needs: [lint, style, test]
+        steps:
+            - run: echo "✔️ Código validado com sucesso"
+
+    deploy:
+        needs: check-code-quality
+        if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+
+            - name: Install dependencies
+              run: yarn install --frozen-lockfile
+
+            - name: Deploy to Staging
+              run: |
+                  echo "🚀 Fazendo deploy para staging..."
+                  # yarn deploy:staging ← substitua por seu comando real

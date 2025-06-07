@@ -106,8 +106,9 @@ jobs:
             - name: Install dependencies
               run: yarn install --frozen-lockfile
 
-            - name: Deploy to Staging
-              run: |
-                  echo "🚀 Fazendo deploy para staging..."
-                  # Exemplo real:
-                  # yarn deploy:staging
+            - name: Deploy to Heroku (Staging)
+              uses: akhileshns/heroku-deploy@v3.12.12
+              with:
+                  heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+                  heroku_app_name: ${{ secrets.HEROKU_APP_NAME_STAGING }}
+                  heroku_email: ${{ secrets.HEROKU_EMAIL }}

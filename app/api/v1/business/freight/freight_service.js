@@ -133,14 +133,14 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        await this._freightModel.create(body);
+        const result = await this._freightModel.create(body);
 
         await this._notificationModel.create({
             content: `${userFinancial.name}, Esta indicando um novo frete!`,
             driver_id: financial.driver_id
         });
 
-        return result.toJSON();
+        return result.toJSON() || {};
     }
 
     async getIdManagerFreight(freightId) {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import dotenv from 'dotenv';
 
 const bootstrap = (environment = process.env.NODE_ENV) => {

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import 'dotenv/config';
 import '../config/config.mjs';
 import Models from './models/index.js';
@@ -9,6 +10,7 @@ const isSSL = process.env.DB_SSL === 'true';
 const sequelize = new Sequelize(process.env.DATABASE_URL_DB, {
     dialect: 'postgres',
     logging: console.log,
+    /* eslint-disable indent */
     dialectOptions: isSSL
         ? {
               ssl: {
@@ -17,6 +19,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL_DB, {
               }
           }
         : {},
+    /* eslint-enable indent */
     define: {
         timestamps: true,
         underscored: true,

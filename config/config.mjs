@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import dotenv from 'dotenv';
 
 // Carrega o arquivo .env baseado no ambiente

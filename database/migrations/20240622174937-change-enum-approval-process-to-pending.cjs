@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-    async up(queryInterface, Sequelize) {
+    async up(queryInterface) {
         // Primeiro, altera o enum para incluir o novo valor
         await queryInterface.sequelize.query(`
             ALTER TYPE enum_freights_status ADD VALUE IF NOT EXISTS 'APPROVAL_PROCESS';
@@ -15,7 +15,7 @@ module.exports = {
         );
     },
 
-    async down(queryInterface, Sequelize) {
+    async down(queryInterface) {
         // Primeiro, atualiza os registros de volta
         await queryInterface.bulkUpdate(
             'freights',

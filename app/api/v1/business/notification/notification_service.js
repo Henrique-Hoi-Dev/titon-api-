@@ -41,8 +41,8 @@ class NotificationService extends BaseService {
             driver.player_id,
             driver.cpf
         );
+        // eslint-disable-next-line no-console
         console.log('🚀 ~ NotificationService ~ getAll ~ bindExternalUserId:', bindExternalUserId);
-        // }
 
         const sendToAllOneSignal = await this._oneSignalProvider.sendToUsers({
             title: body.title,

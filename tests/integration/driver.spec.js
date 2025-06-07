@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+import { describe, expect, it, beforeAll, beforeEach, afterEach, afterAll } from '@jest/globals';
 import { Sequelize } from 'sequelize';
 import Driver from '../../app/api/v1/business/driver/driver_model.js';
 import BaseService from '../../app/api/v1/base/base_service.js';

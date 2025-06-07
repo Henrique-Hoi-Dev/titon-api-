@@ -19,9 +19,6 @@ export default [
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: 'module',
-            experimental: {
-                importAssertions: true
-            },
             globals: {
                 ...globals.node,
                 ...globals.es2021

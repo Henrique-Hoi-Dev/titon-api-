@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import AWS from 'aws-sdk';
 import '../../../config/config.mjs';
 

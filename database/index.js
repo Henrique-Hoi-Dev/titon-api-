@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import 'dotenv/config';
 import Models from './models/index.js';
 import databaseConfig from '../config/config.cjs';

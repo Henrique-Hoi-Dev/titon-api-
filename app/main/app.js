@@ -88,7 +88,7 @@ app.use(helmet.hidePoweredBy());
 app.use((req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('X-Frame-Options', 'SAMEORIGIN');
-    res.set('Content-Security-Policy', "frame-ancestors 'none'");
+    res.set('Content-Security-Policy', 'frame-ancestors none');
 
     return next();
 });

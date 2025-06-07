@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import BaseIntegration from '../../api/v1/base/base_integration.js';
 
 class OneSignal extends BaseIntegration {

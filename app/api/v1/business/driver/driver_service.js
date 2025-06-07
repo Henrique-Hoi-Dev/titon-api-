@@ -107,7 +107,7 @@ class DriverService extends BaseService {
     }
 
     async update(id, body) {
-        const { oldPassword, cpf, ...updateData } = body;
+        const { oldPassword, ...updateData } = body;
 
         const driver = await this._driverModel.findByPk(id);
 
@@ -262,23 +262,19 @@ class DriverService extends BaseService {
     }
 
     async forgotPassword(body) {
-        try {
-            const { password, cpf } = body;
+        const { password, cpf } = body;
 
-            const driver = await this._driverModel.findOne({ where: { cpf } });
+        const driver = await this._driverModel.findOne({ where: { cpf } });
 
-            if (password && (await driver.checkPassword(password))) {
-                const err = new Error('NEW_PASSWORD_SAME_AS_OLD');
-                err.status = 400;
-                throw err;
-            }
-
-            await driver.update({ password });
-
-            return { msg: 'Password updated successfully' };
-        } catch (error) {
-            throw error;
+        if (password && (await driver.checkPassword(password))) {
+            const err = new Error('NEW_PASSWORD_SAME_AS_OLD');
+            err.status = 400;
+            throw err;
         }
+
+        await driver.update({ password });
+
+        return { msg: 'Password updated successfully' };
     }
 
     async create(body) {
@@ -428,7 +424,7 @@ class DriverService extends BaseService {
                 const driverData = driver.toJSON();
                 const activeFinancial = driverData.financialStatements?.[0];
 
-                const { financialStatements, ...driverInfo } = driverData;
+                const { ...driverInfo } = driverData;
 
                 return {
                     ...driverInfo,
@@ -492,7 +488,7 @@ class DriverService extends BaseService {
         const driverData = driver.toJSON();
         const activeFinancial = driverData.financialStatements?.[0];
 
-        const { financialStatements, ...driverInfo } = driverData;
+        const { ...driverInfo } = driverData;
 
         return {
             ...driverInfo,
@@ -510,6 +506,7 @@ class DriverService extends BaseService {
             throw err;
         }
 
+        // eslint-disable-next-line no-unused-vars
         const { cpf, phone, password, ...allowedUpdates } = body;
 
         await driver.update(allowedUpdates);

@@ -11,7 +11,7 @@ on:
             - dev
 
 env:
-    NODE_VERSION: 20
+    NODE_VERSION: 16
     DB_USER: postgres
     DB_PASSWORD: postgres
     DB_NAME: test_db
@@ -43,11 +43,11 @@ jobs:
         runs-on: ubuntu-latest
         services:
             postgres:
-                image: postgres:20
+                image: postgres:16
                 env:
                     POSTGRES_USER: ${{ env.DB_USER }}
                     POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-                    POSTGRES_DB: ${{ env.DB_NAME }}
+                    POSTGRES_DB: ${{ env.DB_DATABASE }}
                 ports:
                     - 5432:5432
                 options: >-

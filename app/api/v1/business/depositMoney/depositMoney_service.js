@@ -55,7 +55,7 @@ class DepositMoneyService extends BaseService {
                 financial_statements_id: financial.id
             });
 
-            const driverFind = await this._driverModel.findByPk(user.id);
+            const driverFind = await this._driverModel.findByPk(driver.id);
             driverFind.addTransaction({
                 value: result.value,
                 typeTransactions: result.type_transaction

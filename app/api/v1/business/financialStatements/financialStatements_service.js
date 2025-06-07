@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { isAfter, parseISO } from 'date-fns';
+import { isAfter } from 'date-fns';
 
 import FinancialStatement from './financialStatements_model.js';
 import BaseService from '../../base/base_service.js';

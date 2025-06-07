@@ -8,12 +8,6 @@ on:
 
 env:
     NODE_VERSION: 20.12.2
-    DATABASE_URL_DB: ${{ secrets.DATABASE_URL_DB }}
-    DB_USER: ${{ secrets.DB_USER }}
-    DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-    DB_NAME: ${{ secrets.DB_NAME }}
-    DB_PORT: ${{ secrets.DB_PORT }}
-    DB_HOST: ${{ secrets.DB_HOST }}
 
 jobs:
     lint:
@@ -42,9 +36,9 @@ jobs:
             postgres:
                 image: postgres:16
                 env:
-                    POSTGRES_USER: ${{ env.DB_USER }}
-                    POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-                    POSTGRES_DB: ${{ env.DB_NAME }}
+                    POSTGRES_USER: ${{ secrets.DB_USER }}
+                    POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                    POSTGRES_DB: ${{ secrets.DB_NAME }}
                 ports:
                     - 5432:5432
                 options: >-
@@ -53,7 +47,7 @@ jobs:
                     --health-timeout 5s
                     --health-retries 5
         env:
-            DATABASE_URL_DB: postgres://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@localhost:${{ env.DB_PORT }}/test
+            DATABASE_URL_DB: postgres://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@localhost:5432/${{ secrets.DB_NAME }}
         steps:
             - uses: actions/checkout@v3
             - uses: actions/setup-node@v3
@@ -70,7 +64,7 @@ jobs:
 
     deploy:
         needs: check-code-quality
-        if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+        if: github.event_name == 'push' && contains('refs/heads/staging,refs/heads/master', github.ref)
         runs-on: ubuntu-latest
         steps:
             - name: Checkout repo
@@ -87,4 +81,5 @@ jobs:
             - name: Deploy to Staging
               run: |
                   echo "🚀 Fazendo deploy para staging..."
-                  # yarn deploy:staging ← substitua por seu comando real
+                  # Exemplo real:
+                  # yarn deploy:staging

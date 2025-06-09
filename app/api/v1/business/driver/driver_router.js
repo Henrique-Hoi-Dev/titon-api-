@@ -261,18 +261,21 @@ router
         '/activate/push-receive-notifications',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.activatePushReceiveNotifications),
         notificationController.activatePushReceiveNotifications.bind(notificationController)
     )
     .get(
         '/notifications',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.getAllNotifications),
         notificationController.getAll.bind(notificationController)
     )
     .put(
         '/notifications/:id/read',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.updateReadNotification),
         notificationController.updateReadDriver.bind(notificationController)
     )
     .post(

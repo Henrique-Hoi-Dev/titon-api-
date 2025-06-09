@@ -251,5 +251,24 @@ export default {
         body: Joi.object({
             file: Joi.string().required()
         })
+    },
+    activatePushReceiveNotifications: {
+        body: Joi.object({
+            player_id: Joi.string().required(),
+            external_user_id: Joi.string().required()
+        })
+    },
+    getAllNotifications: {
+        query: Joi.object({
+            page: Joi.number().optional(),
+            limit: Joi.number().optional(),
+            sort_order: Joi.string().optional(),
+            sort_field: Joi.string().optional()
+        })
+    },
+    updateReadNotification: {
+        params: Joi.object({
+            id: Joi.number().required()
+        })
     }
 };

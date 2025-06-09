@@ -136,7 +136,8 @@ class NotificationService extends BaseService {
         }
 
         const data = {
-            player_id: body.player_id
+            player_id: body.player_id,
+            external_user_id: body.external_user_id
         };
 
         await driverData.update(data);

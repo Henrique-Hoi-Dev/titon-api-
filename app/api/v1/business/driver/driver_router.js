@@ -34,15 +34,15 @@ router.post(
     driverController.signin.bind(driverController)
 );
 
-//Code Request and Validation
+//Code Request and Validation Forgot Password
 router
     .post(
-        '/code-request',
-        validator(validation.requestCodeValidation),
-        driverController.requestCodeValidation.bind(driverController)
+        '/code-request-forgot-password',
+        validator(validation.requestCodeValidationForgotPassword),
+        driverController.requestCodeValidationForgotPassword.bind(driverController)
     )
     .post(
-        '/code-validation',
+        '/code-validation-forgot-password',
         validator(validation.validCodeForgotPassword),
         driverController.validCodeForgotPassword.bind(driverController)
     );
@@ -61,6 +61,19 @@ router
         middleware.verifyDriverToken,
         validator(validation.update),
         driverController.update.bind(driverController)
+    )
+    .get(
+        '/avatar',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        driverController.getIdAvatar.bind(driverController)
+    )
+    .patch(
+        '/avatar/upload-image',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
+        upload.single('file'),
+        driverController.uploadImage.bind(driverController)
     )
     .put(
         '/forgot-password',

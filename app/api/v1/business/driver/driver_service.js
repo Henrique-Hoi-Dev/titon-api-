@@ -8,8 +8,11 @@ import validateCpf from '../../../../utils/validateCpf.js';
 
 import { createExpirationDateFromNow } from '../../../../utils/date.js';
 import { Op, literal } from 'sequelize';
-import { generateDriverToken } from '../../../../utils/jwt.js';
-import { sendSMS } from '../../../../providers/aws/index.js';
+import {
+    generateDriverToken,
+    generateDriverRequestCodeForgotPassword
+} from '../../../../utils/jwt.js';
+import { getFile, sendFilePublic, sendSMS } from '../../../../providers/aws/index.js';
 import { generateRandomCode } from '../../../../utils/crypto.js';
 
 class DriverService extends BaseService {
@@ -93,7 +96,8 @@ class DriverService extends BaseService {
                 'credit',
                 'value_fix',
                 'percentage',
-                'daily'
+                'daily',
+                'avatar'
             ]
         });
 
@@ -128,11 +132,12 @@ class DriverService extends BaseService {
         return await this._driverModel.findByPk(id);
     }
 
-    async requestCodeValidation({ phone }) {
+    async requestCodeValidationForgotPassword({ phone, cpf }) {
         try {
             const user = await this._driverModel.findOne({
                 where: {
-                    phone: phone
+                    phone: phone,
+                    cpf: cpf
                 }
             });
 
@@ -177,7 +182,9 @@ class DriverService extends BaseService {
             resultSendSMS.cpf = user.cpf;
             resultSendSMS.code = verificationCode;
 
-            return { token: generateDriverToken(resultSendSMS) };
+            return {
+                token: generateDriverRequestCodeForgotPassword(resultSendSMS)
+            };
         } catch (error) {
             if (['CELL_PHONE_DOES_NOT_EXIST', 'ERROR_SENDING_CODE'].includes(error.message)) {
                 throw new Error(`${error.message}`);
@@ -249,7 +256,7 @@ class DriverService extends BaseService {
 
         if (upValidOk) {
             return {
-                token: generateDriverToken({
+                token: generateDriverRequestCodeForgotPassword({
                     valid,
                     name: driver.name,
                     phone: driver.phone,
@@ -307,7 +314,8 @@ class DriverService extends BaseService {
             type_position: 'COLLABORATOR',
             value_fix: body?.value_fix,
             percentage: body?.percentage,
-            daily: body?.daily
+            daily: body?.daily,
+            address: body?.address
         };
 
         await this._driverModel.create(data);
@@ -376,47 +384,70 @@ class DriverService extends BaseService {
         const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
 
         const where = {};
-        // if (id) where.id = id;
+        /* eslint-disable indent */
+        const financialStatementInclude = {
+            model: this._financialStatementsModel,
+            as: 'financialStatements',
+            where: { status: true },
+            required: false,
+            include: [
+                {
+                    model: this._truckModel,
+                    as: 'truck',
+                    attributes: ['truck_models', 'truck_board'],
+                    where: search
+                        ? {
+                              truck_board: {
+                                  [Op.iLike]: `%${search}%`
+                              }
+                          }
+                        : undefined,
+                    required: search ? true : false
+                },
+                {
+                    model: this._cartModel,
+                    as: 'cart',
+                    attributes: ['cart_models', 'cart_board'],
+                    where: search
+                        ? {
+                              cart_board: {
+                                  [Op.iLike]: `%${search}%`
+                              }
+                          }
+                        : undefined,
+                    required: search ? true : false
+                }
+            ]
+        };
+
         /* eslint-disable indent */
         const drivers = await this._driverModel.findAll({
             where: search
                 ? {
-                      [Op.or]: [
-                          // { id: search },
-                          { truck: { [Op.iLike]: `%${search}%` } },
-                          { name: { [Op.iLike]: `%${search}%` } }
-                      ]
+                      name: {
+                          [Op.iLike]: `%${search}%`
+                      }
                   }
                 : where,
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0,
-            attributes: ['id', 'name', 'cpf', 'credit', 'value_fix', 'percentage', 'daily'],
-            include: [
-                {
-                    model: this._financialStatementsModel,
-                    as: 'financialStatements',
-                    where: { status: true },
-                    required: false,
-                    include: [
-                        {
-                            model: this._truckModel,
-                            as: 'truck',
-                            attributes: ['truck_models', 'truck_board']
-                        },
-                        {
-                            model: this._cartModel,
-                            as: 'cart',
-                            attributes: ['cart_models', 'cart_board']
-                        }
-                    ]
-                }
-            ]
+            attributes: [
+                'id',
+                'name',
+                'cpf',
+                'credit',
+                'value_fix',
+                'percentage',
+                'daily',
+                'avatar',
+                'address'
+            ],
+            include: [financialStatementInclude]
         });
 
         const total = await this._driverModel.count();
         const totalPages = Math.ceil(total / limit);
-
         const currentPage = Number(page);
 
         return {
@@ -455,7 +486,9 @@ class DriverService extends BaseService {
                 'value_fix',
                 'percentage',
                 'daily',
-                'transactions'
+                'transactions',
+                'avatar',
+                'address'
             ],
             include: [
                 {
@@ -495,6 +528,107 @@ class DriverService extends BaseService {
             truck: activeFinancial?.truck || {},
             cart: activeFinancial?.cart || {}
         };
+    }
+
+    async uploadImage(id, payload) {
+        const { file, body } = payload;
+
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
+        const driver = await this._driverModel.findByPk(id);
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (driver.avatar && driver.avatar.uuid) {
+            await this.deleteFile({ id });
+        }
+
+        if (!body.category) {
+            const err = new Error('CATEGORY_OR_TYPE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
+        const originalFilename = file.originalname;
+
+        const code = generateRandomCode(9);
+
+        file.name = code;
+
+        await sendFilePublic(payload);
+
+        const infoDriver = await driver.update({
+            avatar: {
+                uuid: file.name,
+                name: originalFilename,
+                mimetype: file.mimetype,
+                category: body.category
+            }
+        });
+
+        return infoDriver.toJSON();
+    }
+
+    async deleteFile({ id }) {
+        const driver = await this._driverModel.findByPk(id);
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        try {
+            await this._deleteFileIntegration({
+                filename: driver.avatar.uuid,
+                category: driver.avatar.category
+            });
+
+            const infoDriver = await driver.update({
+                avatar: {}
+            });
+
+            return infoDriver;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    async _deleteFileIntegration({ filename, category }) {
+        try {
+            return await this.deleteFile({ filename, category });
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    async getIdAvatar(id) {
+        const driver = await this._driverModel.findByPk(id, {
+            attributes: ['avatar']
+        });
+
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        const { Body, ContentType } = await getFile({
+            filename: driver.avatar.uuid,
+            category: driver.avatar.category
+        });
+
+        return { contentType: ContentType, fileData: Body };
     }
 
     async updateManagerDriver(body, id) {

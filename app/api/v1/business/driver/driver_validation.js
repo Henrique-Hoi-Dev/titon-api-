@@ -22,15 +22,26 @@ export default {
             date_birthday: Joi.date()
         })
     },
-    requestCodeValidation: {
+    getIdAvatar: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    uploadImage: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    requestCodeValidationForgotPassword: {
         body: Joi.object({
-            phone: Joi.string().required()
+            phone: Joi.string().required(),
+            cpf: Joi.string().replace(/\D/g, '').custom(validateCpf).required()
         })
     },
     validCodeForgotPassword: {
         body: Joi.object({
             code: Joi.string().required(),
-            cpf: Joi.string().required()
+            cpf: Joi.string().replace(/\D/g, '').custom(validateCpf).required()
         })
     },
     getIdFreight: {

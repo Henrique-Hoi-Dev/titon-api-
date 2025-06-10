@@ -40,6 +40,26 @@ const generateDriverToken = (payload = {}) => {
     return token;
 };
 
+const generateDriverRequestCodeForgotPassword = (payload = {}) => {
+    if (!process.env.DRIVER_REQUEST_CODE_FORGOT_PASSWORD_SECRET) {
+        const error = new Error('DRIVER_REQUEST_CODE_FORGOT_PASSWORD_SECRET_NOT_FOUND');
+        error.status = 401;
+        throw error;
+    }
+
+    if (!process.env.DRIVER_REQUEST_CODE_FORGOT_PASSWORD_EXPIRES_IN) {
+        const error = new Error('DRIVER_REQUEST_CODE_FORGOT_PASSWORD_EXPIRES_IN_NOT_FOUND');
+        error.status = 401;
+        throw error;
+    }
+
+    const token = jwt.sign(payload, process.env.DRIVER_REQUEST_CODE_FORGOT_PASSWORD_SECRET, {
+        expiresIn: process.env.DRIVER_REQUEST_CODE_FORGOT_PASSWORD_EXPIRES_IN
+    });
+
+    return token;
+};
+
 const verifyManagerTokenApi = (token = '') => {
     token = token.replace('Bearer ', '');
 
@@ -76,4 +96,10 @@ const verifyDriverTokenApi = (token = '') => {
     return jwt.verify(token, process.env.DRIVER_JWT_SECRET);
 };
 
-export { generateManagerToken, generateDriverToken, verifyManagerTokenApi, verifyDriverTokenApi };
+export {
+    generateManagerToken,
+    generateDriverToken,
+    verifyManagerTokenApi,
+    verifyDriverTokenApi,
+    generateDriverRequestCodeForgotPassword
+};

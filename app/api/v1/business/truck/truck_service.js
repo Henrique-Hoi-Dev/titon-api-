@@ -189,24 +189,14 @@ class TruckService extends BaseService {
     }
 
     async getAll(query) {
-        const {
-            page = 1,
-            limit = 100,
-            sort_order = 'ASC',
-            sort_field = 'id',
-            // truck_models,
-            // id,
-            search
-        } = query;
+        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id', search } = query;
 
         const where = {};
-        // if (id) where.id = id;
         /* eslint-disable indent */
         const trucks = await this._truckModel.findAll({
             where: search
                 ? {
                       [Op.or]: [
-                          // { id: search },
                           { truck_name_brand: { [Op.iLike]: `%${search}%` } },
                           { truck_year: { [Op.iLike]: `%${search}%` } },
                           { truck_color: { [Op.iLike]: `%${search}%` } },

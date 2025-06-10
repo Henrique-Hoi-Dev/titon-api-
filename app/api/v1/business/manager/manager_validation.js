@@ -55,6 +55,16 @@ export default {
             id: Joi.string()
         })
     },
+    getIdUser: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    uploadImageUser: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
     delete: {
         params: Joi.object({
             id: Joi.string().required()

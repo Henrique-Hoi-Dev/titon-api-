@@ -267,14 +267,7 @@ class FinancialStatementService extends BaseService {
 
         /* eslint-disable indent */
         const financialStatements = await this._financialStatementModel.findAll({
-            where: search
-                ? {
-                      [Op.or]: [
-                          { truck_board: { [Op.iLike]: `%${search}%` } },
-                          { driver_name: { [Op.iLike]: `%${search}%` } }
-                      ]
-                  }
-                : where,
+            where: search ? {} : where,
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0,
@@ -282,7 +275,15 @@ class FinancialStatementService extends BaseService {
                 {
                     model: this._driverModel,
                     as: 'driver',
-                    attributes: ['name', 'email', 'credit', 'value_fix', 'percentage', 'daily']
+                    attributes: ['name', 'email', 'credit', 'value_fix', 'percentage', 'daily'],
+                    where: search
+                        ? {
+                              name: {
+                                  [Op.iLike]: `%${search}%`
+                              }
+                          }
+                        : undefined,
+                    required: search ? true : false
                 },
                 {
                     model: this._freightModel,
@@ -292,7 +293,15 @@ class FinancialStatementService extends BaseService {
                 {
                     model: this._truckModel,
                     as: 'truck',
-                    attributes: ['truck_models', 'truck_board', 'image_truck']
+                    attributes: ['truck_models', 'truck_board', 'image_truck'],
+                    where: search
+                        ? {
+                              truck_board: {
+                                  [Op.iLike]: `%${search}%`
+                              }
+                          }
+                        : undefined,
+                    required: search ? true : false
                 },
                 {
                     model: this._cartModel,

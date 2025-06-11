@@ -66,5 +66,7 @@
     "NEED_SOME_PAYMENT": "Need some payment",
     "TRIP_NOT_STARTED": "Trip not started",
     "RESTOCK_NOT_FOUND": "Restock not found",
-    "FINANCIAL_NOT_FOUND_NO_FREIGHT_ID_OR_FINANCIAL_ID": "Financial not found no freight id or financial id"
+    "FINANCIAL_NOT_FOUND_NO_FREIGHT_ID_OR_FINANCIAL_ID": "Financial not found no freight id or financial id",
+    "DRIVER_REQUEST_CODE_FORGOT_PASSWORD_SECRET_NOT_FOUND": "Driver request code forgot password secret not found",
+    "DRIVER_REQUEST_CODE_FORGOT_PASSWORD_EXPIRES_IN_NOT_FOUND": "Driver request code forgot password expires in not found"
 }

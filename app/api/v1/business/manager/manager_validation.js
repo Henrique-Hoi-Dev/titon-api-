@@ -18,6 +18,8 @@ export default {
             name: Joi.string().required(),
             cpf: Joi.string().replace(/\D/g, '').custom(validateCpf).required(),
             email: Joi.string().email(),
+            gender: Joi.string().valid('MALE', 'FEMALE', 'OTHER'),
+            birth_date: Joi.date(),
             phone: Joi.string().required(),
             password: Joi.string().required().min(8),
             daily: Joi.number().required(),
@@ -53,6 +55,16 @@ export default {
             sort_field: Joi.string(),
             name: Joi.string(),
             id: Joi.string()
+        })
+    },
+    getIdUser: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    uploadImageUser: {
+        params: Joi.object({
+            id: Joi.string().required()
         })
     },
     delete: {

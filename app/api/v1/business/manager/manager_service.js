@@ -3,6 +3,8 @@ import BaseService from '../../base/base_service.js';
 import Permission from '../permission/permission_model.js';
 import { generateManagerToken } from '../../../../utils/jwt.js';
 import { Op } from 'sequelize';
+import { getFile, sendFilePublic } from '../../../../providers/aws/index.js';
+import { generateRandomCode } from '../../../../utils/crypto.js';
 
 class ManagerService extends BaseService {
     constructor() {
@@ -28,7 +30,7 @@ class ManagerService extends BaseService {
             throw error;
         }
 
-        const { permission_id, name, type_role, id } = user.toJSON();
+        const { permission_id, name, type_role, id, avatar, phone, cpf, gender } = user.toJSON();
 
         const permissions = await Permission.findByPk(permission_id, {
             attributes: ['role', 'actions']
@@ -39,7 +41,11 @@ class ManagerService extends BaseService {
             name,
             email,
             type_role,
-            permissions: permissions.toJSON()
+            permissions: permissions.toJSON(),
+            avatar,
+            phone,
+            cpf,
+            gender
         };
 
         const token = this._generateToken(userData);
@@ -105,7 +111,7 @@ class ManagerService extends BaseService {
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0,
-            attributes: ['id', 'name', 'email', 'type_role'],
+            attributes: ['id', 'name', 'email', 'type_role', 'avatar', 'phone', 'cpf', 'gender'],
             include: [
                 {
                     model: this._permissionModel,
@@ -134,7 +140,7 @@ class ManagerService extends BaseService {
 
     async getId(id) {
         const user = await this._managerModel.findByPk(id, {
-            attributes: ['id', 'name', 'email', 'type_role'],
+            attributes: ['id', 'name', 'email', 'type_role', 'avatar', 'phone', 'cpf', 'gender'],
             include: [
                 {
                     model: this._permissionModel,
@@ -156,6 +162,107 @@ class ManagerService extends BaseService {
         };
 
         return userResult;
+    }
+
+    async uploadImage(payload, id) {
+        const { file, body } = payload;
+
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
+        const user = await this._managerModel.findByPk(id);
+        if (!user) {
+            const err = new Error('USER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (user.avatar && user.avatar.uuid) {
+            await this.deleteFile({ id });
+        }
+
+        if (!body.category) {
+            const err = new Error('CATEGORY_OR_TYPE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
+        const originalFilename = file.originalname;
+
+        const code = generateRandomCode(9);
+
+        file.name = code;
+
+        await sendFilePublic(payload);
+
+        const infoUser = await user.update({
+            avatar: {
+                uuid: file.name,
+                name: originalFilename,
+                mimetype: file.mimetype,
+                category: body.category
+            }
+        });
+
+        return infoUser.toJSON();
+    }
+
+    async deleteFile({ id }) {
+        const user = await this._managerModel.findByPk(id);
+        if (!user) {
+            const err = new Error('USER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        try {
+            await this._deleteFileIntegration({
+                filename: user.avatar.uuid,
+                category: user.avatar.category
+            });
+
+            const infoUser = await user.update({
+                avatar: {}
+            });
+
+            return infoUser;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    async _deleteFileIntegration({ filename, category }) {
+        try {
+            return await this.deleteFile({ filename, category });
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    async getIdAvatar(id) {
+        const user = await this._managerModel.findByPk(id, {
+            attributes: ['image_truck']
+        });
+
+        if (!user) {
+            const err = new Error('USER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        const { Body, ContentType } = await getFile({
+            filename: user.avatar.uuid,
+            category: user.avatar.category
+        });
+
+        return { contentType: ContentType, fileData: Body };
     }
 
     async update(body, id) {

@@ -36,16 +36,14 @@ class CartService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
+        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id', search } = query;
 
         const where = {};
-        // if (id) where.id = id;
         /* eslint-disable indent */
         const carts = await this._cartModel.findAll({
             where: search
                 ? {
                       [Op.or]: [
-                          // { id: search },
                           { cart_color: { [Op.iLike]: `%${search}%` } },
                           { cart_models: { [Op.iLike]: `%${search}%` } },
                           { cart_year: { [Op.iLike]: `%${search}%` } },

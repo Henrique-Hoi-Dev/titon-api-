@@ -75,6 +75,21 @@ router
         validator(validation.getAll),
         managerController.getAll.bind(managerController)
     )
+    .get(
+        '/user/:id/avatar',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        validator(validation.getIdUser),
+        managerController.getIdAvatar.bind(managerController)
+    )
+    .patch(
+        '/user/upload-image/:id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        upload.single('file'),
+        validator(validation.uploadImageUser),
+        managerController.uploadImage.bind(managerController)
+    )
     .delete(
         '/user/:id',
         middleware.ensureAuthorization,

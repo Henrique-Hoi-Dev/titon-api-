@@ -21,17 +21,13 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 });
 
 // Inicializa os modelos
-Models.forEach((model) => {
-    if (model.initModel) {
-        model.initModel(sequelize);
-    }
-});
+for (const model of Object.values(Models)) {
+    if (model.init) model.init(sequelize);
+}
 
 // Associa os modelos
-Models.forEach((model) => {
-    if (model.associate) {
-        model.associate(sequelize.models);
-    }
-});
+for (const model of Object.values(Models)) {
+    if (model.associate) model.associate(sequelize.models);
+}
 
 export default sequelize;

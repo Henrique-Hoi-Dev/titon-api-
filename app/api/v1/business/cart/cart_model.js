@@ -12,7 +12,7 @@ class Cart extends Model {
                     values: ['TANK', 'BULKCARRIER', 'SIDER', 'CHEST', 'BUCKET']
                 }),
                 cart_year: Sequelize.STRING,
-                cart_chassis: Sequelize.DOUBLE,
+                cart_chassis: Sequelize.STRING,
                 cart_liter_capacity: Sequelize.DOUBLE,
                 cart_ton_capacity: Sequelize.DOUBLE,
                 cart_board: Sequelize.STRING,

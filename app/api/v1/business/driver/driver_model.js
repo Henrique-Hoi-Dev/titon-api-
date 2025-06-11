@@ -1,69 +1,57 @@
-import Sequelize, { Model } from 'sequelize';
+import { Model, DataTypes } from 'sequelize';
 import bcrypt from 'bcryptjs';
 
 class Driver extends Model {
     static init(sequelize) {
-        const driver = super.init(
+        super.init(
             {
-                // info base
-                name: { type: Sequelize.STRING, allowNull: false },
-                phone: { type: Sequelize.STRING, unique: true, allowNull: false },
-                email: {
-                    type: Sequelize.STRING,
-                    unique: true,
-                    allowNull: false
-                },
-                cpf: {
-                    type: Sequelize.STRING,
-                    unique: true,
-                    allowNull: false
-                },
-                avatar: {
-                    type: Sequelize.JSONB,
-                    allowNull: true,
-                    defaultValue: {}
-                },
-                gender: { type: Sequelize.STRING, defaultValue: null },
-                password: Sequelize.VIRTUAL,
-                password_hash: { type: Sequelize.STRING, allowNull: false },
+                // Informações básicas
+                name: { type: DataTypes.STRING, allowNull: false },
+                phone: { type: DataTypes.STRING, allowNull: false, unique: true },
+                email: { type: DataTypes.STRING, allowNull: false, unique: true },
+                cpf: { type: DataTypes.STRING, allowNull: false, unique: true },
+                avatar: { type: DataTypes.JSONB, allowNull: true, defaultValue: {} },
+                gender: { type: DataTypes.STRING, defaultValue: null },
+                date_birthday: { type: DataTypes.DATE, allowNull: true },
+
+                password: DataTypes.VIRTUAL,
+                password_hash: DataTypes.STRING,
+
                 status: {
-                    type: Sequelize.ENUM,
-                    values: ['ACTIVE', 'INACTIVE', 'INCOMPLETE'],
+                    type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'INCOMPLETE'),
                     defaultValue: 'INCOMPLETE'
                 },
                 type_positions: {
-                    type: Sequelize.STRING,
+                    type: DataTypes.STRING,
                     defaultValue: 'COLLABORATOR'
                 },
-                permission_id: Sequelize.INTEGER,
+                permission_id: DataTypes.INTEGER,
 
-                // notification ids
-                external_user_id: Sequelize.STRING,
-                player_id: Sequelize.STRING,
+                // Notificações push
+                external_user_id: DataTypes.STRING,
+                player_id: DataTypes.STRING,
 
-                // driver personal data
-                number_cnh: Sequelize.STRING,
-                valid_cnh: Sequelize.DATE,
-                date_valid_mopp: Sequelize.DATE,
-                date_valid_nr20: Sequelize.DATE,
-                date_valid_nr35: Sequelize.DATE,
-                date_admission: Sequelize.DATE,
-                date_birthday: Sequelize.DATE,
+                // CNH e datas
+                number_cnh: DataTypes.STRING,
+                valid_cnh: DataTypes.DATE,
+                date_valid_mopp: DataTypes.DATE,
+                date_valid_nr20: DataTypes.DATE,
+                date_valid_nr35: DataTypes.DATE,
+                date_admission: DataTypes.DATE,
 
-                // financial data
-                credit: { type: Sequelize.INTEGER, defaultValue: 0 },
+                // Financeiro
+                credit: { type: DataTypes.INTEGER, defaultValue: 0 },
                 transactions: {
-                    type: Sequelize.JSONB,
-                    allowNull: false,
+                    type: DataTypes.JSONB,
                     defaultValue: []
                 },
-                value_fix: { type: Sequelize.INTEGER, defaultValue: 0 },
-                percentage: { type: Sequelize.INTEGER, defaultValue: 0 },
-                daily: { type: Sequelize.INTEGER, defaultValue: 0 },
+                value_fix: { type: DataTypes.INTEGER, defaultValue: 0 },
+                percentage: { type: DataTypes.INTEGER, defaultValue: 0 },
+                daily: { type: DataTypes.INTEGER, defaultValue: 0 },
 
-                // address
+                // Endereço
                 address: {
-                    type: Sequelize.JSONB,
+                    type: DataTypes.JSONB,
                     defaultValue: {
                         street: '',
                         number: '',
@@ -80,19 +68,14 @@ class Driver extends Model {
             }
         );
 
-        this.addHook('beforeSave', async (user) => {
-            if (user.password) {
-                user.password_hash = await bcrypt.hash(user.password, 8);
+        // Hook para gerar hash da senha
+        this.addHook('beforeSave', async (driver) => {
+            if (driver.password) {
+                driver.password_hash = await bcrypt.hash(driver.password, 8);
             }
         });
 
-        this.addHook('beforeCreate', (driver) => {
-            if (!driver.transactions) {
-                driver.transactions = [];
-            }
-        });
-
-        return driver;
+        return this;
     }
 
     static associate(models) {
@@ -100,31 +83,29 @@ class Driver extends Model {
             foreignKey: 'driver_id',
             as: 'financialStatements'
         });
+
         this.hasMany(models.Credit, {
             foreignKey: 'driver_id',
             as: 'credits'
         });
     }
 
+    // Verifica senha
     checkPassword(password) {
         return bcrypt.compare(password, this.password_hash);
     }
 
+    // Adiciona transação
     addTransaction(transaction) {
         if (!Array.isArray(this.transactions)) {
             this.transactions = [];
         }
-
         this.transactions.push(transaction);
     }
 
+    // Remove transação
     removeTransaction(index) {
-        if (!Array.isArray(this.transactions)) {
-            this.transactions = [];
-            return;
-        }
-
-        if (index >= 0 && index < this.transactions.length) {
+        if (Array.isArray(this.transactions) && index >= 0 && index < this.transactions.length) {
             this.transactions.splice(index, 1);
         }
     }

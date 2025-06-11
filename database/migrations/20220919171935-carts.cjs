@@ -25,7 +25,7 @@ module.exports = {
             },
             cart_bodyworks: {
                 type: Sequelize.ENUM,
-                values: ['tank', 'bulkCarrier', 'sider', 'chest', 'bucket'],
+                values: ['TANK', 'BULKCARRIER', 'SIDER', 'CHEST', 'BUCKET'],
                 defaultValue: null
             },
             cart_year: {
@@ -33,7 +33,7 @@ module.exports = {
                 allowNull: true
             },
             cart_chassis: {
-                type: Sequelize.DOUBLE,
+                type: Sequelize.STRING,
                 allowNull: true
             },
             cart_liter_capacity: {

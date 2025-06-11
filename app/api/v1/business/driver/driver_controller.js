@@ -91,9 +91,9 @@ class DriverController extends BaseResourceController {
         }
     };
 
-    create = async (req, res, next) => {
+    driverSignup = async (req, res, next) => {
         try {
-            const data = await this._driverService.create(req.body);
+            const data = await this._driverService.driverSignup(req.body);
             res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

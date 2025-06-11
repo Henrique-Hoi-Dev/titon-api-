@@ -19,7 +19,7 @@ export default {
             cpf: Joi.string().replace(/\D/g, '').custom(validateCpf).required(),
             email: Joi.string().email(),
             gender: Joi.string().valid('MALE', 'FEMALE', 'OTHER'),
-            birth_date: Joi.date(),
+            date_birthday: Joi.date(),
             phone: Joi.string().required(),
             password: Joi.string().required().min(8),
             daily: Joi.number().required(),

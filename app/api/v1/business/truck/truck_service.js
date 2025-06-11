@@ -286,7 +286,7 @@ class TruckService extends BaseService {
             throw err;
         }
 
-        await this._trusckModel.destroy({
+        await this._truckModel.destroy({
             where: {
                 id: id
             }

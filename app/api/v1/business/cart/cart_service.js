@@ -91,12 +91,12 @@ class CartService extends BaseService {
                     [Op.notIn]: literal('(SELECT "cart_id" FROM "financial_statements")')
                 }
             },
-            attributes: ['id', 'cart_models'],
+            attributes: ['id', 'cart_models', 'cart_board'],
             raw: true
         });
 
         const selectFinancial = await this._cartModel.findAll({
-            attributes: ['id', 'cart_models'],
+            attributes: ['id', 'cart_models', 'cart_board'],
             include: [
                 {
                     model: this._financialStatementsModel,

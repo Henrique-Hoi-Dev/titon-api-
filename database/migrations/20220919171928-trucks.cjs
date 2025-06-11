@@ -24,7 +24,7 @@ module.exports = {
                 allowNull: false
             },
             truck_km: {
-                type: Sequelize.STRING,
+                type: Sequelize.DOUBLE,
                 allowNull: true
             },
             truck_chassis: {

@@ -24,7 +24,6 @@ class Driver extends Model {
                     defaultValue: {}
                 },
                 gender: { type: Sequelize.STRING, defaultValue: null },
-                birth_date: { type: Sequelize.DATE, defaultValue: null },
                 password: Sequelize.VIRTUAL,
                 password_hash: { type: Sequelize.STRING, allowNull: false },
                 status: {

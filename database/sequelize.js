@@ -28,17 +28,13 @@ const sequelize = new Sequelize(process.env.DATABASE_URL_DB, {
 });
 
 // Inicializa os modelos
-for (const model of Models) {
-    if (model.init) {
-        model.init(sequelize);
-    }
+for (const model of Object.values(Models)) {
+    if (model.init) model.init(sequelize);
 }
 
 // Associa os modelos
-for (const model of Models) {
-    if (model.associate) {
-        model.associate(sequelize.models);
-    }
+for (const model of Object.values(Models)) {
+    if (model.associate) model.associate(sequelize.models);
 }
 
 // Verifica a conexão

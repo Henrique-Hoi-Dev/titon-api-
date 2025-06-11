@@ -46,7 +46,7 @@ router.post(
     middleware.ensureAuthorization,
     middleware.verifyManagerToken,
     validator(validation.signupDriver),
-    driverController.create.bind(driverController)
+    driverController.driverSignup.bind(driverController)
 );
 
 //User Manager

@@ -68,5 +68,8 @@
     "RESTOCK_NOT_FOUND": "Restock not found",
     "FINANCIAL_NOT_FOUND_NO_FREIGHT_ID_OR_FINANCIAL_ID": "Financial not found no freight id or financial id",
     "DRIVER_REQUEST_CODE_FORGOT_PASSWORD_SECRET_NOT_FOUND": "Driver request code forgot password secret not found",
-    "DRIVER_REQUEST_CODE_FORGOT_PASSWORD_EXPIRES_IN_NOT_FOUND": "Driver request code forgot password expires in not found"
+    "DRIVER_REQUEST_CODE_FORGOT_PASSWORD_EXPIRES_IN_NOT_FOUND": "Driver request code forgot password expires in not found",
+    "CPF_ALREADY_EXISTS": "This cpf already exists",
+    "PHONE_ALREADY_EXISTS": "This phone already exists",
+    "EMAIL_ALREADY_EXISTS": "This email already exists"
 }

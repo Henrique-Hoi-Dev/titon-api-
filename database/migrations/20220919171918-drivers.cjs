@@ -78,7 +78,6 @@ module.exports = {
             },
             type_positions: {
                 type: Sequelize.STRING,
-                allowNull: false,
                 defaultValue: 'COLLABORATOR'
             },
             permission_id: {
@@ -96,7 +95,6 @@ module.exports = {
             },
             transactions: {
                 type: Sequelize.JSONB,
-                allowNull: false,
                 defaultValue: []
             },
             value_fix: {

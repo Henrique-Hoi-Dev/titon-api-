@@ -284,7 +284,9 @@ class DriverService extends BaseService {
         return { msg: 'Password updated successfully' };
     }
 
-    async create(body) {
+    async driverSignup(body) {
+        const data = body;
+
         const cpf = body.cpf.replace(/\D/g, '');
         const validCpf = validateCpf(cpf);
 
@@ -294,33 +296,47 @@ class DriverService extends BaseService {
             throw err;
         }
 
-        // doing name user verification
-        const driverExist = await this._driverModel.findOne({
-            where: { cpf: validCpf }
-        });
-
-        if (driverExist) {
-            const err = new Error('THIS_CPF_ALREADY_EXISTS');
+        if (!body.password) {
+            const err = new Error('PASSWORD_REQUIRED');
             err.status = 400;
             throw err;
         }
+        // doing name user verification
+        const driverExist = await this._driverModel.findOne({
+            where: {
+                [Op.or]: [{ cpf: validCpf }, { phone: `+55${body.phone}` }, { email: body.email }]
+            }
+        });
 
-        const data = {
-            cpf: validCpf,
-            password: body.password,
-            name: body.name,
-            phone: `+55${body.phone}`,
-            email: body.email,
-            type_position: 'COLLABORATOR',
-            value_fix: body?.value_fix,
-            percentage: body?.percentage,
-            daily: body?.daily,
-            address: body?.address
-        };
+        if (driverExist) {
+            if (driverExist.cpf === validCpf) {
+                const err = new Error('CPF_ALREADY_EXISTS');
+                err.status = 400;
+                throw err;
+            }
 
-        await this._driverModel.create(data);
+            if (driverExist.phone === `+55${body.phone}`) {
+                const err = new Error('PHONE_ALREADY_EXISTS');
+                err.status = 400;
+                throw err;
+            }
 
-        return { msg: 'Driver created successfully' };
+            if (driverExist.email === body.email) {
+                const err = new Error('EMAIL_ALREADY_EXISTS');
+                err.status = 400;
+                throw err;
+            }
+        }
+
+        data.cpf = validCpf;
+        data.phone = `+55${data.phone}`;
+
+        const driver = await this._driverModel.create(data);
+
+        // eslint-disable-next-line no-unused-vars
+        const { password_hash, ...driverData } = driver.toJSON();
+
+        return driverData;
     }
 
     async resetPassword({ cpf }) {

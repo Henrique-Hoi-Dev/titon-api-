@@ -15,7 +15,7 @@ import TravelExpenses from '../../app/api/v1/business/travelExpenses/travelExpen
 import Truck from '../../app/api/v1/business/truck/truck_model.js';
 import ValidateCode from '../../app/api/v1/business/validateCode/validateCode_model.js';
 
-const Models = [
+const Models = {
     Cart,
     Cities,
     Credit,
@@ -32,6 +32,6 @@ const Models = [
     TravelExpenses,
     Truck,
     ValidateCode
-];
+};
 
 export default Models;

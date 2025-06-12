@@ -266,42 +266,38 @@ class FinancialStatementService extends BaseService {
         if (status_check) whereStatus.status = status_check;
 
         /* eslint-disable indent */
+        const whereSearch = search?.trim()
+            ? {
+                  [Op.or]: [
+                      { '$driver.name$': { [Op.iLike]: `%${search}%` } },
+                      { '$truck.truck_board$': { [Op.iLike]: `%${search}%` } }
+                  ]
+              }
+            : {};
+        /* eslint-enable indent */
+
         const financialStatements = await this._financialStatementModel.findAll({
-            where: search ? {} : where,
+            where: search ? whereSearch : where,
             order: [[sort_field, sort_order]],
-            limit: limit,
+            limit,
             offset: page - 1 ? (page - 1) * limit : 0,
             include: [
                 {
                     model: this._driverModel,
                     as: 'driver',
                     attributes: ['name', 'email', 'credit', 'value_fix', 'percentage', 'daily'],
-                    where: search
-                        ? {
-                              name: {
-                                  [Op.iLike]: `%${search}%`
-                              }
-                          }
-                        : undefined,
-                    required: search ? true : false
+                    required: !!search
                 },
                 {
                     model: this._freightModel,
-                    where: status_check ? whereStatus : null,
-                    as: 'freight'
+                    as: 'freight',
+                    where: status_check ? whereStatus : null
                 },
                 {
                     model: this._truckModel,
                     as: 'truck',
                     attributes: ['truck_models', 'truck_board', 'image_truck'],
-                    where: search
-                        ? {
-                              truck_board: {
-                                  [Op.iLike]: `%${search}%`
-                              }
-                          }
-                        : undefined,
-                    required: search ? true : false
+                    required: !!search
                 },
                 {
                     model: this._cartModel,

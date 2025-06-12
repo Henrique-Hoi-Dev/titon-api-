@@ -399,55 +399,23 @@ class DriverService extends BaseService {
     async getAllManagerDriver(query) {
         const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
 
-        const where = {};
         /* eslint-disable indent */
-        const financialStatementInclude = {
-            model: this._financialStatementsModel,
-            as: 'financialStatements',
-            where: { status: true },
-            required: false,
-            include: [
-                {
-                    model: this._truckModel,
-                    as: 'truck',
-                    attributes: ['truck_models', 'truck_board'],
-                    where: search
-                        ? {
-                              truck_board: {
-                                  [Op.iLike]: `%${search}%`
-                              }
-                          }
-                        : undefined,
-                    required: search ? true : false
-                },
-                {
-                    model: this._cartModel,
-                    as: 'cart',
-                    attributes: ['cart_models', 'cart_board'],
-                    where: search
-                        ? {
-                              cart_board: {
-                                  [Op.iLike]: `%${search}%`
-                              }
-                          }
-                        : undefined,
-                    required: search ? true : false
-                }
-            ]
-        };
+        const driverWhere = search
+            ? {
+                  [Op.or]: [
+                      { name: { [Op.iLike]: `%${search}%` } },
+                      { '$financialStatements.truck.truck_board$': { [Op.iLike]: `%${search}%` } },
+                      { '$financialStatements.cart.cart_board$': { [Op.iLike]: `%${search}%` } }
+                  ]
+              }
+            : {};
 
-        /* eslint-disable indent */
         const drivers = await this._driverModel.findAll({
-            where: search
-                ? {
-                      name: {
-                          [Op.iLike]: `%${search}%`
-                      }
-                  }
-                : where,
+            where: driverWhere,
+            subQuery: false,
             order: [[sort_field, sort_order]],
             limit: limit,
-            offset: page - 1 ? (page - 1) * limit : 0,
+            offset: (page - 1) * limit,
             attributes: [
                 'id',
                 'name',
@@ -459,7 +427,29 @@ class DriverService extends BaseService {
                 'avatar',
                 'address'
             ],
-            include: [financialStatementInclude]
+            include: [
+                {
+                    model: this._financialStatementsModel,
+                    as: 'financialStatements',
+                    where: { status: true },
+                    attributes: ['id', 'status', 'truck_id', 'cart_id'],
+                    required: false,
+                    include: [
+                        {
+                            model: this._truckModel,
+                            as: 'truck',
+                            attributes: ['truck_models', 'truck_board'],
+                            required: false
+                        },
+                        {
+                            model: this._cartModel,
+                            as: 'cart',
+                            attributes: ['cart_models', 'cart_board'],
+                            required: false
+                        }
+                    ]
+                }
+            ]
         });
 
         const total = await this._driverModel.count();
@@ -471,10 +461,8 @@ class DriverService extends BaseService {
                 const driverData = driver.toJSON();
                 const activeFinancial = driverData.financialStatements?.[0];
 
-                const { ...driverInfo } = driverData;
-
                 return {
-                    ...driverInfo,
+                    ...driverData,
                     truck: activeFinancial?.truck || {},
                     cart: activeFinancial?.cart || {}
                 };

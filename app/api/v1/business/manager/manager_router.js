@@ -8,6 +8,8 @@ import TruckController from '../truck/truck_controller.js';
 import validation from './manager_validation.js';
 import CreditController from '../credit/credit_controller.js';
 import CartController from '../cart/cart_controller.js';
+import CitiesController from '../cities/cities_controller.js';
+import StatesController from '../states/states_controller.js';
 import multer from 'multer';
 import middleware from '../../../../main/middleware.js';
 
@@ -25,6 +27,8 @@ const permissionController = new PermissionController();
 const truckController = new TruckController();
 const creditController = new CreditController();
 const cartController = new CartController();
+const citiesController = new CitiesController();
+const statesController = new StatesController();
 
 const router = Router();
 
@@ -444,5 +448,32 @@ router
         validator(validation.deleteCart),
         cartController.delete.bind(cartController)
     );
+
+//Cities and States
+router
+    .get(
+        '/cities',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        validator(validation.getAllCities),
+        citiesController.allCities.bind(citiesController)
+    )
+    .get(
+        '/states',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        validator(validation.getAllStates),
+        statesController.allStates.bind(statesController)
+    );
+
+router.post(
+    '/popular-city-state',
+    upload.single('file'),
+    middleware.ensureAuthorization,
+    middleware.verifyManagerToken,
+    verifyIfUserHasRole('MASTER'),
+    validator(validation.popularCityStateData),
+    statesController.popularCityStateData.bind(statesController)
+);
 
 export default router;

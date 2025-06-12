@@ -302,21 +302,17 @@ router
 router
     .get(
         '/cities',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
         validator(validation.getAllCities),
         citiesController.allCities.bind(citiesController)
     )
     .get(
         '/states',
+        middleware.ensureAuthorization,
+        middleware.verifyDriverToken,
         validator(validation.getAllStates),
         statesController.allStates.bind(statesController)
     );
-router.post(
-    '/popular-city-state',
-    upload.single('file'),
-    middleware.ensureAuthorization,
-    middleware.verifyDriverToken,
-    validator(validation.popularCityStateData),
-    statesController.popularCityStateData.bind(statesController)
-);
 
 export default router;

@@ -366,5 +366,21 @@ export default {
             page: Joi.number(),
             limit: Joi.number()
         })
+    },
+    getAllCities: {
+        query: Joi.object({
+            search: Joi.string(),
+            uf: Joi.string()
+        })
+    },
+    getAllStates: {
+        query: Joi.object({
+            search: Joi.string()
+        })
+    },
+    popularCityStateData: {
+        body: Joi.object({
+            file: Joi.string().required()
+        })
     }
 };

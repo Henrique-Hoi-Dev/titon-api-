@@ -76,11 +76,7 @@ class NotificationController extends BaseResourceController {
 
     async createNotification(req, res, next) {
         try {
-            const data = await this._notificationService.createNotification(
-                req.manager,
-                req.params.user_id,
-                req.body
-            );
+            const data = await this._notificationService.createNotification(req.body);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

@@ -17,38 +17,38 @@ module.exports = {
             start_freight_city: {
                 type: Sequelize.STRING
             },
-            final_freight_city: {
+            end_freight_city: {
                 type: Sequelize.STRING
             },
-            location_of_the_truck: {
+            truck_location: {
                 type: Sequelize.STRING
             },
-            contractor: {
+            contractor_name: {
                 type: Sequelize.STRING
             },
             truck_current_km: {
                 type: Sequelize.INTEGER
             },
-            liter_of_fuel_per_km: {
+            fuel_avg_per_km: {
                 type: Sequelize.INTEGER
             },
-            preview_tonne: {
+            estimated_tonnage: {
                 type: Sequelize.INTEGER
             },
-            value_tonne: {
+            estimated_fuel_cost: {
                 type: Sequelize.INTEGER
             },
-            preview_value_diesel: {
+            ton_value: {
                 type: Sequelize.INTEGER
             },
             status: {
                 type: Sequelize.ENUM,
                 values: ['PENDING', 'APPROVED', 'STARTING_TRIP', 'DENIED', 'FINISHED']
             },
-            distance: {
+            route_distance_km: {
                 type: Sequelize.STRING
             },
-            duration: {
+            route_duration: {
                 type: Sequelize.STRING
             },
 
@@ -56,15 +56,17 @@ module.exports = {
             tons_loaded: {
                 type: Sequelize.INTEGER
             },
-            toll_value: {
+            toll_cost: {
                 type: Sequelize.INTEGER
             },
-            truck_km_completed_trip: {
+            truck_km_end_trip: {
                 type: Sequelize.INTEGER
             },
             discharge: {
                 type: Sequelize.INTEGER
             },
+
+            // proof
             img_proof_cte: {
                 type: Sequelize.JSONB,
                 allowNull: true

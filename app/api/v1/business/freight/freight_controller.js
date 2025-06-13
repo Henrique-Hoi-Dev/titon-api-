@@ -20,7 +20,11 @@ class FreightController extends BaseResourceController {
 
     async create(req, res, next) {
         try {
-            const data = await this._freightService.create(req.body);
+            const data = await this._freightService.create(
+                req.manager,
+                req.body,
+                req.params.financial_id
+            );
             return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -125,9 +129,22 @@ class FreightController extends BaseResourceController {
     async approveFreightManager(req, res, next) {
         try {
             const data = await this._freightService.approveFreightManager(
-                req.user,
-                req.body,
-                req.params.id
+                req.manager,
+                req.params.id,
+                req.params.financial_id
+            );
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
+    async rejectFreightManager(req, res, next) {
+        try {
+            const data = await this._freightService.rejectFreightManager(
+                req.manager,
+                req.params.id,
+                req.params.financial_id
             );
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {

@@ -13,44 +13,56 @@ class NotificationService extends BaseService {
         this._oneSignalProvider = new OneSignalProvider();
     }
 
-    async createNotification(user, user_id, body) {
-        const driver = await this._driverModel.findByPk(user_id);
-        if (!driver) {
-            const err = new Error('DRIVER_NOT_FOUND');
-            err.status = 404;
-            throw err;
-        }
-
+    async createNotification({
+        driver_id = null,
+        manager_id = null,
+        financial_id = null,
+        freight_id = null,
+        title,
+        content,
+        titlePush,
+        messagePush
+    }) {
         const notification = await this._notificationModel.create({
-            driver_id: user_id,
-            user_id: user.id,
-            content: body.message,
-            read: false
+            driver_id: driver_id,
+            user_id: manager_id,
+            freight_id: freight_id,
+            financial_statements_id: financial_id,
+            title: title,
+            content: content
         });
 
-        if (!driver.player_id) {
-            const err = new Error('DRIVER_NOT_HAS_PLAYER_ID');
-            err.status = 404;
-            throw err;
+        // Envia notificação push para o driver
+        if (driver_id) {
+            const driver = await this._driverModel.findByPk(driver_id);
+            if (!driver) {
+                const err = new Error('DRIVER_NOT_FOUND');
+                err.status = 404;
+                throw err;
+            }
+
+            if (!driver.player_id) {
+                const sendToAllOneSignal = await this._oneSignalProvider.sendToUsers({
+                    title: titlePush,
+                    message: messagePush,
+                    externalUserIds: [driver.cpf]
+                });
+
+                this.logger?.info?.('Notificação enviada push:', sendToAllOneSignal);
+            }
+            this.logger?.info?.('Notificação nao enviada push:', driver.cpf);
         }
 
-        // const getPlayerId = await this._oneSignalProvider.getPlayerId(driver.player_id);
-        // console.log('🚀 ~ NotificationService ~ getAll ~ getPlayerId:', getPlayerId);
-        // if (!getPlayerId.external_user_id) {
-        const bindExternalUserId = await this._oneSignalProvider.bindExternalUserId(
-            driver.player_id,
-            driver.cpf
-        );
-        // eslint-disable-next-line no-console
-        console.log('🚀 ~ NotificationService ~ getAll ~ bindExternalUserId:', bindExternalUserId);
+        return notification.toJSON();
+    }
 
-        const sendToAllOneSignal = await this._oneSignalProvider.sendToUsers({
-            title: body.title,
-            message: body.message,
-            externalUserIds: [driver.cpf]
+    async getAllManagerFinancialStatement({ financial_id, user_id }) {
+        const notification = await this._notificationModel.findAll({
+            where: { financial_statements_id: financial_id, user_id: user_id },
+            attributes: ['id', 'title', 'content', 'createdAt', 'driver_id', 'freight_id']
         });
 
-        return { notification: notification.toJSON(), sendToAllOneSignal };
+        return notification.map((res) => res.toJSON());
     }
 
     async getAll(driver, { page = 1, limit = 10 }) {
@@ -62,15 +74,6 @@ class NotificationService extends BaseService {
             err.status = 400;
             throw err;
         }
-        // const listOneSignal = await this._oneSignalProvider.listNotifications();
-        // const oneSignalList = listOneSignal.notifications.map((item) => ({
-        //     title: item.headings,
-        //     name: item.name,
-        //     text: item.contents
-        // }));
-
-        // // eslint-disable-next-line no-console
-        // console.log('OneSignal notifications:', oneSignalList);
 
         // Busca notificações locais do banco com paginação
         const notifications = await this._notificationModel.findAll({

@@ -71,5 +71,11 @@
     "DRIVER_REQUEST_CODE_FORGOT_PASSWORD_EXPIRES_IN_NOT_FOUND": "Driver request code forgot password expires in not found",
     "CPF_ALREADY_EXISTS": "This cpf already exists",
     "PHONE_ALREADY_EXISTS": "This phone already exists",
-    "EMAIL_ALREADY_EXISTS": "This email already exists"
+    "EMAIL_ALREADY_EXISTS": "This email already exists",
+    "DRIVER_ALREADY_HAS_AN_OPEN_FINANCIAL_STATEMENT": "Driver already has an open financial statement",
+    "TRUCK_ALREADY_HAS_AN_OPEN_FINANCIAL_STATEMENT": "Truck already has an open financial statement",
+    "CART_ALREADY_HAS_AN_OPEN_FINANCIAL_STATEMENT": "Cart already has an open financial statement",
+    "MANAGER_NOT_FOUND": "Manager not found",
+    "SHIPPING_WAS_NOT_APPROVED": "Shipping was not approved",
+    "FINANCIAL_NOT_FOUND_NO_FINANCIAL_ID": "Financial not found no financial id"
 }

@@ -1,14 +1,15 @@
-import Freight from './freight_model.js';
 import BaseService from '../../base/base_service.js';
 import ApiGoogle from '../../../../providers/google/router_map_google.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
-import Driver from '../driver/driver_model.js';
-import Restock from '../restock/restock_model.js';
-import TravelExpenses from '../travelExpenses/travelExpenses_model.js';
-import DepositMoney from '../depositMoney/depositMoney_model.js';
-import Notification from '../notification/notification_model.js';
 import OneSignalProvider from '../../../../providers/oneSignal/index.js';
-import Manager from '../manager/manager_model.js';
+
+import FreightModel from './freight_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
+import DriverModel from '../driver/driver_model.js';
+import RestockModel from '../restock/restock_model.js';
+import TravelExpensesModel from '../travelExpenses/travelExpenses_model.js';
+import DepositMoneyModel from '../depositMoney/depositMoney_model.js';
+import NotificationService from '../notification/notification_service.js';
+import ManagerModel from '../manager/manager_model.js';
 import FinancialService from '../financialStatements/financialStatements_service.js';
 
 import { formatWithTimezone } from '../../../../utils/formatTimeZone.js';
@@ -18,15 +19,15 @@ import { generateRandomCode } from '../../../../utils/crypto.js';
 class FreightService extends BaseService {
     constructor() {
         super();
-        this._freightModel = Freight;
-        this._financialStatementModel = FinancialStatements;
-        this._driverModel = Driver;
-        this._restockModel = Restock;
-        this._travelExpensesModel = TravelExpenses;
-        this._depositMoneyModel = DepositMoney;
-        this._notificationModel = Notification;
+        this._freightModel = FreightModel;
+        this._financialStatementModel = FinancialStatementsModel;
+        this._driverModel = DriverModel;
+        this._restockModel = RestockModel;
+        this._travelExpensesModel = TravelExpensesModel;
+        this._depositMoneyModel = DepositMoneyModel;
+        this._notificationService = new NotificationService();
         this._oneSignalProvider = OneSignalProvider;
-        this._managerModel = Manager;
+        this._managerModel = ManagerModel;
         this._financialService = new FinancialService();
     }
 
@@ -116,31 +117,34 @@ class FreightService extends BaseService {
         return data;
     }
 
-    async create(body) {
-        const financial = await this._financialStatementModel.findByPk(
-            body.financial_statements_id
-        );
-        if (!financial) {
+    async create(manager, body, financialId) {
+        const financial = await this._financialStatementModel.findByPk(financialId);
+
+        if (!financial.dataValues.id) {
             const err = new Error('FINANCIAL_NOT_FOUND');
             err.status = 404;
             throw err;
         }
 
-        const userFinancial = await this._managerModel.findByPk(financial.creator_user_id);
-        if (!userFinancial) {
-            const err = new Error('USER_NOT_FOUND');
+        if (!manager.id) {
+            const err = new Error('MANAGER_NOT_FOUND');
             err.status = 404;
             throw err;
         }
 
-        const result = await this._freightModel.create(body);
-
-        await this._notificationModel.create({
-            content: `${userFinancial.name}, Esta indicando um novo frete!`,
-            driver_id: financial.driver_id
+        const result = await this._freightModel.create({
+            ...body,
+            financial_statements_id: financial.dataValues.id
         });
 
-        return result.toJSON() || {};
+        await this._notificationService.createNotification({
+            title: 'Indicou um novo frete',
+            content: `${manager.name}, Esta indicando um novo frete!`,
+            driver_id: financial.dataValues.driver_id,
+            financial_id: financial.dataValues.id
+        });
+
+        return result.toJSON();
     }
 
     async getIdManagerFreight(freightId) {
@@ -196,17 +200,17 @@ class FreightService extends BaseService {
 
         const kmTravel = await this._googleQuery(
             freight.start_freight_city,
-            freight.final_freight_city
+            freight.end_freight_city
         );
 
-        const totalFreight = this._valueTotalTonne(freight.preview_tonne, freight.value_tonne);
+        const totalFreight = this._valueTotalTonne(freight.estimated_tonnage, freight.ton_value);
 
         const totalLiters = this._calculatesLiters(
             kmTravel.distance.value,
-            freight.liter_of_fuel_per_km
+            freight.fuel_avg_per_km
         );
 
-        const totalAmountSpent = this._valueTotalGasto(totalLiters, freight.preview_value_diesel);
+        const totalAmountSpent = this._valueTotalGasto(totalLiters, freight.estimated_fuel_cost);
 
         const totalDriver = this._valueDriver(
             driver.percentage,
@@ -230,7 +234,7 @@ class FreightService extends BaseService {
             totalLiters: totalLiters,
             driverCommission: driver.percentage > 0 ? driver.percentage : driver.value_fix,
             startCity: freight.start_freight_city,
-            finalCity: freight.final_freight_city,
+            finalCity: freight.end_freight_city,
             restock: restock
                 .sort((a, b) => new Date(b.registration_date) - new Date(a.registration_date))
                 .map((res) => ({
@@ -307,7 +311,7 @@ class FreightService extends BaseService {
 
         const kmTravel = await this._googleQuery(
             freight.start_freight_city,
-            freight.final_freight_city
+            freight.end_freight_city
         );
 
         if (!kmTravel) {
@@ -327,22 +331,22 @@ class FreightService extends BaseService {
 
         const totalLiters = this._calculatesLiters(
             kmTravel.distance.value,
-            freight.liter_of_fuel_per_km
+            freight.fuel_avg_per_km
         );
 
         const totalValuePerKm = valuePerKm(
             kmTravel.distance.value,
             totalLiters,
-            freight.preview_value_diesel
+            freight.estimated_fuel_cost
         );
 
-        const totalAmountSpent = this._valueTotalGasto(totalLiters, freight.preview_value_diesel);
+        const totalAmountSpent = this._valueTotalGasto(totalLiters, freight.estimated_fuel_cost);
 
-        const totalFreight = this._valueTotalTonne(freight.preview_tonne, freight.value_tonne);
+        const totalFreight = this._valueTotalTonne(freight.estimated_tonnage, freight.ton_value);
 
         const totalDriver = this._valueDriver(
-            driver.percentage_commission,
-            driver.fixed_commission,
+            driver.percentage,
+            driver.value_fix,
             this._unmaskMoney(totalFreight)
         );
 
@@ -360,10 +364,11 @@ class FreightService extends BaseService {
         return {
             status: freight.status,
             start_freight_city: freight.start_freight_city,
-            final_freight_city: freight.final_freight_city,
-            previous_average: `${freight.liter_of_fuel_per_km / 100} M`,
-            distance: kmTravel.distance.text,
+            end_freight_city: freight.end_freight_city,
+            previous_average: `${freight.fuel_avg_per_km / 100} M`,
+            route_distance_km: kmTravel.distance.text,
             consumption: `${totalLiters} L`,
+            distance: kmTravel.distance.text,
             KM_price: totalValuePerKm,
             fuel_estimate: totalAmountSpent,
             full_freight: totalFreight,
@@ -373,73 +378,84 @@ class FreightService extends BaseService {
         };
     }
 
-    async approveFreightManager(user, body, id) {
-        const [freight, driver] = await Promise.all([
+    async approveFreightManager(manager, id, financialId) {
+        const [freight, financial] = await Promise.all([
             this._freightModel.findByPk(id),
-            this._driverModel.findByPk(body.driver_id)
+            this._financialStatementModel.findOne({
+                where: { id: financialId, status: true }
+            })
         ]);
 
-        if (user.type_role !== 'MASTER') {
-            const err = new Error('THIS_USER_IS_NOT_MASTER');
-            err.status = 400;
-            throw err;
-        }
         if (!freight) {
             const err = new Error('FREIGHT_NOT_FOUND');
             err.status = 404;
             throw err;
         }
-        if (!driver) {
-            const err = new Error('DRIVER_NOT_FOUND');
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (freight.dataValues.status === 'PENDING') {
+            await freight.update({
+                status: 'APPROVED'
+            });
+
+            await this._notificationService.createNotification({
+                title: 'Aprovou seu check frete',
+                content: `${
+                    manager.name
+                }, Aprovou seu check frete, de ${freight.dataValues.start_freight_city.toUpperCase()} para ${freight.dataValues.end_freight_city.toUpperCase()}!`,
+                driver_id: financial.dataValues.driver_id,
+                financial_id: financial.dataValues.id
+            });
+        }
+
+        return { msg: 'check frete aprovado' };
+    }
+
+    async rejectFreightManager(manager, id, financialId) {
+        const [freight, financial] = await Promise.all([
+            this._freightModel.findByPk(id),
+            this._financialStatementModel.findOne({
+                where: { id: financialId, status: true }
+            })
+        ]);
+
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
             err.status = 404;
             throw err;
         }
 
         if (freight.status === 'PENDING') {
-            const result = await freight.update({
-                status: body.status
+            await freight.update({
+                status: 'DENIED'
             });
 
-            const financial = await this._financialStatementModel.findOne({
-                where: { driver_id: driver.id, status: true }
+            await this._notificationService.createNotification({
+                title: 'Rejeitou seu check frete',
+                content: `${
+                    manager.name
+                }, Rejeitou seu check frete, de ${freight.dataValues.start_freight_city.toUpperCase()} para ${freight.dataValues.end_freight_city.toUpperCase()}!`,
+                driver_id: financial.dataValues.driver_id,
+                financial_id: financial.dataValues.id
             });
-
-            if (!financial) {
-                const err = new Error('FINANCIAL_NOT_FOUND');
-                err.status = 404;
-                throw err;
-            }
-
-            if (result.status === 'APPROVED') {
-                await this._notificationModel.create({
-                    content: `${
-                        user.name
-                    }, Aprovou seu check frete, de ${freight.start_freight_city.toUpperCase()} para ${freight.final_freight_city.toUpperCase()}!`,
-                    driver_id: driver.id,
-                    financial_statements_id: financial.id
-                });
-
-                if (driver.player_id) {
-                    await this._oneSignalProvider.sendToUsers({
-                        externalUserIds: [driver.player_id],
-                        title: 'Gerenciador',
-                        message: 'Aprovou seu check frete'
-                    });
-                    const mobilesids = await this._oneSignalProvider.getPlayers();
-                    // eslint-disable-next-line no-console
-                    console.log('log de test para pegar usuarios', mobilesids);
-                }
-                return { status: 'check frete aprovado' };
-            }
         }
 
-        return { status: 'check frete reprovado' };
+        return { msg: 'check frete reprovado' };
     }
 
     async deleteFreightManager(id) {
         const freight = await this._freightModel.findByPk(id);
 
-        if (freight.status === 'STARTING_TRIP') {
+        if (freight.dataValues.status === 'STARTING_TRIP') {
             const err = new Error('TRIP_IN_PROGRESS');
             err.status = 400;
             throw err;
@@ -542,7 +558,7 @@ class FreightService extends BaseService {
 
         if (!financialId && changedDestiny) {
             const origin = freight.dataValues.start_freight_city;
-            const destination = freight.dataValues.final_freight_city;
+            const destination = freight.dataValues.end_freight_city;
 
             const googleTravel = await this._googleQuery(origin, destination);
 
@@ -612,13 +628,13 @@ class FreightService extends BaseService {
         const normalize = (s) => s.toLowerCase().trim();
 
         const originUI = normalize(body.start_freight_city || '');
-        const destinationUI = normalize(body.final_freight_city || '');
+        const destinationUI = normalize(body.end_freight_city || '');
         const originDB = normalize(freight.dataValues.start_freight_city || '');
-        const destinationDB = normalize(freight.dataValues.final_freight_city || '');
+        const destinationDB = normalize(freight.dataValues.end_freight_city || '');
 
         const precisaDeRota =
-            !freight.dataValues.distance || // falta distância
-            !freight.dataValues.duration || // ou falta duração
+            !freight.dataValues.route_distance_km || // falta distância
+            !freight.dataValues.route_duration || // ou falta duração
             (originUI && originUI !== originDB) || // ou origem mudou
             (destinationUI && destinationUI !== destinationDB); // ou destino mudou
 
@@ -629,20 +645,20 @@ class FreightService extends BaseService {
         await freight.update(body);
 
         if (body.status === 'PENDING') {
-            await Notification.create({
+            await this._notificationService.createNotification({
+                title: 'Requisitou um novo check frete',
                 content: `${name}, Requisitou um novo check frete!`,
-                user_id: financial.creator_user_id,
-                freight_id: freightId,
+                manager_id: financial.creator_user_id,
                 driver_id: id,
-                financial_statements_id: financial.id
+                financial_id: financial.id
             });
         }
 
-        if (freight.status === 'STARTING_TRIP') {
+        if (freight.dataValues.status === 'STARTING_TRIP') {
             const result = await freight.update({
                 tons_loaded: body.tons_loaded,
-                toll_value: body.toll_value,
-                truck_km_completed_trip: body.truck_km_completed_trip,
+                toll_cost: body.toll_cost,
+                truck_km_end_trip: body.truck_km_end_trip,
                 discharge: body.discharge,
                 img_proof_cte: body.img_proof_cte,
                 img_proof_ticket: body.img_proof_ticket,
@@ -868,11 +884,14 @@ class FreightService extends BaseService {
     async finishedTrip({ freight_id, truck_km_completed_trip }, { name, id }) {
         const financial = await this._financialService.getFinancialCurrent(id);
 
-        const freight = await Freight.findByPk(freight_id);
+        const freight = await this._freightModel.findByPk(freight_id);
         if (!freight) throw Error('FREIGHT_NOT_FOUND');
 
-        if (freight.status !== 'STARTING_TRIP')
-            throw Error('THIS_TRIP_IS_NOT_IN_PROGRESS_TO_FINALIZE');
+        if (freight.status !== 'STARTING_TRIP') {
+            const err = new Error('THIS_TRIP_IS_NOT_IN_PROGRESS_TO_FINALIZE');
+            err.status = 400;
+            throw err;
+        }
 
         if (freight.status === 'STARTING_TRIP') {
             await freight.update({
@@ -884,10 +903,12 @@ class FreightService extends BaseService {
                 final_km: truck_km_completed_trip
             });
 
-            await Notification.create({
+            await this._notificationService.createNotification({
+                title: 'Finalizou a viagem',
                 content: `${name}, Finalizou a viagem!`,
-                user_id: financial.creator_user_id,
-                financial_statements_id: freight.financial_statements_id
+                manager_id: financial.creator_user_id,
+                financial_id: freight.financial_statements_id,
+                driver_id: freight.driver_id
             });
         }
         return { msg: 'Finished Trip' };

@@ -134,6 +134,7 @@ class FreightService extends BaseService {
 
         const result = await this._freightModel.create({
             ...body,
+            status: 'APPROVED',
             financial_statements_id: financial.dataValues.id
         });
 

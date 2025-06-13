@@ -377,8 +377,9 @@ class FinancialStatementService extends BaseService {
                 date: res.createdAt,
                 status: res.status,
                 locationTruck: res.location_of_the_truck,
-                finalFreightCity: res.final_freight_city,
-                totalFreight: this._valueTotalTonne(res.preview_tonne, res.value_tonne)
+                startFreightCity: res.start_freight_city,
+                endFreightCity: res.end_freight_city,
+                totalFreight: this._valueTotalTonne(res.estimated_tonnage, res.ton_value)
             })),
             notifications
         };

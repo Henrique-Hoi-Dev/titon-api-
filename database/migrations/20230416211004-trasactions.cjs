@@ -1,6 +1,6 @@
 module.exports = {
     up: (queryInterface, Sequelize) => {
-        return queryInterface.createTable('credits', {
+        return queryInterface.createTable('trasactions', {
             id: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
@@ -10,14 +10,14 @@ module.exports = {
             driver_id: {
                 type: Sequelize.INTEGER,
                 references: { model: 'drivers', key: 'id' },
-                allowNull: false,
+                allowNull: true,
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             financial_statements_id: {
                 type: Sequelize.INTEGER,
                 references: { model: 'financial_statements', key: 'id' },
-                allowNull: false,
+                allowNull: true,
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
@@ -52,6 +52,6 @@ module.exports = {
     },
 
     down: (queryInterface) => {
-        return queryInterface.dropTable('credits');
+        return queryInterface.dropTable('trasactions');
     }
 };

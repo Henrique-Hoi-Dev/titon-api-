@@ -1,32 +1,37 @@
-import Sequelize, { DataTypes, Model } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 
 class Freight extends Model {
     static init(sequelize) {
         super.init(
             {
-                financial_statements_id: Sequelize.INTEGER,
-                start_freight_city: Sequelize.STRING, // cidade iniciar do frete
-                final_freight_city: Sequelize.STRING, // cidade final do frete
-                location_of_the_truck: Sequelize.STRING, // local atual do caminhão
-                contractor: Sequelize.STRING, // empresa que foi pego o frete
-                truck_current_km: Sequelize.INTEGER, // km atual registrado no caminhão
-                liter_of_fuel_per_km: Sequelize.INTEGER, // media do caminhão
-                preview_tonne: Sequelize.INTEGER, // previa de tonelada
-                preview_value_diesel: Sequelize.INTEGER, // previa de valor de combustivel
-                value_tonne: Sequelize.INTEGER, // valor por tonelada
-                distance: Sequelize.STRING, // distância da rota
-                duration: Sequelize.STRING, // duração da rota
+                financial_statements_id: DataTypes.INTEGER,
 
-                status: Sequelize.ENUM({
+                start_freight_city: DataTypes.STRING, // cidade iniciar do frete
+                end_freight_city: DataTypes.STRING, // cidade final do frete
+
+                truck_location: DataTypes.STRING, // local atual do caminhão
+                contractor_name: DataTypes.STRING, // Nome da empresa contratante
+
+                truck_current_km: DataTypes.INTEGER, // km atual do caminhão
+                fuel_avg_per_km: DataTypes.INTEGER, // Média de consumo (ex: litros/100km ou ml/km)
+
+                estimated_tonnage: DataTypes.INTEGER, // Tonelada prevista (ex: 25000 = 25t)
+                estimated_fuel_cost: DataTypes.INTEGER, // Valor previsto do diesel em centavos
+                ton_value: DataTypes.INTEGER, // Valor por tonelada em centavos
+
+                route_distance_km: DataTypes.STRING, // Distância da rota (ex: "523 km")
+                route_duration: DataTypes.STRING, // Duração (ex: "5h 30min")
+
+                status: DataTypes.ENUM({
                     values: ['DRAFT', 'PENDING', 'APPROVED', 'STARTING_TRIP', 'DENIED', 'FINISHED'],
                     defaultValue: 'DRAFT'
                 }),
 
                 // level two
-                tons_loaded: Sequelize.INTEGER, // total da tonelada carregada
-                toll_value: Sequelize.INTEGER, // valor do pedagio
-                truck_km_completed_trip: Sequelize.INTEGER, // km do caminhão do final da viagem
-                discharge: Sequelize.INTEGER,
+                tons_loaded: DataTypes.INTEGER, // Tonelada carregada real
+                toll_cost: DataTypes.INTEGER, // Valor do pedágio em centavos
+                truck_km_end_trip: DataTypes.INTEGER, // KM final da viagem
+                discharge: DataTypes.INTEGER,
 
                 img_proof_cte: {
                     type: DataTypes.JSONB,

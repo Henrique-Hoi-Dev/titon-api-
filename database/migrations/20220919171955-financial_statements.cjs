@@ -44,7 +44,7 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: true
             },
-            final_km: {
+            end_km: {
                 type: Sequelize.INTEGER,
                 allowNull: true
             },
@@ -52,31 +52,24 @@ module.exports = {
                 type: Sequelize.DATE,
                 allowNull: true
             },
-            final_date: {
+            end_date: {
                 type: Sequelize.DATE,
                 allowNull: true
             },
-            invoicing_all: {
+            total_invoicing: {
                 type: Sequelize.INTEGER,
-                allowNull: true
+                allowNull: true,
+                defaultValue: 0
             },
-            transactions: {
-                type: Sequelize.ARRAY({
-                    type: Sequelize.JSONB,
-                    defaultValue: {
-                        typeTransactions: Sequelize.STRING,
-                        value: Sequelize.INTEGER
-                    }
-                }),
-                defaultValue: []
-            },
-            medium_fuel_all: {
+            average_fuel_consumption: {
                 type: Sequelize.INTEGER,
-                allowNull: true
+                allowNull: true,
+                defaultValue: 0
             },
-            total_value: {
+            total_amount: {
                 type: Sequelize.INTEGER,
-                allowNull: true
+                allowNull: true,
+                defaultValue: 0
             },
             created_at: {
                 type: Sequelize.DATE,

@@ -1,11 +1,11 @@
-import Credit from './credit_model.js';
+import Credit from './trasactions_model.js';
 import FinancialStatements from '../financialStatements/financialStatements_model.js';
 import Freight from '../freight/freight_model.js';
 import Driver from '../driver/driver_model.js';
 import Notification from '../notification/notification_model.js';
 import BaseService from '../../base/base_service.js';
 
-class CreditService extends BaseService {
+class TrasactionsService extends BaseService {
     constructor() {
         super();
         this._creditModel = Credit;
@@ -179,4 +179,4 @@ class CreditService extends BaseService {
     }
 }
 
-export default CreditService;
+export default TrasactionsService;

@@ -13,8 +13,8 @@ export const USER_ROLE_ENUM = ['MASTER', 'USER', 'MANAGER', 'DIRECTOR', 'COLLABO
 export const userRoleSchema = Joi.string().valid(...USER_ROLE_ENUM);
 
 // Enums para Credit (Crédito)
-export const CREDIT_TYPE_ENUM = ['DEBIT', 'CREDIT'];
-export const creditTypeSchema = Joi.string().valid(...CREDIT_TYPE_ENUM);
+export const TRASACTIONS_TYPE_METHOD_ENUM = ['DEBIT', 'CREDIT'];
+export const trasactionsTypeMethodSchema = Joi.string().valid(...TRASACTIONS_TYPE_METHOD_ENUM);
 
 // Enums para Freight (Frete)
 export const FREIGHT_STATUS_ENUM = [
@@ -54,7 +54,7 @@ export const enumSchemas = {
     cartBodyworks: cartBodyworksSchema,
     driverStatus: driverStatusSchema,
     userRole: userRoleSchema,
-    creditType: creditTypeSchema,
+    trasactionsTypeMethod: trasactionsTypeMethodSchema,
     freightStatus: freightStatusSchema,
     depositType: depositTypeSchema,
     brazilianBanks: brazilianBanksSchema

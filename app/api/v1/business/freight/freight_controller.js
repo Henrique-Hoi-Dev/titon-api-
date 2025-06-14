@@ -31,6 +31,19 @@ class FreightController extends BaseResourceController {
         }
     }
 
+    async createFreightDocument(req, res, next) {
+        try {
+            const data = await this._freightService.createFreightDocument(
+                req.manager,
+                req,
+                req.params.financial_id
+            );
+            return res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    }
+
     async getId(req, res, next) {
         try {
             const data = await this._freightService.getId(req.params, req.driver);
@@ -55,7 +68,7 @@ class FreightController extends BaseResourceController {
 
     async startingTrip(req, res, next) {
         try {
-            const data = await this._freightService.startingTrip(req.body, req.user);
+            const data = await this._freightService.startingTrip(req.params, req.body, req.driver);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -64,7 +77,7 @@ class FreightController extends BaseResourceController {
 
     async finishedTrip(req, res, next) {
         try {
-            const data = await this._freightService.finishedTrip(req.body, req.user);
+            const data = await this._freightService.finishedTrip(req.params, req.body, req.driver);
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

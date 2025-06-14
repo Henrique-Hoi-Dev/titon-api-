@@ -64,7 +64,7 @@ class FinancialStatementService extends BaseService {
         });
 
         if (!financialStatement) {
-            const err = new Error('FINANCIAL_NOT_FOUND');
+            const err = new Error('FINANCIAL_STATEMENT_CURRENT_NOT_FOUND');
             err.status = 404;
             throw err;
         }
@@ -374,11 +374,11 @@ class FinancialStatementService extends BaseService {
             ...financialData,
             freight: freight.map((res) => ({
                 id: res.id,
-                date: res.createdAt,
                 status: res.status,
-                locationTruck: res.location_of_the_truck,
+                locationTruck: res.truck_location,
                 startFreightCity: res.start_freight_city,
                 endFreightCity: res.end_freight_city,
+                date: res.createdAt,
                 totalFreight: this._valueTotalTonne(res.estimated_tonnage, res.ton_value)
             })),
             notifications

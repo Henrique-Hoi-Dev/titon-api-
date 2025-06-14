@@ -270,14 +270,22 @@ router
         validator(validation.createFreight),
         freightController.create.bind(freightController)
     )
-    .post(
+    .patch(
+        '/freight/upload-document/:financial_id',
+        middleware.ensureAuthorization,
+        middleware.verifyManagerToken,
+        upload.single('file'),
+        validator(validation.createFreight),
+        freightController.createFreightDocument.bind(freightController)
+    )
+    .put(
         '/freight/approve/:id/:financial_id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         validator(validation.approveFreight),
         freightController.approveFreightManager.bind(freightController)
     )
-    .post(
+    .put(
         '/freight/reject/:id/:financial_id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,

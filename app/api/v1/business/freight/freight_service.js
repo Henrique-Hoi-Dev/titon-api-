@@ -134,18 +134,29 @@ class FreightService extends BaseService {
 
         const result = await this._freightModel.create({
             ...body,
-            status: 'APPROVED',
             financial_statements_id: financial.dataValues.id
         });
 
         await this._notificationService.createNotification({
-            title: 'Indicou um novo frete',
-            content: `${manager.name}, Esta indicando um novo frete!`,
+            title: 'Indicou um frete!',
+            content: `${manager.name} está indicando um novo frete!`,
             driver_id: financial.dataValues.driver_id,
             financial_id: financial.dataValues.id
         });
 
         return result.toJSON();
+    }
+
+    async createFreightDocument(manager, { file }, financialId) {
+        // eslint-disable-next-line no-console
+        console.log(file);
+        const financial = await this._financialStatementModel.findByPk(financialId);
+
+        if (!financial.dataValues.id) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
     }
 
     async getIdManagerFreight(freightId) {
@@ -157,21 +168,38 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        const financial = await this._financialStatementModel.findByPk(
-            freight.financial_statements_id
-        );
+        const financial = await this._financialStatementModel.findOne({
+            where: { id: freight.financial_statements_id },
+            include: [
+                {
+                    model: this._driverModel,
+                    as: 'driver',
+                    attributes: ['id', 'name', 'percentage', 'value_fix']
+                }
+            ]
+        });
 
-        if (!financial) {
-            const err = new Error('FINANCIAL_NOT_FOUND');
+        let driver = null;
+
+        if (financial.dataValues.driver) {
+            driver = financial.dataValues.driver.dataValues;
+        } else {
+            const err = new Error('DRIVER_NOT_FOUND_IN_FINANCIAL');
             err.status = 404;
             throw err;
         }
 
-        const driver = await this._driverModel.findByPk(financial.driver_id);
-
-        const restock = await this._restockModel.findAll({
-            where: { freight_id: freightId }
-        });
+        const [restock, travelExpenses, depositMoney] = await Promise.all([
+            this._restockModel.findAll({
+                where: { freight_id: freightId }
+            }),
+            this._travelExpensesModel.findAll({
+                where: { freight_id: freightId }
+            }),
+            this._depositMoneyModel.findAll({
+                where: { freight_id: freightId }
+            })
+        ]);
 
         if (!restock) {
             const err = new Error('RESTOCK_NOT_FOUND');
@@ -179,19 +207,11 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        const travelExpenses = await this._travelExpensesModel.findAll({
-            where: { freight_id: freightId }
-        });
-
         if (!travelExpenses) {
             const err = new Error('TRAVEL_EXPENSES_NOT_FOUND');
             err.status = 404;
             throw err;
         }
-
-        const depositMoney = await this._depositMoneyModel.findAll({
-            where: { freight_id: freightId }
-        });
 
         if (!depositMoney) {
             const err = new Error('DEPOSIT_MONEY_NOT_FOUND');
@@ -200,18 +220,24 @@ class FreightService extends BaseService {
         }
 
         const kmTravel = await this._googleQuery(
-            freight.start_freight_city,
-            freight.end_freight_city
+            freight.dataValues.start_freight_city,
+            freight.dataValues.end_freight_city
         );
 
-        const totalFreight = this._valueTotalTonne(freight.estimated_tonnage, freight.ton_value);
+        const totalFreight = this._valueTotalTonne(
+            freight.dataValues.estimated_tonnage,
+            freight.dataValues.ton_value
+        );
 
         const totalLiters = this._calculatesLiters(
             kmTravel.distance.value,
-            freight.fuel_avg_per_km
+            freight.dataValues.fuel_avg_per_km
         );
 
-        const totalAmountSpent = this._valueTotalGasto(totalLiters, freight.estimated_fuel_cost);
+        const totalAmountSpent = this._valueTotalGasto(
+            totalLiters,
+            freight.dataValues.estimated_fuel_cost
+        );
 
         const totalDriver = this._valueDriver(
             driver.percentage,
@@ -300,19 +326,30 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        const driver = await this._financialStatementModel.findByPk(
-            freight.financial_statements_id
-        );
+        const financial = await this._financialStatementModel.findOne({
+            where: { id: freight.financial_statements_id },
+            include: [
+                {
+                    model: this._driverModel,
+                    as: 'driver',
+                    attributes: ['id', 'name', 'percentage', 'value_fix']
+                }
+            ]
+        });
 
-        if (!driver) {
-            const err = new Error('DRIVER_NOT_FOUND');
+        let driver = null;
+
+        if (financial.dataValues.driver) {
+            driver = financial.dataValues.driver.dataValues;
+        } else {
+            const err = new Error('DRIVER_NOT_FOUND_IN_FINANCIAL');
             err.status = 404;
             throw err;
         }
 
         const kmTravel = await this._googleQuery(
-            freight.start_freight_city,
-            freight.end_freight_city
+            freight.dataValues.start_freight_city,
+            freight.dataValues.end_freight_city
         );
 
         if (!kmTravel) {
@@ -332,18 +369,24 @@ class FreightService extends BaseService {
 
         const totalLiters = this._calculatesLiters(
             kmTravel.distance.value,
-            freight.fuel_avg_per_km
+            freight.dataValues.fuel_avg_per_km
         );
 
         const totalValuePerKm = valuePerKm(
             kmTravel.distance.value,
             totalLiters,
-            freight.estimated_fuel_cost
+            freight.dataValues.estimated_fuel_cost
         );
 
-        const totalAmountSpent = this._valueTotalGasto(totalLiters, freight.estimated_fuel_cost);
+        const totalAmountSpent = this._valueTotalGasto(
+            totalLiters,
+            freight.dataValues.estimated_fuel_cost
+        );
 
-        const totalFreight = this._valueTotalTonne(freight.estimated_tonnage, freight.ton_value);
+        const totalFreight = this._valueTotalTonne(
+            freight.dataValues.estimated_tonnage,
+            freight.dataValues.ton_value
+        );
 
         const totalDriver = this._valueDriver(
             driver.percentage,
@@ -483,13 +526,18 @@ class FreightService extends BaseService {
         return financial;
     }
 
-    async getId({ freightId, financialId }, { id, changedDestiny = false }) {
+    async getId({ freight_id, financial_id }, { id, changedDestiny = false }) {
         let financial = null;
         // aqui é para pegar o financial pelo endpoint /freight/:freightId/:financialId
-        if (freightId && financialId) {
+        if (freight_id && financial_id) {
             const result = await this._financialStatementModel.findOne({
-                where: { id: financialId, driver_id: id }
+                where: { id: financial_id, driver_id: id }
             });
+            if (!result) {
+                const err = new Error('FINANCIAL_NOT_FOUND_NO_FREIGHT_ID_OR_FINANCIAL_ID');
+                err.status = 404;
+                throw err;
+            }
 
             financial = result.dataValues;
         } else {
@@ -503,7 +551,7 @@ class FreightService extends BaseService {
         }
 
         let freight = await this._freightModel.findOne({
-            where: { id: freightId, financial_statements_id: financial?.id },
+            where: { id: freight_id, financial_statements_id: financial?.id },
             include: [
                 {
                     model: this._restockModel,
@@ -557,7 +605,7 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        if (!financialId && changedDestiny) {
+        if (!financial_id && changedDestiny) {
             const origin = freight.dataValues.start_freight_city;
             const destination = freight.dataValues.end_freight_city;
 
@@ -568,8 +616,8 @@ class FreightService extends BaseService {
             const minutes = Math.floor((seconds % 3600) / 60);
 
             await freight.update({
-                distance: googleTravel.distance.text,
-                duration: `${hours} horas e ${minutes} minutos`
+                route_distance_km: googleTravel.distance.text,
+                route_duration: `${hours} horas e ${minutes} minutos`
             });
         }
 
@@ -841,75 +889,82 @@ class FreightService extends BaseService {
         }
     }
 
-    async startingTrip({ freight_id, truck_current_km }, { name, id }) {
-        const financial = await this._financialService.getFinancialCurrent(id);
+    async startingTrip({ freight_id }, { truck_current_km }, { name, id }) {
+        const [financial, freight] = await Promise.all([
+            this._financialService.getFinancialCurrent({ driver_id: id }),
+            this._freightModel.findByPk(freight_id)
+        ]);
 
         const freighStartTrip = financial.freight.find((item) => item.status === 'STARTING_TRIP');
         if (freighStartTrip) {
-            const err = new Error('THERE_IS_ALREADY_A_TRIP_IN_PROGRESS');
+            const err = new Error('THERE_IS_ALREADY_A_STARTING_TRIP');
             err.status = 400;
             throw err;
         }
 
-        const freight = await this._freightModel.findByPk(freight_id);
         if (!freight) {
             const err = new Error('FREIGHT_NOT_FOUND');
             err.status = 404;
             throw err;
         }
 
-        if (freight.status === 'APPROVED') {
+        if (freight.dataValues.status === 'APPROVED') {
             await freight.update({
                 status: 'STARTING_TRIP',
                 truck_current_km: truck_current_km
             });
 
-            await financial.update({
-                start_km: truck_current_km
-            });
+            if (!financial.start_km) {
+                await financial.update({
+                    start_km: truck_current_km
+                });
+            }
 
             await this._notificationModel.create({
-                content: `${name}, Inicio a viagem!`,
-                user_id: financial.creator_user_id,
-                financial_statements_id: freight.financial_statements_id
+                title: 'Iniciou a viagem!',
+                content: `${name} está iniciando a viagem de ${freight.dataValues.start_freight_city} para ${freight.dataValues.end_freight_city}`,
+                manager_id: financial.creator_user_id,
+                financial_id: financial.id
             });
-
-            return { msg: 'Starting Trip' };
-        } else {
-            const err = new Error('SHIPPING_WAS_NOT_APPROVED');
-            err.status = 400;
-            throw err;
         }
+        return { msg: 'Starting Trip' };
     }
 
-    async finishedTrip({ freight_id, truck_km_completed_trip }, { name, id }) {
-        const financial = await this._financialService.getFinancialCurrent(id);
+    async finishedTrip({ freight_id }, { truck_km_end_trip }, { name, id }) {
+        const [financial, freight] = await Promise.all([
+            this._financialService.getFinancialCurrent({ driver_id: id }),
+            this._freightModel.findByPk(freight_id)
+        ]);
 
-        const freight = await this._freightModel.findByPk(freight_id);
-        if (!freight) throw Error('FREIGHT_NOT_FOUND');
-
-        if (freight.status !== 'STARTING_TRIP') {
-            const err = new Error('THIS_TRIP_IS_NOT_IN_PROGRESS_TO_FINALIZE');
+        if (freight.dataValues.status !== 'STARTING_TRIP') {
+            const err = new Error('THIS_TRIP_IS_NOT_IN_STARTING_TRIP');
             err.status = 400;
             throw err;
         }
 
-        if (freight.status === 'STARTING_TRIP') {
+        if (!freight) {
+            const err = new Error('FREIGHT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (freight.dataValues.status === 'STARTING_TRIP') {
             await freight.update({
                 status: 'FINISHED',
-                truck_km_completed_trip: truck_km_completed_trip
+                truck_km_end_trip: truck_km_end_trip
             });
 
-            await financial.update({
-                final_km: truck_km_completed_trip
-            });
+            if (!financial.end_km) {
+                await financial.update({
+                    end_km: truck_km_end_trip
+                });
+            }
 
             await this._notificationService.createNotification({
                 title: 'Finalizou a viagem',
-                content: `${name}, Finalizou a viagem!`,
+                content: `${name} finalizou a viagem de ${freight.dataValues.start_freight_city} para ${freight.dataValues.end_freight_city}`,
                 manager_id: financial.creator_user_id,
-                financial_id: freight.financial_statements_id,
-                driver_id: freight.driver_id
+                financial_id: financial.id
             });
         }
         return { msg: 'Finished Trip' };
@@ -924,8 +979,10 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        if (freight.status === 'STARTING_TRIP') {
-            throw Error('THIS_TRIP_IS_NOT_IN_PROGRESS_TO_FINALIZE');
+        if (freight.dataValues.status === 'STARTING_TRIP') {
+            const err = new Error('THIS_TRIP_IS_NOT_IN_PROGRESS_TO_FINALIZE');
+            err.status = 400;
+            throw err;
         }
 
         await freight.destroy();

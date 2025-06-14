@@ -66,10 +66,10 @@ class NotificationService extends BaseService {
     }
 
     async getAll(driver, { page = 1, limit = 10 }) {
-        const checkIsDriver = await this._driverModel.findOne({
+        const driverData = await this._driverModel.findOne({
             where: { id: driver.id, type_positions: 'COLLABORATOR' }
         });
-        if (!checkIsDriver) {
+        if (!driverData) {
             const err = new Error('USER_NOT_IS_DRIVER');
             err.status = 400;
             throw err;
@@ -81,7 +81,7 @@ class NotificationService extends BaseService {
             order: [['created_at', 'DESC']],
             limit,
             offset: page - 1 ? (page - 1) * limit : 0,
-            attributes: ['id', 'content', 'read', 'created_at', 'driver_id']
+            attributes: ['id', 'title', 'content', 'read', 'created_at', 'driver_id']
         });
 
         // Conta o total de notificações para calcular as páginas
@@ -91,10 +91,10 @@ class NotificationService extends BaseService {
         const totalPages = Math.ceil(totalNotifications / limit);
 
         return {
+            docs: notifications.map((res) => res.toJSON()),
             total: totalNotifications,
             totalPages,
-            currentPage: Number(page),
-            docs: notifications.map((res) => res.toJSON())
+            currentPage: Number(page)
         };
     }
 
@@ -183,6 +183,7 @@ class NotificationService extends BaseService {
             order: [['created_at', 'DESC']],
             attributes: [
                 'id',
+                'title',
                 'content',
                 'read',
                 'created_at',
@@ -197,7 +198,7 @@ class NotificationService extends BaseService {
 
         return {
             docs: notifications.map((res) => res.toJSON()),
-            totalItems,
+            total: totalItems,
             totalPages,
             currentPage: Number(page),
             totalUnread
@@ -221,6 +222,7 @@ class NotificationService extends BaseService {
             .findByPk(id, {
                 attributes: [
                     'id',
+                    'title',
                     'content',
                     'read',
                     'freight_id',

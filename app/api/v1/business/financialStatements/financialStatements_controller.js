@@ -47,9 +47,12 @@ class FinancialStatementController extends BaseResourceController {
         }
     }
 
-    async finishing(req, res, next) {
+    async finishingFinancial(req, res, next) {
         try {
-            const data = await this._financialStatementService.finishing(req.body, req.params.id);
+            const data = await this._financialStatementService.finishingFinancial(
+                req.body,
+                req.params.id
+            );
             return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

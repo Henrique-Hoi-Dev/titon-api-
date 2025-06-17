@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import validateCpf from '../../../../utils/validateCpf.js';
+import { enumSchemas } from '../../../../utils/validations/enums.js';
 
 export default {
     signin: {
@@ -46,8 +47,8 @@ export default {
     },
     getIdFreight: {
         params: Joi.object({
-            freightId: Joi.number().required(),
-            financialId: Joi.number().required()
+            freight_id: Joi.number().required(),
+            financial_id: Joi.number().required()
         })
     },
     getAllFinished: {
@@ -61,19 +62,21 @@ export default {
     createFreight: {
         body: Joi.object({
             start_freight_city: Joi.string(),
-            final_freight_city: Joi.string(),
-            distance: Joi.string(),
-            duration: Joi.string(),
-            total_freight: Joi.number(),
-            total_freight_driver: Joi.number(),
-            status: Joi.string(),
+            end_freight_city: Joi.string(),
+            truck_location: Joi.string(),
+            contractor_name: Joi.string(),
             truck_current_km: Joi.number(),
-            liter_of_fuel_per_km: Joi.number(),
-            preview_tonne: Joi.number(),
-            preview_value_diesel: Joi.number(),
-            value_tonne: Joi.number(),
+            fuel_avg_per_km: Joi.number(),
+            estimated_tonnage: Joi.number(),
+            estimated_fuel_cost: Joi.number(),
+            ton_value: Joi.number(),
+            route_distance_km: Joi.string(),
+            route_duration: Joi.string(),
             tons_loaded: Joi.number(),
-            toll_value: Joi.number()
+            toll_cost: Joi.number(),
+            truck_km_end_trip: Joi.number(),
+            discharge: Joi.number(),
+            status: enumSchemas.freightStatus
         })
     },
     uploadDocuments: {
@@ -91,21 +94,21 @@ export default {
         }),
         body: Joi.object({
             start_freight_city: Joi.string(),
-            final_freight_city: Joi.string(),
-            distance: Joi.string(),
-            duration: Joi.string(),
-            total_freight: Joi.number(),
-            total_freight_driver: Joi.number(),
-            location_of_the_truck: Joi.string(),
-            contractor: Joi.string(),
-            status: Joi.string(),
+            end_freight_city: Joi.string(),
+            truck_location: Joi.string(),
+            contractor_name: Joi.string(),
             truck_current_km: Joi.number(),
-            liter_of_fuel_per_km: Joi.number(),
-            preview_tonne: Joi.number(),
-            preview_value_diesel: Joi.number(),
-            value_tonne: Joi.number(),
+            fuel_avg_per_km: Joi.number(),
+            estimated_tonnage: Joi.number(),
+            estimated_fuel_cost: Joi.number(),
+            ton_value: Joi.number(),
+            route_distance_km: Joi.string(),
+            route_duration: Joi.string(),
             tons_loaded: Joi.number(),
-            toll_value: Joi.number()
+            toll_cost: Joi.number(),
+            truck_km_end_trip: Joi.number(),
+            discharge: Joi.number(),
+            status: enumSchemas.freightStatus
         })
     },
     deleteFile: {

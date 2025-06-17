@@ -84,9 +84,9 @@ class Driver extends Model {
             as: 'financialStatements'
         });
 
-        this.hasMany(models.Credit, {
+        this.hasMany(models.Trasactions, {
             foreignKey: 'driver_id',
-            as: 'credits'
+            as: 'trasactions'
         });
     }
 

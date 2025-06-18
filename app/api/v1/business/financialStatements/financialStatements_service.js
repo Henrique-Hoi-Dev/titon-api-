@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { isAfter } from 'date-fns';
+import { Sequelize } from 'sequelize';
 
 import BaseService from '../../base/base_service.js';
 import FinancialStatementModel from './financialStatements_model.js';
@@ -283,7 +284,18 @@ class FinancialStatementService extends BaseService {
                 {
                     model: this._freightModel,
                     as: 'freight',
-                    where: status_check ? whereStatus : null
+                    where: status_check ? whereStatus : null,
+                    order: [
+                        [
+                            Sequelize.literal(`CASE 
+                                WHEN status = 'STARTING_TRIP' THEN 1
+                                WHEN status = 'APPROVED' THEN 2
+                                ELSE 3
+                            END`),
+                            'ASC'
+                        ],
+                        ['created_at', 'DESC']
+                    ]
                 },
                 {
                     model: this._truckModel,
@@ -354,7 +366,18 @@ class FinancialStatementService extends BaseService {
         }
 
         const freight = await this._freightModel.findAll({
-            where: { financial_statements_id: financial.id }
+            where: { financial_statements_id: financial.id },
+            order: [
+                [
+                    Sequelize.literal(`CASE 
+                        WHEN status = 'STARTING_TRIP' THEN 1
+                        WHEN status = 'APPROVED' THEN 2
+                        ELSE 3
+                    END`),
+                    'ASC'
+                ],
+                ['created_at', 'DESC']
+            ]
         });
 
         if (!freight) {

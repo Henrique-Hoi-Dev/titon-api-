@@ -353,7 +353,7 @@ class FreightService extends BaseService {
         );
 
         if (!kmTravel) {
-            const err = new Error('Erro api google');
+            const err = new Error('INVALID_ROUTE_GOOGLE_MAPS');
             err.status = 400;
             throw err;
         }

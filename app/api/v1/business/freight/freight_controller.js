@@ -18,9 +18,9 @@ class FreightController extends BaseResourceController {
         }
     }
 
-    async create(req, res, next) {
+    async createFreightManager(req, res, next) {
         try {
-            const data = await this._freightService.create(
+            const data = await this._freightService.createFreightManager(
                 req.manager,
                 req.body,
                 req.params.financial_id
@@ -31,9 +31,9 @@ class FreightController extends BaseResourceController {
         }
     }
 
-    async createFreightDocument(req, res, next) {
+    async createFreightFromFile(req, res, next) {
         try {
-            const data = await this._freightService.createFreightDocument(
+            const data = await this._freightService.createFreightFromFile(
                 req.manager,
                 req,
                 req.params.financial_id

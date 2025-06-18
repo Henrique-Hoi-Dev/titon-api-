@@ -268,15 +268,14 @@ router
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         validator(validation.createFreight),
-        freightController.create.bind(freightController)
+        freightController.createFreightManager.bind(freightController)
     )
-    .patch(
-        '/freight/upload-document/:financial_id',
+    .post(
+        '/freight/upload-file/:financial_id',
         middleware.ensureAuthorization,
         middleware.verifyManagerToken,
         upload.single('file'),
-        validator(validation.createFreight),
-        freightController.createFreightDocument.bind(freightController)
+        freightController.createFreightFromFile.bind(freightController)
     )
     .put(
         '/freight/approve/:id/:financial_id',

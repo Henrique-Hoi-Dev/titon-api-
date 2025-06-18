@@ -84,5 +84,8 @@
     "DRIVER_NOT_FOUND_IN_FINANCIAL": "Driver not found in financial",
     "INVALID_ROUTE_GOOGLE_MAPS": "Invalid route google maps",
     "ERROR_PARSING_RESPONSE": "Error parsing response",
-    "ERROR_REQUEST_GOOGLE_MAPS": "Error request google maps"
+    "ERROR_REQUEST_GOOGLE_MAPS": "Error request google maps",
+    "INVALID_FILE_FORMAT": "Invalid file format",
+    "INVALID_FILE_DATA": "Invalid file data",
+    "FREIGHT_IN_TRIP": "Freight in trip"
 }

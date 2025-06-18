@@ -11,7 +11,9 @@ import DepositMoneyModel from '../depositMoney/depositMoney_model.js';
 import NotificationService from '../notification/notification_service.js';
 import ManagerModel from '../manager/manager_model.js';
 import FinancialService from '../financialStatements/financialStatements_service.js';
+import * as XLSX from 'xlsx';
 
+import { XMLParser } from 'fast-xml-parser';
 import { formatWithTimezone } from '../../../../utils/formatTimeZone.js';
 import { deleteFile, getFile, sendFile } from '../../../../providers/aws/index.js';
 import { generateRandomCode } from '../../../../utils/crypto.js';
@@ -127,7 +129,7 @@ class FreightService extends BaseService {
         return data;
     }
 
-    async create(manager, body, financialId) {
+    async createFreightManager(manager, body, financialId) {
         const financial = await this._financialStatementModel.findByPk(financialId);
 
         if (!financial.dataValues.id) {
@@ -142,31 +144,44 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        const result = await this._freightModel.create({
+        const existingFreightInTrip = await this._freightModel.findOne({
+            where: {
+                financial_statements_id: financial.dataValues.id,
+                status: 'STARTING_TRIP'
+            }
+        });
+
+        if (existingFreightInTrip) {
+            const err = new Error('FREIGHT_IN_TRIP');
+            err.status = 400;
+            throw err;
+        }
+
+        const origin = body.start_freight_city;
+        const destination = body.end_freight_city;
+
+        const googleTravel = await this._googleQuery(origin, destination);
+
+        const seconds = googleTravel.duration.value;
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const routeDuration = `${hours} horas e ${minutes} minutos`;
+
+        const freight = await this._freightModel.create({
             ...body,
-            financial_statements_id: financial.dataValues.id
+            financial_statements_id: financial.id,
+            route_distance_km: googleTravel.distance.text,
+            route_duration: routeDuration
         });
 
         await this._notificationService.createNotification({
             title: 'Indicou um frete!',
             content: `${manager.name} está indicando um novo frete!`,
-            driver_id: financial.dataValues.driver_id,
-            financial_id: financial.dataValues.id
+            driver_id: financial.driver_id,
+            financial_id: financial.id
         });
 
-        return result.toJSON();
-    }
-
-    async createFreightDocument(manager, { file }, financialId) {
-        // eslint-disable-next-line no-console
-        console.log(file);
-        const financial = await this._financialStatementModel.findByPk(financialId);
-
-        if (!financial.dataValues.id) {
-            const err = new Error('FINANCIAL_NOT_FOUND');
-            err.status = 404;
-            throw err;
-        }
+        return freight.toJSON();
     }
 
     async getIdManagerFreight(freightId) {
@@ -229,10 +244,45 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        const kmTravel = await this._googleQuery(
-            freight.dataValues.start_freight_city,
-            freight.dataValues.end_freight_city
-        );
+        // Verifica se o frete já tem informações de rota no banco
+        let kmTravel = null;
+
+        if (!freight.dataValues.route_distance_km || !freight.dataValues.route_duration) {
+            // Se não tem informações de rota, consulta o Google Maps
+            kmTravel = await this._googleQuery(
+                freight.dataValues.start_freight_city,
+                freight.dataValues.end_freight_city
+            );
+
+            if (!kmTravel) {
+                const err = new Error('INVALID_ROUTE_GOOGLE_MAPS');
+                err.status = 400;
+                throw err;
+            }
+
+            // Atualiza o frete com as informações da rota
+            const seconds = kmTravel.duration.value;
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+
+            await freight.update({
+                route_distance_km: kmTravel.distance.text,
+                route_duration: `${hours} horas e ${minutes} minutos`
+            });
+        } else {
+            // Se já tem informações de rota, usa as existentes
+            kmTravel = {
+                distance: {
+                    text: freight.dataValues.route_distance_km,
+                    value:
+                        parseInt(freight.dataValues.route_distance_km.replace(/[^\d]/g, '')) * 1000
+                },
+                duration: {
+                    text: freight.dataValues.route_duration,
+                    value: this._parseDurationToSeconds(freight.dataValues.route_duration)
+                }
+            };
+        }
 
         // Calcula o valor total do frete em centavos
         const totalFreightInCents =
@@ -354,10 +404,45 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        const kmTravel = await this._googleQuery(
-            freight.dataValues.start_freight_city,
-            freight.dataValues.end_freight_city
-        );
+        // Verifica se o frete já tem informações de rota no banco
+        let kmTravel = null;
+
+        if (!freight.dataValues.route_distance_km || !freight.dataValues.route_duration) {
+            // Se não tem informações de rota, consulta o Google Maps
+            kmTravel = await this._googleQuery(
+                freight.dataValues.start_freight_city,
+                freight.dataValues.end_freight_city
+            );
+
+            if (!kmTravel) {
+                const err = new Error('INVALID_ROUTE_GOOGLE_MAPS');
+                err.status = 400;
+                throw err;
+            }
+
+            // Atualiza o frete com as informações da rota
+            const seconds = kmTravel.duration.value;
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+
+            await freight.update({
+                route_distance_km: kmTravel.distance.text,
+                route_duration: `${hours} horas e ${minutes} minutos`
+            });
+        } else {
+            // Se já tem informações de rota, usa as existentes
+            kmTravel = {
+                distance: {
+                    text: freight.dataValues.route_distance_km,
+                    value:
+                        parseInt(freight.dataValues.route_distance_km.replace(/[^\d]/g, '')) * 1000
+                },
+                duration: {
+                    text: freight.dataValues.route_duration,
+                    value: this._parseDurationToSeconds(freight.dataValues.route_duration)
+                }
+            };
+        }
 
         if (!kmTravel) {
             const err = new Error('INVALID_ROUTE_GOOGLE_MAPS');
@@ -411,7 +496,7 @@ class FreightService extends BaseService {
             status: freight.status,
             start_freight_city: freight.start_freight_city,
             end_freight_city: freight.end_freight_city,
-            previous_average: `${freight.fuel_avg_per_km / 100} M`,
+            previous_average: `${freight.fuel_avg_per_km / 100} KM/L`,
             route_distance_km: kmTravel.distance.text,
             consumption: `${totalLiters} L`,
             distance: kmTravel.distance.text,
@@ -752,6 +837,20 @@ class FreightService extends BaseService {
             throw err;
         }
 
+        // Valida se o arquivo tem as propriedades necessárias
+        if (!file.name || !file.data) {
+            const err = new Error('INVALID_FILE_FORMAT');
+            err.status = 400;
+            throw err;
+        }
+
+        // Valida se o arquivo tem dados válidos
+        if (!Buffer.isBuffer(file.data) && !(file.data instanceof Uint8Array)) {
+            const err = new Error('INVALID_FILE_DATA');
+            err.status = 400;
+            throw err;
+        }
+
         const originalFilename = file.originalname;
 
         const code = generateRandomCode(9);
@@ -989,6 +1088,256 @@ class FreightService extends BaseService {
         await freight.destroy();
 
         return { msg: 'Freight deleted' };
+    }
+
+    async _processExcelFile(fileBuffer) {
+        try {
+            const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            const dataRows = jsonData.slice(1);
+
+            if (dataRows.length === 0) {
+                const err = new Error('NO_DATA_FOUND_IN_EXCEL');
+                err.status = 400;
+                throw err;
+            }
+
+            const row = dataRows[0];
+
+            if (row.length < 8) {
+                const err = new Error('INSUFFICIENT_DATA_IN_EXCEL');
+                err.status = 400;
+                throw err;
+            }
+
+            const freight = {
+                start_freight_city: row[0]?.toString().trim(),
+                end_freight_city: row[1]?.toString().trim(),
+                contractor_name: row[2]?.toString().trim(),
+                estimated_tonnage: this._parseNumber(row[3]) * 1000,
+                ton_value: this._parseMoneyToCents(row[4]),
+                estimated_fuel_cost: this._parseMoneyToCents(row[5]),
+                fuel_avg_per_km: this._parseNumber(row[6]) * 100,
+                truck_current_km: this._parseNumber(row[7])
+            };
+
+            if (!freight.start_freight_city || !freight.end_freight_city) {
+                const err = new Error('ORIGIN_AND_DESTINATION_CITIES_ARE_REQUIRED');
+                err.status = 400;
+                throw err;
+            }
+
+            return freight;
+        } catch {
+            const err = new Error('ERRO_PROCESSAR_EXCEL');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    async _processXmlFile(fileBuffer) {
+        try {
+            const xmlContent = fileBuffer.toString('utf-8');
+            const parser = new XMLParser({
+                ignoreAttributes: false,
+                attributeNamePrefix: '@_'
+            });
+
+            const result = parser.parse(xmlContent);
+
+            let freightData = null;
+
+            if (result.fretes && result.fretes.frete) {
+                freightData = result.fretes.frete;
+            } else if (result.frete) {
+                freightData = result.frete;
+            } else if (result.data && result.data.frete) {
+                freightData = result.data.frete;
+            } else {
+                const err = new Error('UNRECOGNIZED_XML_STRUCTURE');
+                err.status = 400;
+                err.details = 'UNRECOGNIZED_XML_STRUCTURE';
+                throw err;
+            }
+
+            const freight = {
+                start_freight_city:
+                    freightData.cidade_origem || freightData.origem || freightData.start_city,
+                end_freight_city:
+                    freightData.cidade_destino || freightData.destino || freightData.end_city,
+                contractor_name:
+                    freightData.contratante || freightData.empresa || freightData.contractor,
+                estimated_tonnage:
+                    this._parseNumber(freightData.toneladas || freightData.tonnage) * 1000,
+                ton_value: this._parseMoneyToCents(
+                    freightData.valor_tonelada || freightData.ton_value
+                ),
+                estimated_fuel_cost: this._parseMoneyToCents(
+                    freightData.custo_combustivel || freightData.fuel_cost
+                ),
+                fuel_avg_per_km:
+                    this._parseNumber(freightData.media_consumo || freightData.fuel_avg) * 100,
+                truck_current_km: this._parseNumber(freightData.km_atual || freightData.current_km)
+            };
+
+            // Valida dados obrigatórios
+            if (!freight.start_freight_city || !freight.end_freight_city) {
+                throw new Error('ORIGIN_AND_DESTINATION_CITIES_ARE_REQUIRED');
+            }
+
+            return freight;
+        } catch (error) {
+            const err = new Error('ERROR_PROCESSING_XML');
+            err.status = 400;
+            err.details = error.message;
+            throw err;
+        }
+    }
+
+    _parseNumber(value) {
+        if (value === null || value === undefined || value === '') {
+            return 0;
+        }
+
+        const num = parseFloat(
+            value
+                .toString()
+                .replace(/[^\d.,]/g, '')
+                .replace(',', '.')
+        );
+        return isNaN(num) ? 0 : num;
+    }
+
+    _parseMoneyToCents(value) {
+        if (value === null || value === undefined || value === '') {
+            return 0;
+        }
+
+        const cleanValue = value.toString().replace(/[R$\s]/g, '');
+
+        const num = parseFloat(cleanValue.replace(',', '.'));
+
+        if (isNaN(num)) {
+            return 0;
+        }
+
+        return Math.round(num * 100);
+    }
+
+    /**
+     * Converte duração de texto para segundos
+     * @param {string} durationText - Texto da duração (ex: "5 horas e 30 minutos")
+     * @returns {number} - Duração em segundos
+     */
+    _parseDurationToSeconds(durationText) {
+        if (!durationText) return 0;
+
+        const hoursMatch = durationText.match(/(\d+)\s*hora/);
+        const minutesMatch = durationText.match(/(\d+)\s*minuto/);
+
+        const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+        const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+
+        return hours * 3600 + minutes * 60;
+    }
+
+    async createFreightFromFile(manager, { file }, financialId) {
+        if (!file) {
+            const err = new Error('NO_FILE_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
+        if (!file.fieldname || !file.buffer) {
+            const err = new Error('INVALID_FILE_FORMAT');
+            err.status = 400;
+            throw err;
+        }
+
+        if (!Buffer.isBuffer(file.buffer) && !(file.buffer instanceof Uint8Array)) {
+            const err = new Error('INVALID_FILE_DATA');
+            err.status = 400;
+            throw err;
+        }
+
+        const financial = await this._financialStatementModel.findByPk(financialId);
+
+        if (!financial || !financial.dataValues.id) {
+            const err = new Error('FINANCIAL_STATEMENT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (!manager.id) {
+            const err = new Error('MANAGER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        let freightData = null;
+        const fileExtension = file.fieldname.toLowerCase().split('.').pop();
+
+        try {
+            switch (fileExtension) {
+                case 'xlsx':
+                case 'xls': {
+                    freightData = await this._processExcelFile(file.buffer);
+                    break;
+                }
+                case 'xml': {
+                    freightData = await this._processXmlFile(file.buffer);
+                    break;
+                }
+                default: {
+                    const err = new Error('FILE_FORMAT_NOT_SUPPORTED');
+                    err.status = 400;
+                    throw err;
+                }
+            }
+
+            if (!freightData) {
+                const err = new Error('NO_FREIGHT_FOUND');
+                err.status = 400;
+                throw err;
+            }
+
+            const kmTravel = await this._googleQuery(
+                freightData.start_freight_city,
+                freightData.end_freight_city
+            );
+
+            const result = await this._freightModel.create({
+                ...freightData,
+                financial_statements_id: financial.dataValues.id,
+                route_distance_km: kmTravel.distance.text,
+                route_duration: `${Math.floor(kmTravel.duration.value / 3600)}h ${Math.floor((kmTravel.duration.value % 3600) / 60)}min`,
+                status: 'APPROVED'
+            });
+
+            await this._notificationService.createNotification({
+                title: 'Indicou um frete!',
+                content: `${manager.name} está indicando um novo frete de ${freightData.start_freight_city} para ${freightData.end_freight_city}!`,
+                driver_id: financial.dataValues.driver_id,
+                financial_id: financial.dataValues.id
+            });
+
+            return {
+                success: true,
+                freight: result.toJSON(),
+                fileInfo: {
+                    name: file.originalname || file.name,
+                    size: file.size || 0
+                }
+            };
+        } catch (error) {
+            const err = new Error(error);
+            err.status = 400;
+            throw err;
+        }
     }
 }
 

@@ -55,20 +55,16 @@ class FreightService extends BaseService {
     }
 
     _valueTotalGasto(totalLiters, fuelValue) {
-        const fuelValueReal = fuelValue / 100;
+        const calculate = totalLiters * fuelValue;
 
-        const calculate = totalLiters * fuelValueReal;
-
-        return this._formatRealValue(calculate.toFixed(2));
+        return this._formatRealValue(calculate / 100);
     }
 
     _valueTotalTonne(tonne, valueTonne) {
-        const valueTonneReal = valueTonne / 100;
         const tonneDiv = tonne / 1000;
+        const calculate = tonneDiv * valueTonne;
 
-        const calculate = tonneDiv * valueTonneReal;
-
-        return this._formatRealValue(calculate.toFixed(2));
+        return this._formatRealValue(calculate / 100);
     }
 
     _valueNetFreight(totalDriver, totalFreight, totalAmountSpent) {
@@ -87,14 +83,28 @@ class FreightService extends BaseService {
     _valueDriver(percentage, fixedValue, totalFreight) {
         if (percentage > 0) {
             const percentageReal = percentage / 100;
-            const freightReal = totalFreight / 100;
+            const calculate = totalFreight * percentageReal;
 
-            const calculate = freightReal * percentageReal;
-
-            return this._formatRealValue(calculate.toFixed(2));
+            return this._formatRealValue(calculate / 100);
         } else {
             return this._formatRealValue(fixedValue / 100);
         }
+    }
+
+    _unmaskMoney(string) {
+        if (typeof string === 'string') {
+            const cleanString = string.replace(/[^\d,.-]/g, '');
+            const numberString = cleanString.replace(',', '.');
+            return Math.round(parseFloat(numberString) * 100);
+        }
+        return Number(string);
+    }
+
+    _getValueInCents(formattedValue) {
+        if (typeof formattedValue === 'string') {
+            return this._unmaskMoney(formattedValue);
+        }
+        return formattedValue;
     }
 
     async createFreightDriver(driver, body) {
@@ -224,32 +234,33 @@ class FreightService extends BaseService {
             freight.dataValues.end_freight_city
         );
 
-        const totalFreight = this._valueTotalTonne(
-            freight.dataValues.estimated_tonnage,
-            freight.dataValues.ton_value
-        );
+        // Calcula o valor total do frete em centavos
+        const totalFreightInCents =
+            (freight.dataValues.estimated_tonnage / 1000) * freight.dataValues.ton_value;
+        const totalFreight = this._formatRealValue(totalFreightInCents / 100);
 
         const totalLiters = this._calculatesLiters(
             kmTravel.distance.value,
             freight.dataValues.fuel_avg_per_km
         );
 
-        const totalAmountSpent = this._valueTotalGasto(
-            totalLiters,
-            freight.dataValues.estimated_fuel_cost
-        );
+        // Calcula o valor total gasto em centavos
+        const totalAmountSpentInCents = totalLiters * freight.dataValues.estimated_fuel_cost;
+        const totalAmountSpent = this._formatRealValue(totalAmountSpentInCents / 100);
 
-        const totalDriver = this._valueDriver(
-            driver.percentage,
-            driver.value_fix,
-            this._unmaskMoney(totalFreight)
-        );
+        // Calcula o valor do motorista em centavos
+        let totalDriverInCents;
+        if (driver.percentage > 0) {
+            totalDriverInCents = totalFreightInCents * (driver.percentage / 100);
+        } else {
+            totalDriverInCents = driver.value_fix;
+        }
+        const totalDriver = this._formatRealValue(totalDriverInCents / 100);
 
-        const totalNetFreight = this._valueNetFreight(
-            this._unmaskMoney(totalDriver),
-            this._unmaskMoney(totalFreight),
-            this._unmaskMoney(totalAmountSpent)
-        );
+        // Calcula o valor líquido do frete em centavos
+        const totalNetFreightInCents =
+            totalFreightInCents - totalDriverInCents - totalAmountSpentInCents;
+        const totalNetFreight = this._formatRealValue(totalNetFreightInCents / 100);
 
         return {
             status: freight.status,
@@ -306,10 +317,6 @@ class FreightService extends BaseService {
                     }
                 }))
         };
-    }
-
-    _unmaskMoney(string) {
-        return Number(string.toString().replace('.', '').replace('.', '').replace(/\D/g, ''));
     }
 
     async firstCheckId(id) {
@@ -378,32 +385,27 @@ class FreightService extends BaseService {
             freight.dataValues.estimated_fuel_cost
         );
 
-        const totalAmountSpent = this._valueTotalGasto(
-            totalLiters,
-            freight.dataValues.estimated_fuel_cost
-        );
+        const totalAmountSpentInCents = totalLiters * freight.dataValues.estimated_fuel_cost;
+        const totalAmountSpent = this._formatRealValue(totalAmountSpentInCents / 100);
 
-        const totalFreight = this._valueTotalTonne(
-            freight.dataValues.estimated_tonnage,
-            freight.dataValues.ton_value
-        );
+        const totalFreightInCents =
+            (freight.dataValues.estimated_tonnage / 1000) * freight.dataValues.ton_value;
+        const totalFreight = this._formatRealValue(totalFreightInCents / 100);
 
-        const totalDriver = this._valueDriver(
-            driver.percentage,
-            driver.value_fix,
-            this._unmaskMoney(totalFreight)
-        );
+        let totalDriverInCents;
+        if (driver.percentage > 0) {
+            totalDriverInCents = totalFreightInCents * (driver.percentage / 100);
+        } else {
+            totalDriverInCents = driver.value_fix;
+        }
+        const totalDriver = this._formatRealValue(totalDriverInCents / 100);
 
-        const totalNetFreight = this._valueNetFreight(
-            this._unmaskMoney(totalDriver),
-            this._unmaskMoney(totalFreight),
-            this._unmaskMoney(totalAmountSpent)
-        );
+        const totalNetFreightInCents =
+            totalFreightInCents - totalDriverInCents - totalAmountSpentInCents;
+        const totalNetFreight = this._formatRealValue(totalNetFreightInCents / 100);
 
-        const totalleftoverLiquid = this._leftoverLiquid(
-            this._unmaskMoney(totalFreight),
-            this._unmaskMoney(totalAmountSpent)
-        );
+        const totalleftoverLiquidInCents = totalFreightInCents - totalAmountSpentInCents;
+        const totalleftoverLiquid = this._formatRealValue(totalleftoverLiquidInCents / 100);
 
         return {
             status: freight.status,
@@ -528,7 +530,6 @@ class FreightService extends BaseService {
 
     async getId({ freight_id, financial_id }, { id, changedDestiny = false }) {
         let financial = null;
-        // aqui é para pegar o financial pelo endpoint /freight/:freightId/:financialId
         if (freight_id && financial_id) {
             const result = await this._financialStatementModel.findOne({
                 where: { id: financial_id, driver_id: id }
@@ -682,10 +683,10 @@ class FreightService extends BaseService {
         const destinationDB = normalize(freight.dataValues.end_freight_city || '');
 
         const precisaDeRota =
-            !freight.dataValues.route_distance_km || // falta distância
-            !freight.dataValues.route_duration || // ou falta duração
-            (originUI && originUI !== originDB) || // ou origem mudou
-            (destinationUI && destinationUI !== destinationDB); // ou destino mudou
+            !freight.dataValues.route_distance_km ||
+            !freight.dataValues.route_duration ||
+            (originUI && originUI !== originDB) ||
+            (destinationUI && destinationUI !== destinationDB);
 
         if (precisaDeRota) {
             changedDestiny = true;

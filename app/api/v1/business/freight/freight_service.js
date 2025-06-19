@@ -112,6 +112,12 @@ class FreightService extends BaseService {
     async createFreightDriver(driver, body) {
         const financial = await this._financialDriver({ driverId: driver.id });
 
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
         const result = await this._freightModel.create({
             ...body,
             status: 'DRAFT',
@@ -124,7 +130,7 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        const data = await this.getId({ freightId: result.id }, { id: driver.id });
+        const data = await this.getId({ freight_id: result.id }, { id: driver.id });
 
         return data;
     }
@@ -750,6 +756,12 @@ class FreightService extends BaseService {
         let changedDestiny = false;
         const financial = await this._financialDriver({ driverId: id });
 
+        if (!financial) {
+            const err = new Error('FINANCIAL_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
         const freight = await this._freightModel.findOne({
             where: { id: freightId, financial_statements_id: financial.id }
         });
@@ -758,6 +770,12 @@ class FreightService extends BaseService {
             const err = new Error('FREIGHT_NOT_FOUND');
             err.status = 404;
             throw err;
+        }
+
+        if (!financial.dataValues.startKm) {
+            await financial.update({
+                startKm: body.truck_current_km
+            });
         }
 
         const normalize = (s) => s.toLowerCase().trim();
@@ -784,6 +802,7 @@ class FreightService extends BaseService {
                 title: 'Requisitou um novo check frete',
                 content: `${name}, Requisitou um novo check frete!`,
                 manager_id: financial.creator_user_id,
+                freight_id: freightId,
                 driver_id: id,
                 financial_id: financial.id
             });
@@ -806,7 +825,7 @@ class FreightService extends BaseService {
         }
 
         const data = await this.getId(
-            { freightId: freightId },
+            { freight_id: freightId },
             {
                 id,
                 changedDestiny

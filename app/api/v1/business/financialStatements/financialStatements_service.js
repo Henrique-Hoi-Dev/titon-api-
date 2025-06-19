@@ -255,8 +255,7 @@ class FinancialStatementService extends BaseService {
         const where = {};
         if (status) where.status = status;
 
-        const whereStatus = {};
-        if (status_check) whereStatus.status = status_check;
+        const whereStatus = status_check ? { status: status_check } : {};
 
         /* eslint-disable indent */
         const whereSearch = search?.trim()
@@ -278,24 +277,16 @@ class FinancialStatementService extends BaseService {
                 {
                     model: this._driverModel,
                     as: 'driver',
-                    attributes: ['name', 'email', 'credit', 'value_fix', 'percentage', 'daily'],
+                    attributes: [
+                        'name',
+                        'email',
+                        'phone',
+                        'credit',
+                        'value_fix',
+                        'percentage',
+                        'daily'
+                    ],
                     required: !!search
-                },
-                {
-                    model: this._freightModel,
-                    as: 'freight',
-                    where: status_check ? whereStatus : null,
-                    order: [
-                        [
-                            Sequelize.literal(`CASE 
-                                WHEN status = 'STARTING_TRIP' THEN 1
-                                WHEN status = 'APPROVED' THEN 2
-                                ELSE 3
-                            END`),
-                            'ASC'
-                        ],
-                        ['created_at', 'DESC']
-                    ]
                 },
                 {
                     model: this._truckModel,
@@ -307,8 +298,43 @@ class FinancialStatementService extends BaseService {
                     model: this._cartModel,
                     as: 'cart',
                     attributes: ['cart_models', 'cart_board', 'cart_bodyworks', 'image_cart']
+                },
+                {
+                    model: this._freightModel,
+                    as: 'freight',
+                    ...(status_check && {
+                        where: whereStatus
+                    })
                 }
             ]
+        });
+
+        const orderedFreights = (freights) => {
+            const statusOrder = {
+                STARTING_TRIP: 1,
+                APPROVED: 2,
+                PENDING: 3,
+                DRAFT: 4,
+                DENIED: 5,
+                FINISHED: 6
+            };
+
+            return freights.sort((a, b) => {
+                const aStatus = statusOrder[a.status] ?? 7;
+                const bStatus = statusOrder[b.status] ?? 7;
+
+                if (aStatus !== bStatus) return aStatus - bStatus;
+
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+        };
+
+        const docs = financialStatements.map((res) => {
+            const json = res.toJSON();
+            if (Array.isArray(json.freight)) {
+                json.freight = orderedFreights(json.freight);
+            }
+            return json;
         });
 
         const total = await this._financialStatementModel.count();
@@ -317,7 +343,7 @@ class FinancialStatementService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            docs: financialStatements.map((res) => res.toJSON()),
+            docs,
             total,
             totalPages,
             currentPage

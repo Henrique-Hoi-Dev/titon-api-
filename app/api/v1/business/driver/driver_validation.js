@@ -167,6 +167,7 @@ export default {
     },
     getAllDeposits: {
         query: Joi.object({
+            freight_id: Joi.number().optional(),
             page: Joi.number().optional(),
             limit: Joi.number().optional(),
             sort_order: Joi.string().optional(),
@@ -211,6 +212,7 @@ export default {
     },
     getAllTravels: {
         query: Joi.object({
+            freight_id: Joi.number().optional(),
             page: Joi.number().optional(),
             limit: Joi.number().optional(),
             sort_order: Joi.string().optional(),
@@ -244,6 +246,7 @@ export default {
     },
     getAllRestocks: {
         query: Joi.object({
+            freight_id: Joi.number().optional(),
             page: Joi.number().optional(),
             limit: Joi.number().optional(),
             sort_order: Joi.string().optional(),

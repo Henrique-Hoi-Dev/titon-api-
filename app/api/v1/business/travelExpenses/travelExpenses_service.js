@@ -139,12 +139,18 @@ class TravelExpensesService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
+        const { freight_id, page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
 
         const totalItems = (await this._travelExpensesModel.findAll()).length;
         const totalPages = Math.ceil(totalItems / limit);
 
+        const where = {};
+        if (freight_id) {
+            where.freight_id = freight_id;
+        }
+
         const travelExpenses = await this._travelExpensesModel.findAll({
+            where,
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0

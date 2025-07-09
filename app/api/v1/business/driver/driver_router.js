@@ -133,14 +133,14 @@ router
         '/freight/starting-trip/:freight_id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        validator(validation.deleteFile),
+        validator(validation.startingTrip),
         freightController.startingTrip.bind(freightController)
     )
     .put(
         '/freight/finished-trip/:freight_id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
-        validator(validation.deleteFile),
+        validator(validation.finishedTrip),
         freightController.finishedTrip.bind(freightController)
     )
     .get(

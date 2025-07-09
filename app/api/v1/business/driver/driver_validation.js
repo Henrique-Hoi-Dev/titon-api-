@@ -119,6 +119,22 @@ export default {
             typeImg: Joi.string().required()
         })
     },
+    startingTrip: {
+        params: Joi.object({
+            freight_id: Joi.number().required()
+        }),
+        body: Joi.object({
+            truck_current_km: Joi.number()
+        })
+    },
+    finishedTrip: {
+        params: Joi.object({
+            freight_id: Joi.number().required()
+        }),
+        body: Joi.object({
+            truck_km_end_trip: Joi.number()
+        })
+    },
     getDocuments: {
         query: Joi.object({
             filename: Joi.string().required(),

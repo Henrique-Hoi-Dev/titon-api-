@@ -27,9 +27,9 @@ class FreightService extends BaseService {
         this._restockModel = RestockModel;
         this._travelExpensesModel = TravelExpensesModel;
         this._depositMoneyModel = DepositMoneyModel;
-        this._notificationService = new NotificationService();
         this._oneSignalProvider = OneSignalProvider;
         this._managerModel = ManagerModel;
+        this._notificationService = new NotificationService();
         this._financialService = new FinancialService();
     }
 
@@ -616,7 +616,7 @@ class FreightService extends BaseService {
             err.status = 400;
             throw err;
         }
-        return financial;
+        return financial.toJSON();
     }
 
     async getId({ freight_id, financial_id }, { id, changedDestiny = false }) {
@@ -1010,11 +1010,19 @@ class FreightService extends BaseService {
 
     async startingTrip({ freight_id }, { truck_current_km }, { name, id }) {
         const [financial, freight] = await Promise.all([
-            this._financialService.getFinancialCurrent({ driver_id: id }),
+            this._financialService.getFinancialCurrent({ id }),
             this._freightModel.findByPk(freight_id)
         ]);
 
-        const freighStartTrip = financial.freight.find((item) => item.status === 'STARTING_TRIP');
+        if (!financial) {
+            const err = new Error('FINANCIAL_STATEMENT_CURRENT_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        const freighStartTrip = financial.dataValues.freight.find(
+            (item) => item.status === 'STARTING_TRIP'
+        );
         if (freighStartTrip) {
             const err = new Error('THERE_IS_ALREADY_A_STARTING_TRIP');
             err.status = 400;
@@ -1033,31 +1041,33 @@ class FreightService extends BaseService {
                 truck_current_km: truck_current_km
             });
 
-            if (!financial.start_km) {
+            if (!financial.dataValues.start_km) {
                 await financial.update({
                     start_km: truck_current_km
                 });
             }
 
-            await this._notificationModel.create({
+            await this._notificationService.createNotification({
                 title: 'Iniciou a viagem!',
                 content: `${name} está iniciando a viagem de ${freight.dataValues.start_freight_city} para ${freight.dataValues.end_freight_city}`,
-                manager_id: financial.creator_user_id,
-                financial_id: financial.id
+                manager_id: financial.dataValues.creator_user_id,
+                financial_id: financial.dataValues.id
             });
+            return { msg: 'Starting Trip' };
         }
-        return { msg: 'Starting Trip' };
+
+        return { msg: 'Trip not started' };
     }
 
     async finishedTrip({ freight_id }, { truck_km_end_trip }, { name, id }) {
         const [financial, freight] = await Promise.all([
-            this._financialService.getFinancialCurrent({ driver_id: id }),
+            this._financialService.getFinancialCurrent({ id }),
             this._freightModel.findByPk(freight_id)
         ]);
 
-        if (freight.dataValues.status !== 'STARTING_TRIP') {
-            const err = new Error('THIS_TRIP_IS_NOT_IN_STARTING_TRIP');
-            err.status = 400;
+        if (!financial) {
+            const err = new Error('FINANCIAL_STATEMENT_CURRENT_NOT_FOUND');
+            err.status = 404;
             throw err;
         }
 
@@ -1067,13 +1077,19 @@ class FreightService extends BaseService {
             throw err;
         }
 
+        if (freight.dataValues.status !== 'STARTING_TRIP') {
+            const err = new Error('THIS_TRIP_IS_NOT_IN_STARTING_TRIP');
+            err.status = 400;
+            throw err;
+        }
+
         if (freight.dataValues.status === 'STARTING_TRIP') {
             await freight.update({
                 status: 'FINISHED',
                 truck_km_end_trip: truck_km_end_trip
             });
 
-            if (!financial.end_km) {
+            if (!financial.dataValues.end_km) {
                 await financial.update({
                     end_km: truck_km_end_trip
                 });
@@ -1082,8 +1098,8 @@ class FreightService extends BaseService {
             await this._notificationService.createNotification({
                 title: 'Finalizou a viagem',
                 content: `${name} finalizou a viagem de ${freight.dataValues.start_freight_city} para ${freight.dataValues.end_freight_city}`,
-                manager_id: financial.creator_user_id,
-                financial_id: financial.id
+                manager_id: financial.dataValues.creator_user_id,
+                financial_id: financial.dataValues.id
             });
         }
         return { msg: 'Finished Trip' };

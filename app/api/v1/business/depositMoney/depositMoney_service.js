@@ -1,8 +1,8 @@
-import DepositMoney from './depositMoney_model.js';
 import BaseService from '../../base/base_service.js';
-import Driver from '../driver/driver_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
-import Freight from '../freight/freight_model.js';
+import DepositMoneyModel from './depositMoney_model.js';
+import DriverModel from '../driver/driver_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
+import FreightModel from '../freight/freight_model.js';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
@@ -18,10 +18,10 @@ dayjs.tz.setDefault('America/Sao_Paulo');
 class DepositMoneyService extends BaseService {
     constructor() {
         super();
-        this._depositMoneyModel = DepositMoney;
-        this._driverModel = Driver;
-        this._financialStatementsModel = FinancialStatements;
-        this._freightModel = Freight;
+        this._depositMoneyModel = DepositMoneyModel;
+        this._driverModel = DriverModel;
+        this._financialStatementsModel = FinancialStatementsModel;
+        this._freightModel = FreightModel;
     }
 
     async create(driver, body) {

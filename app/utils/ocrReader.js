@@ -5,7 +5,7 @@ async function extractTextFromImage(imagePath) {
         data: { text }
     } = await Tesseract.recognize(imagePath, 'eng', {
         // eslint-disable-next-line no-console
-        logger: (m) => console.log(m) // pode remover em produção
+        logger: process.env.NODE_ENV === 'development' ? (m) => console.log(m) : () => {}
     });
     return text;
 }

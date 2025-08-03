@@ -1,15 +1,15 @@
 import BaseService from '../../base/base_service.js';
-import Notification from './notification_model.js';
-import Driver from '../driver/driver_model.js';
-import Manager from '../manager/manager_model.js';
+import NotificationModel from './notification_model.js';
+import DriverModel from '../driver/driver_model.js';
+import ManagerModel from '../manager/manager_model.js';
 import OneSignalProvider from '../../../../providers/oneSignal/index.js';
 
 class NotificationService extends BaseService {
     constructor() {
         super();
-        this._notificationModel = Notification;
-        this._driverModel = Driver;
-        this._managerModel = Manager;
+        this._notificationModel = NotificationModel;
+        this._driverModel = DriverModel;
+        this._managerModel = ManagerModel;
         this._oneSignalProvider = new OneSignalProvider();
     }
 

@@ -5,8 +5,8 @@ import { updateHours } from '../../../../utils/updateHours.js';
 import TravelExpensesModel from './travelExpenses_model.js';
 import BaseService from '../../base/base_service.js';
 import dayjs from 'dayjs';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
-import Freight from '../freight/freight_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
+import FreightModel from '../freight/freight_model.js';
 
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
@@ -19,8 +19,8 @@ class TravelExpensesService extends BaseService {
     constructor() {
         super();
         this._travelExpensesModel = TravelExpensesModel;
-        this._financialStatementsModel = FinancialStatements;
-        this._freightModel = Freight;
+        this._financialStatementsModel = FinancialStatementsModel;
+        this._freightModel = FreightModel;
     }
 
     async create(driver, body) {

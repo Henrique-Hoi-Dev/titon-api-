@@ -12,7 +12,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     host: config.host,
     port: config.port,
     dialect: config.dialect,
-    logging: console.log,
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
     define: {
         timestamps: true,
         underscored: true,

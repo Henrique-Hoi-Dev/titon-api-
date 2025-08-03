@@ -114,7 +114,9 @@ class OneSignal extends BaseIntegration {
                 }
             );
 
-            console.log('✅ External ID vinculado com sucesso:', response.data);
+            if (process.env.NODE_ENV === 'development') {
+                console.log('✅ External ID vinculado com sucesso:', response.data);
+            }
             return response.data;
         } catch (error) {
             console.error('❌ Erro ao vincular external ID:', error.response?.data || error);

@@ -1,6 +1,6 @@
 import ManagerModel from './manager_model.js';
 import BaseService from '../../base/base_service.js';
-import Permission from '../permission/permission_model.js';
+import PermissionModel from '../permission/permission_model.js';
 import { generateManagerToken } from '../../../../utils/jwt.js';
 import { Op } from 'sequelize';
 import { getFile, sendFilePublic } from '../../../../providers/aws/index.js';
@@ -10,7 +10,7 @@ class ManagerService extends BaseService {
     constructor() {
         super();
         this._managerModel = ManagerModel;
-        this._permissionModel = Permission;
+        this._permissionModel = PermissionModel;
     }
 
     async signin(body) {
@@ -32,7 +32,7 @@ class ManagerService extends BaseService {
 
         const { permission_id, name, type_role, id, avatar, phone, cpf, gender } = user.toJSON();
 
-        const permissions = await Permission.findByPk(permission_id, {
+        const permissions = await this._permissionModel.findByPk(permission_id, {
             attributes: ['role', 'actions']
         });
 

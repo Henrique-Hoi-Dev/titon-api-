@@ -1,5 +1,5 @@
 import TruckModel from './truck_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
 import BaseService from '../../base/base_service.js';
 
 import { Op, literal } from 'sequelize';
@@ -10,7 +10,7 @@ class TruckService extends BaseService {
     constructor() {
         super();
         this._truckModel = TruckModel;
-        this._financialStatementsModel = FinancialStatements;
+        this._financialStatementsModel = FinancialStatementsModel;
     }
 
     async create(body) {

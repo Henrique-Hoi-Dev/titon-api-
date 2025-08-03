@@ -1,9 +1,9 @@
 import BaseService from '../../base/base_service.js';
-import Driver from './driver_model.js';
-import ValidateCode from '../validateCode/validateCode_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
-import Truck from '../truck/truck_model.js';
-import Cart from '../cart/cart_model.js';
+import DriverModel from './driver_model.js';
+import ValidateCodeModel from '../validateCode/validateCode_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
+import TruckModel from '../truck/truck_model.js';
+import CartModel from '../cart/cart_model.js';
 import validateCpf from '../../../../utils/validateCpf.js';
 
 import { createExpirationDateFromNow } from '../../../../utils/date.js';
@@ -18,17 +18,17 @@ import { generateRandomCode } from '../../../../utils/crypto.js';
 class DriverService extends BaseService {
     constructor() {
         super();
-        this._driverModel = Driver;
-        this._validateCodeModel = ValidateCode;
-        this._financialStatementsModel = FinancialStatements;
-        this._truckModel = Truck;
-        this._cartModel = Cart;
+        this._driverModel = DriverModel;
+        this._validateCodeModel = ValidateCodeModel;
+        this._financialStatementsModel = FinancialStatementsModel;
+        this._truckModel = TruckModel;
+        this._cartModel = CartModel;
     }
 
     async signin(body) {
         const { cpf, password } = body;
 
-        const driver = await Driver.findOne({
+        const driver = await this._driverModel.findOne({
             where: { cpf: cpf }
         });
 

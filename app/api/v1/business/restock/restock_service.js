@@ -4,7 +4,7 @@ import { updateHours } from '../../../../utils/updateHours.js';
 
 import RestockModel from './restock_model.js';
 import FreightModel from '../freight/freight_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
@@ -19,7 +19,7 @@ class RestockService extends BaseService {
     constructor() {
         super();
         this._restockModel = RestockModel;
-        this._financialStatementsModel = FinancialStatements;
+        this._financialStatementsModel = FinancialStatementsModel;
         this._freightModel = FreightModel;
     }
     async create(driver, body) {

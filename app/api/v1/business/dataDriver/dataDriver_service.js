@@ -1,10 +1,10 @@
-import DataDriver from './dataDriver_model.js';
+import DataDriverModel from './dataDriver_model.js';
 import BaseService from '../../base/base_service.js';
 
 class DataDriverService extends BaseService {
     constructor() {
         super();
-        this._dataDriverModel = DataDriver;
+        this._dataDriverModel = DataDriverModel;
     }
 
     _handleError(error) {

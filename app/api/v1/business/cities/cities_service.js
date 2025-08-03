@@ -1,13 +1,13 @@
 import BaseService from '../../base/base_service.js';
-import Cities from './cities_model.js';
-import States from '../states/states_model.js';
+import CitiesModel from './cities_model.js';
+import StatesModel from '../states/states_model.js';
 import { Op, literal } from 'sequelize';
 
 class CitiesService extends BaseService {
     constructor() {
         super();
-        this._citiesModel = Cities;
-        this._statesModel = States;
+        this._citiesModel = CitiesModel;
+        this._statesModel = StatesModel;
     }
 
     async allCities({ search = '', uf = '' }) {

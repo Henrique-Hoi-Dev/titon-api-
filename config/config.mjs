@@ -6,9 +6,11 @@ if (process.env.NODE_ENV) {
     dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 }
 
-// Verificação para debug
-console.log('🌍 ENV NODE_ENV =', process.env.NODE_ENV);
-console.log('📦 DATABASE =', process.env.DB_DATABASE);
+// Verificação para debug apenas em desenvolvimento
+if (process.env.NODE_ENV === 'development') {
+    console.log('🌍 ENV NODE_ENV =', process.env.NODE_ENV);
+    console.log('📦 DATABASE =', process.env.DB_DATABASE);
+}
 
 const config = {
     development: {

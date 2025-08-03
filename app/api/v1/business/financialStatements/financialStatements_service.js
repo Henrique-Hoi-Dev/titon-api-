@@ -70,7 +70,7 @@ class FinancialStatementService extends BaseService {
             throw err;
         }
 
-        return financialStatement.toJSON();
+        return financialStatement;
     }
 
     async getAllFinished(driver, query) {

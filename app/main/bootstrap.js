@@ -21,6 +21,8 @@ const bootstrap = (environment = process.env.NODE_ENV) => {
         console.error(`❌ Falha ao carregar variáveis de ambiente de ${path}`);
     } else if (environment === 'development') {
         console.log(`✅ Variáveis carregadas de ${path}`, result.parsed);
+    } else if (environment === 'production') {
+        console.log(`✅ Variáveis carregadas de ${path}`);
     }
 };
 

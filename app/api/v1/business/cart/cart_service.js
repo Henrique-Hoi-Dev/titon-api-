@@ -1,6 +1,6 @@
 import CartModel from './cart_model.js';
 import BaseService from '../../base/base_service.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
 import { literal, Op } from 'sequelize';
 import { generateRandomCode } from '../../../../utils/crypto.js';
 import { deleteFile, getFile, sendFilePublic } from '../../../../providers/aws/index.js';
@@ -9,7 +9,7 @@ class CartService extends BaseService {
     constructor() {
         super();
         this._cartModel = CartModel;
-        this._financialStatementsModel = FinancialStatements;
+        this._financialStatementsModel = FinancialStatementsModel;
     }
 
     async create(body) {

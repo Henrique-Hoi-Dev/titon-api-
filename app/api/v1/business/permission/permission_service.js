@@ -1,10 +1,10 @@
-import Permission from './permission_model.js';
+import PermissionModel from './permission_model.js';
 import BaseService from '../../base/base_service.js';
 
 class PermissionService extends BaseService {
     constructor() {
         super();
-        this._permissionModel = Permission;
+        this._permissionModel = PermissionModel;
     }
 
     async createPermission(body) {

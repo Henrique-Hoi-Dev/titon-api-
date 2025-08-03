@@ -1,10 +1,10 @@
 import BaseService from '../../base/base_service.js';
-import ValidateCode from './validateCode_model.js';
+import ValidateCodeModel from './validateCode_model.js';
 
 class ValidateCodeService extends BaseService {
     constructor() {
         super();
-        this._validateCodeModel = ValidateCode;
+        this._validateCodeModel = ValidateCodeModel;
     }
 
     async baseFunciton() {}

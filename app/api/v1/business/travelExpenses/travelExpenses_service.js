@@ -54,7 +54,7 @@ class TravelExpensesService extends BaseService {
                 financial_statements_id: financial.id
             });
 
-            return result;
+            return result.toJSON();
         }
 
         const err = new Error('TRIP_NOT_FOUND');

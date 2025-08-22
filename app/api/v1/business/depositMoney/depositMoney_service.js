@@ -61,11 +61,11 @@ class DepositMoneyService extends BaseService {
                 typeTransactions: result.type_transaction
             });
 
-            const driver = await this._driverModel.findByPk(driverFind.id);
+            const driverUpdated = await this._driverModel.findByPk(driverFind.id);
             const values = driverFind.transactions.map((res) => res.value);
             const total = values.reduce((acc, cur) => acc + cur, 0);
 
-            await driver.update({
+            await driverUpdated.update({
                 transactions: driverFind.transactions,
                 credit: total
             });

@@ -159,7 +159,7 @@ export default {
                 value: Joi.number(),
                 parcels: Joi.number(),
                 flag: Joi.string()
-            })
+            }).optional()
         })
     },
     getIdDeposit: {
@@ -204,7 +204,7 @@ export default {
                 value: Joi.number(),
                 parcels: Joi.number(),
                 flag: Joi.string()
-            })
+            }).optional()
         })
     },
     getIdTravel: {
@@ -237,8 +237,12 @@ export default {
     },
     createRestock: {
         body: Joi.object({
-            value: Joi.number(),
-            description: Joi.string()
+            name_establishment: Joi.string(),
+            city: Joi.string(),
+            freight_id: Joi.number(),
+            value_fuel: Joi.number(),
+            liters_fuel: Joi.number(),
+            total_nota_value: Joi.number()
         })
     },
     getIdRestock: {

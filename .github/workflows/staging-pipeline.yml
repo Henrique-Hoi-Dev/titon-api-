@@ -1,4 +1,4 @@
-name: CI/CD Back - Staging
+name: CI/CD Backend
 
 on:
     push:
@@ -171,7 +171,7 @@ jobs:
                   }
 
                   {
-                    echo "🔔 **CI/CD Back - Staging**"
+                    echo "🔔 **CI/CD Backend**"
                     echo "**Branch**: \`${{ github.ref_name }}\`"
                     echo "**Autor**: \`${{ github.actor }}\`"
                     echo "**Status por etapa:**"

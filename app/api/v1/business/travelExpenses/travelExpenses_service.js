@@ -33,13 +33,13 @@ class TravelExpensesService extends BaseService {
             this._freightModel.findByPk(freight_id)
         ]);
 
-        if (!financial.dataValues) {
+        if (!financial) {
             const err = new Error('FINANCIAL_NOT_FOUND');
             err.status = 404;
             throw err;
         }
 
-        if (!freight.dataValues) {
+        if (!freight) {
             const err = new Error('FREIGHT_NOT_FOUND');
             err.status = 404;
             throw err;

@@ -81,6 +81,12 @@ class DepositMoneyService extends BaseService {
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
 
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
         const depositMoney = await this._depositMoneyModel.findByPk(id);
         if (!depositMoney) {
             const err = new Error('DEPOSIT_MONEY_NOT_FOUND');

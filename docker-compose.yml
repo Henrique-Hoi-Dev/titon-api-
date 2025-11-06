@@ -1,22 +1,114 @@
-version: '3.1'
-services:
-    ms-base-db:
-        image: mongo
-        ports: ['27017:27017']
-        networks: [ascs-net]
-        command: --logpath=/dev/null
-        environment:
-            TZ: America/Sao_Paulo
+version: "3.8"
 
-    ms-base-app:
-        image: ms-base-app
-        build: .
-        command: ./start.sh
-        env_file: [.env]
-        volumes: ['.:/usr/app/current']
-        ports: ['3002:3000', '9229:9229']
-        networks: [ascs-net]
-        links: [ms-base-db]
+services:
+    # Banco de dados PostgreSQL
+    postgres:
+        image: postgres:15-alpine
+        container_name: titon-postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: truck_manager
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            TZ: America/Sao_Paulo
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            - ./database/init:/docker-entrypoint-initdb.d
+        networks:
+            - titon-network
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres -d truck_manager"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+    # Aplicação Node.js
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: runner
+        container_name: titon-api
+        restart: unless-stopped
+        environment:
+            NODE_ENV: production
+            PORT: 3000
+            TZ: America/Sao_Paulo
+            # Database configuration
+            DB_USER: postgres
+            DB_PASSWORD: postgres
+            DB_DATABASE: truck_manager
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_SSL: false
+            DATABASE_URL_DB: postgresql://postgres:postgres@postgres:5432/truck_manager
+        ports:
+            - "3000:3000"
+        volumes:
+            # Volume para logs (opcional)
+            - app_logs:/app/logs
+        networks:
+            - titon-network
+        depends_on:
+            postgres:
+                condition: service_healthy
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "node",
+                    "-e",
+                    "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+
+    # Serviço de desenvolvimento (opcional)
+    app-dev:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: builder
+        container_name: titon-api-dev
+        restart: unless-stopped
+        environment:
+            NODE_ENV: development
+            PORT: 3001
+            TZ: America/Sao_Paulo
+            # Database configuration
+            DB_USER: postgres
+            DB_PASSWORD: postgres
+            DB_DATABASE: truck_manager_dev
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_SSL: false
+            DATABASE_URL_DB: postgresql://postgres:postgres@postgres:5432/truck_manager_dev
+        ports:
+            - "3001:3001"
+            - "9229:9229" # Debug port
+        volumes:
+            - .:/app
+            - /app/node_modules
+        networks:
+            - titon-network
+        depends_on:
+            postgres:
+                condition: service_healthy
+        command: ["yarn", "dev"]
+        profiles:
+            - dev
+
+volumes:
+    postgres_data:
+        driver: local
+    app_logs:
+        driver: local
 
 networks:
-    ascs-net:
+    titon-network:
+        driver: bridge

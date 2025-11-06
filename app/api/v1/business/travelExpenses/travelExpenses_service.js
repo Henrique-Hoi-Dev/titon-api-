@@ -65,6 +65,12 @@ class TravelExpensesService extends BaseService {
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
 
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
         const travelExpenses = await this._travelExpensesModel.findByPk(id);
         if (!travelExpenses.dataValues) {
             const err = new Error('TRAVELEXPENSES_NOT_FOUND');

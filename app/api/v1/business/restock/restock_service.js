@@ -67,6 +67,12 @@ class RestockService extends BaseService {
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
 
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
         const restock = await this._restockModel.findByPk(id);
         if (!restock) {
             const err = new Error('RESTOCK_NOT_FOUND');

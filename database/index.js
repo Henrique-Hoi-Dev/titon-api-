@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import 'dotenv/config';
+import '../config/config.mjs';
 import Models from './models/index.js';
-import databaseConfig from '../config/config.cjs';
+import databaseConfig from '../config/config.mjs';
 
 import { Sequelize } from 'sequelize';
 

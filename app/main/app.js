@@ -6,10 +6,8 @@ import bodyParser from 'body-parser';
 import compress from 'compression';
 import cors from 'cors';
 import hpp from 'hpp';
-import session from 'express-session';
 import i18n from 'i18n';
 import addRouters from './routers.js';
-import csrf from 'csurf';
 import middleware from './middleware.js';
 
 import { fileURLToPath } from 'url';
@@ -18,12 +16,6 @@ import { pinoHttp } from 'pino-http';
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = dirname(currentFilePath);
-
-const memoryStore = new session.MemoryStore();
-const csrfProtection = csrf({
-    cookie: true,
-    ignoreMethods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'DELETE', 'PATCH']
-});
 
 const app = express();
 
@@ -93,23 +85,12 @@ app.use((req, res, next) => {
     return next();
 });
 
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: true,
-        store: memoryStore
-    })
-);
-
 app.use(cookieParser());
 
 app.use('/v1/', routers.v1);
 app.use('/', routers.v1);
 
 addRouters(routers.v1);
-
-app.use(csrfProtection);
 
 app.use(middleware.throw404);
 app.use(middleware.logError);

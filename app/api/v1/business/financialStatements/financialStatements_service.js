@@ -1,31 +1,32 @@
 import { Op } from 'sequelize';
 import { isAfter } from 'date-fns';
+import { Sequelize } from 'sequelize';
 
-import FinancialStatement from './financialStatements_model.js';
 import BaseService from '../../base/base_service.js';
-import Driver from '../driver/driver_model.js';
-import Restock from '../restock/restock_model.js';
-import TravelExpenses from '../travelExpenses/travelExpenses_model.js';
-import DepositMoney from '../depositMoney/depositMoney_model.js';
-import Freight from '../freight/freight_model.js';
-import Manager from '../manager/manager_model.js';
-import Truck from '../truck/truck_model.js';
-import Cart from '../cart/cart_model.js';
-import Notification from '../notification/notification_model.js';
+import FinancialStatementModel from './financialStatements_model.js';
+import DriverModel from '../driver/driver_model.js';
+import RestockModel from '../restock/restock_model.js';
+import TravelExpensesModel from '../travelExpenses/travelExpenses_model.js';
+import DepositMoneyModel from '../depositMoney/depositMoney_model.js';
+import FreightModel from '../freight/freight_model.js';
+import ManagerModel from '../manager/manager_model.js';
+import TruckModel from '../truck/truck_model.js';
+import CartModel from '../cart/cart_model.js';
+import NotificationService from '../notification/notification_service.js';
 
 class FinancialStatementService extends BaseService {
     constructor() {
         super();
-        this._financialStatementModel = FinancialStatement;
-        this._driverModel = Driver;
-        this._restockModel = Restock;
-        this._travelExpensesModel = TravelExpenses;
-        this._depositMoneyModel = DepositMoney;
-        this._freightModel = Freight;
-        this._managerModel = Manager;
-        this._truckModel = Truck;
-        this._cartModel = Cart;
-        this._notificationModel = Notification;
+        this._financialStatementModel = FinancialStatementModel;
+        this._driverModel = DriverModel;
+        this._restockModel = RestockModel;
+        this._travelExpensesModel = TravelExpensesModel;
+        this._depositMoneyModel = DepositMoneyModel;
+        this._freightModel = FreightModel;
+        this._managerModel = ManagerModel;
+        this._truckModel = TruckModel;
+        this._cartModel = CartModel;
+        this._notificationService = new NotificationService();
     }
 
     async getFinancialCurrent(driver) {
@@ -56,19 +57,20 @@ class FinancialStatementService extends BaseService {
                         'credit',
                         'percentage',
                         'daily',
-                        'value_fix'
+                        'value_fix',
+                        'avatar'
                     ]
                 }
             ]
         });
 
         if (!financialStatement) {
-            const err = new Error('FINANCIAL_NOT_FOUND');
+            const err = new Error('FINANCIAL_STATEMENT_CURRENT_NOT_FOUND');
             err.status = 404;
             throw err;
         }
 
-        return financialStatement.toJSON();
+        return financialStatement;
     }
 
     async getAllFinished(driver, query) {
@@ -189,61 +191,52 @@ class FinancialStatementService extends BaseService {
             throw err;
         }
 
-        const existFileOpen = await this._financialStatementModel.findAll({
-            where: { driver_id: driver_id, status: true }
+        const existFinancialOpen = await this._financialStatementModel.findAll({
+            where: {
+                [Op.or]: [
+                    { driver_id: driver?.id },
+                    { truck_id: truck?.id },
+                    { cart_id: cart?.id }
+                ],
+                status: true
+            }
         });
 
-        if (existFileOpen.length > 0) {
-            const err = new Error('DRIVER_ALREADY_HAS_AN_OPEN_FILE');
+        if (existFinancialOpen.length > 0) {
+            const conflictingItem = existFinancialOpen[0];
+            let errorMessage = '';
+
+            if (conflictingItem.driver_id === driver?.id) {
+                errorMessage = 'DRIVER_ALREADY_HAS_AN_OPEN_FINANCIAL_STATEMENT';
+            } else if (conflictingItem.truck_id === truck?.id) {
+                errorMessage = 'TRUCK_ALREADY_HAS_AN_OPEN_FINANCIAL_STATEMENT';
+            } else if (conflictingItem.cart_id === cart?.id) {
+                errorMessage = 'CART_ALREADY_HAS_AN_OPEN_FINANCIAL_STATEMENT';
+            }
+
+            const err = new Error(errorMessage);
             err.status = 400;
             throw err;
         }
 
-        const truckOnSheet = await this._financialStatementModel.findAll({
-            where: { truck_id: truck_id, status: true }
-        });
-
-        if (truckOnSheet.length > 0) {
-            const err = new Error('TRUCK_ALREADY_HAS_AN_OPEN_FILE');
-            err.status = 400;
-            throw err;
-        }
-
-        const cartOnSheet = await this._financialStatementModel.findAll({
-            where: { cart_id: cart_id, status: true }
-        });
-
-        if (cartOnSheet.length > 0) {
-            const err = new Error('CART_ALREADY_HAS_AN_OPEN_FILE');
-            err.status = 400;
-            throw err;
-        }
-
-        const { name, value_fix, percentage, daily } = driver.dataValues;
-        const { truck_models, truck_board, truck_avatar } = truck.dataValues;
-        const { cart_bodyworks, cart_board } = cart.dataValues;
-
-        await this._financialStatementModel.create({
+        const financialStatement = await this._financialStatementModel.create({
             creator_user_id: userAdm.id,
-            driver_id,
-            truck_id,
-            cart_id,
-            start_date: startDate,
-            percentage_commission: percentage,
-            fixed_commission: value_fix,
-            daily: daily,
-            driver_name: name,
-            truck_models,
-            truck_board,
-            truck_avatar,
-            cart_models: cart_bodyworks,
-            cart_board
+            driver_id: driver?.id,
+            truck_id: truck?.id,
+            cart_id: cart?.id,
+            start_date: startDate
         });
 
-        await this._notificationModel.create({
-            content: `${userAdm.name}, Criou Uma Nova Ficha para você ${driver.name}!`,
-            driver_id: driver_id
-        });
+        if (financialStatement.id && driver?.id && truck?.id && cart?.id && userAdm?.id) {
+            await this._notificationService.createNotification({
+                driver_id: driver?.id,
+                financial_id: financialStatement.id,
+                title: 'Nova Ficha',
+                content: `${userAdm.name}, Criou uma ficha para você ${driver.name}!`,
+                titlePush: 'Nova Ficha',
+                messagePush: `${userAdm.name}, Criou uma ficha para você ${driver.name}!`
+            });
+        }
 
         return { msg: 'SUCCESSFUL CREATED FINANCIAL STATEMENT' };
     }
@@ -262,44 +255,86 @@ class FinancialStatementService extends BaseService {
         const where = {};
         if (status) where.status = status;
 
-        const whereStatus = {};
-        if (status_check) whereStatus.status = status_check;
+        const whereStatus = status_check ? { status: status_check } : {};
 
         /* eslint-disable indent */
+        const whereSearch = search?.trim()
+            ? {
+                  [Op.or]: [
+                      { '$driver.name$': { [Op.iLike]: `%${search}%` } },
+                      { '$truck.truck_board$': { [Op.iLike]: `%${search}%` } }
+                  ]
+              }
+            : {};
+        /* eslint-enable indent */
+
         const financialStatements = await this._financialStatementModel.findAll({
-            where: search
-                ? {
-                      [Op.or]: [
-                          { truck_board: { [Op.iLike]: `%${search}%` } },
-                          { driver_name: { [Op.iLike]: `%${search}%` } }
-                      ]
-                  }
-                : where,
+            where: search ? whereSearch : where,
             order: [[sort_field, sort_order]],
-            limit: limit,
+            limit,
             offset: page - 1 ? (page - 1) * limit : 0,
             include: [
                 {
                     model: this._driverModel,
                     as: 'driver',
-                    attributes: ['name', 'email', 'credit', 'value_fix', 'percentage', 'daily']
-                },
-                {
-                    model: this._freightModel,
-                    where: status_check ? whereStatus : null,
-                    as: 'freight'
+                    attributes: [
+                        'name',
+                        'email',
+                        'phone',
+                        'credit',
+                        'value_fix',
+                        'percentage',
+                        'daily'
+                    ],
+                    required: !!search
                 },
                 {
                     model: this._truckModel,
                     as: 'truck',
-                    attributes: ['truck_models', 'truck_board', 'image_truck']
+                    attributes: ['truck_models', 'truck_board', 'image_truck'],
+                    required: !!search
                 },
                 {
                     model: this._cartModel,
                     as: 'cart',
                     attributes: ['cart_models', 'cart_board', 'cart_bodyworks', 'image_cart']
+                },
+                {
+                    model: this._freightModel,
+                    as: 'freight',
+                    ...(status_check && {
+                        where: whereStatus
+                    })
                 }
             ]
+        });
+
+        const orderedFreights = (freights) => {
+            const statusOrder = {
+                STARTING_TRIP: 1,
+                APPROVED: 2,
+                PENDING: 3,
+                DRAFT: 4,
+                DENIED: 5,
+                FINISHED: 6
+            };
+
+            return freights.sort((a, b) => {
+                const aStatus = statusOrder[a.status] ?? 7;
+                const bStatus = statusOrder[b.status] ?? 7;
+
+                if (aStatus !== bStatus) return aStatus - bStatus;
+
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+        };
+
+        const docs = financialStatements.map((res) => {
+            const json = res.toJSON();
+            if (Array.isArray(json.freight)) {
+                json.freight = orderedFreights(json.freight);
+            }
+            return json;
         });
 
         const total = await this._financialStatementModel.count();
@@ -308,7 +343,7 @@ class FinancialStatementService extends BaseService {
         const currentPage = Number(page);
 
         return {
-            docs: financialStatements.map((res) => res.toJSON()),
+            docs,
             total,
             totalPages,
             currentPage
@@ -357,7 +392,18 @@ class FinancialStatementService extends BaseService {
         }
 
         const freight = await this._freightModel.findAll({
-            where: { financial_statements_id: financial.id }
+            where: { financial_statements_id: financial.id },
+            order: [
+                [
+                    Sequelize.literal(`CASE 
+                        WHEN status = 'STARTING_TRIP' THEN 1
+                        WHEN status = 'APPROVED' THEN 2
+                        ELSE 3
+                    END`),
+                    'ASC'
+                ],
+                ['created_at', 'DESC']
+            ]
         });
 
         if (!freight) {
@@ -366,12 +412,9 @@ class FinancialStatementService extends BaseService {
             throw err;
         }
 
-        const notifications = await this._notificationModel.findAll({
-            where: {
-                financial_statements_id: financial.id,
-                user_id: financial.creator_user_id
-            },
-            attributes: ['id', 'content', 'createdAt', 'driver_id', 'freight_id']
+        const notifications = await this._notificationService.getAllManagerFinancialStatement({
+            financial_id: financial.id,
+            user_id: financial.creator_user_id
         });
 
         const financialData = financial.get({ plain: true });
@@ -380,17 +423,18 @@ class FinancialStatementService extends BaseService {
             ...financialData,
             freight: freight.map((res) => ({
                 id: res.id,
-                date: res.createdAt,
                 status: res.status,
-                locationTruck: res.location_of_the_truck,
-                finalFreightCity: res.final_freight_city,
-                totalFreight: this._valueTotalTonne(res.preview_tonne, res.value_tonne)
+                locationTruck: res.truck_location,
+                startFreightCity: res.start_freight_city,
+                endFreightCity: res.end_freight_city,
+                date: res.createdAt,
+                totalFreight: this._valueTotalTonne(res.estimated_tonnage, res.ton_value)
             })),
-            notifications: notifications.map((res) => res.get({ plain: true }))
+            notifications
         };
     }
 
-    async finishing(body, id) {
+    async finishingFinancial(body, id) {
         const financialStatement = await this._financialStatementModel.findByPk(id, {
             include: {
                 model: this._freightModel,
@@ -413,8 +457,8 @@ class FinancialStatementService extends BaseService {
         }
 
         const result = await financialStatement.update({
-            final_km: body.final_km,
-            status: body.status
+            end_km: body.end_km,
+            status: false
         });
 
         return result.toJSON();
@@ -479,17 +523,17 @@ class FinancialStatementService extends BaseService {
             where: { id: props.financial_statements_id, status: true }
         });
 
-        const restock = await Restock.findAll({ where: { freight_id: props.id } });
+        const restock = await this._restockModel.findAll({ where: { freight_id: props.id } });
         const valoresRestock = restock.map((res) => res.total_nota_value);
         const totalvalueRestock = await this._calculate(valoresRestock);
 
-        const travel = await TravelExpenses.findAll({
+        const travel = await this._travelExpensesModel.findAll({
             where: { freight_id: props.id }
         });
         const valoresTravel = travel.map((res) => res.value);
         const totalvalueTravel = await this._calculate(valoresTravel);
 
-        const deposit = await DepositMoney.findAll({
+        const deposit = await this._depositMoneyModel.findAll({
             where: { freight_id: props.id }
         });
         const valoresDeposit = deposit.map((res) => res.value);

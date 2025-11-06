@@ -1,5 +1,5 @@
 import TruckModel from './truck_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
 import BaseService from '../../base/base_service.js';
 
 import { Op, literal } from 'sequelize';
@@ -10,7 +10,7 @@ class TruckService extends BaseService {
     constructor() {
         super();
         this._truckModel = TruckModel;
-        this._financialStatementsModel = FinancialStatements;
+        this._financialStatementsModel = FinancialStatementsModel;
     }
 
     async create(body) {
@@ -189,24 +189,14 @@ class TruckService extends BaseService {
     }
 
     async getAll(query) {
-        const {
-            page = 1,
-            limit = 100,
-            sort_order = 'ASC',
-            sort_field = 'id',
-            // truck_models,
-            // id,
-            search
-        } = query;
+        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id', search } = query;
 
         const where = {};
-        // if (id) where.id = id;
         /* eslint-disable indent */
         const trucks = await this._truckModel.findAll({
             where: search
                 ? {
                       [Op.or]: [
-                          // { id: search },
                           { truck_name_brand: { [Op.iLike]: `%${search}%` } },
                           { truck_year: { [Op.iLike]: `%${search}%` } },
                           { truck_color: { [Op.iLike]: `%${search}%` } },
@@ -296,7 +286,7 @@ class TruckService extends BaseService {
             throw err;
         }
 
-        await this._trusckModel.destroy({
+        await this._truckModel.destroy({
             where: {
                 id: id
             }

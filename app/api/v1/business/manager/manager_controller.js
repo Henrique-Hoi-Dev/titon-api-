@@ -35,6 +35,24 @@ class ManagerController extends BaseResourceController {
         }
     };
 
+    getIdAvatar = async (req, res, next) => {
+        try {
+            const data = await this._managerService.getIdAvatar(req.params.id);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            return next(this.handleError(error));
+        }
+    };
+
+    uploadImage = async (req, res, next) => {
+        try {
+            const data = await this._managerService.uploadImage(req.params.id, req);
+            return res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            return next(this.handleError(error));
+        }
+    };
+
     getId = async (req, res, next) => {
         try {
             const data = await this._managerService.getId(req.params.id);

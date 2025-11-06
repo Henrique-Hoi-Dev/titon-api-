@@ -1,18 +1,18 @@
-import Credit from './credit_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
-import Freight from '../freight/freight_model.js';
-import Driver from '../driver/driver_model.js';
-import Notification from '../notification/notification_model.js';
+import CreditModel from './trasactions_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
+import FreightModel from '../freight/freight_model.js';
+import DriverModel from '../driver/driver_model.js';
+import NotificationModel from '../notification/notification_model.js';
 import BaseService from '../../base/base_service.js';
 
-class CreditService extends BaseService {
+class TrasactionsService extends BaseService {
     constructor() {
         super();
-        this._creditModel = Credit;
-        this._financialStatementsModel = FinancialStatements;
-        this._freightModel = Freight;
-        this._driverModel = Driver;
-        this._notificationModel = Notification;
+        this._creditModel = CreditModel;
+        this._financialStatementsModel = FinancialStatementsModel;
+        this._freightModel = FreightModel;
+        this._driverModel = DriverModel;
+        this._notificationModel = NotificationModel;
     }
     _formatRealValue(value) {
         const formatter = new Intl.NumberFormat('pt-BR', {
@@ -34,7 +34,7 @@ class CreditService extends BaseService {
             throw err;
         }
 
-        const freight = await Freight.findOne({
+        const freight = await this._freightModel.findOne({
             where: {
                 financial_statements_id: financialProps.id,
                 status: 'STARTING_TRIP'
@@ -179,4 +179,4 @@ class CreditService extends BaseService {
     }
 }
 
-export default CreditService;
+export default TrasactionsService;

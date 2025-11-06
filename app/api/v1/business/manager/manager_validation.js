@@ -18,6 +18,8 @@ export default {
             name: Joi.string().required(),
             cpf: Joi.string().replace(/\D/g, '').custom(validateCpf).required(),
             email: Joi.string().email(),
+            gender: Joi.string().valid('MALE', 'FEMALE', 'OTHER'),
+            date_birthday: Joi.date(),
             phone: Joi.string().required(),
             password: Joi.string().required().min(8),
             daily: Joi.number().required(),
@@ -53,6 +55,16 @@ export default {
             sort_field: Joi.string(),
             name: Joi.string(),
             id: Joi.string()
+        })
+    },
+    getIdUser: {
+        params: Joi.object({
+            id: Joi.string().required()
+        })
+    },
+    uploadImageUser: {
+        params: Joi.object({
+            id: Joi.string().required()
         })
     },
     delete: {
@@ -108,7 +120,7 @@ export default {
             search: Joi.string()
         })
     },
-    getAllCredit: {
+    getAllTrasactions: {
         query: Joi.object({
             driver_id: Joi.number().integer(),
             page: Joi.number(),
@@ -117,20 +129,22 @@ export default {
             sort_field: Joi.string()
         })
     },
-    createCredit: {
+    createTrasactions: {
         body: Joi.object({
             description: Joi.string(),
             driver_id: Joi.number().integer(),
-            type_method: Joi.string().valid('CREDIT', 'DEBIT'),
+            financial_statements_id: Joi.number().integer(),
+            freight_id: Joi.number().integer(),
+            type_method: enumSchemas.trasactionsTypeMethod,
             value: Joi.number()
         })
     },
-    getIdCredit: {
+    getIdTrasactions: {
         params: Joi.object({
             id: Joi.string().required()
         })
     },
-    deleteCredit: {
+    deleteTrasactions: {
         params: Joi.object({
             id: Joi.string().required()
         })
@@ -165,8 +179,7 @@ export default {
             id: Joi.string().required()
         }),
         body: Joi.object({
-            final_km: Joi.number().required(),
-            status: Joi.boolean().required()
+            final_km: Joi.number().required()
         })
     },
     updateFinancial: {
@@ -192,20 +205,32 @@ export default {
         })
     },
     createFreight: {
+        params: Joi.object({
+            financial_id: Joi.string().required()
+        }),
         body: Joi.object({
-            driver_id: Joi.number(),
-            truck_id: Joi.number(),
-            cart_id: Joi.number(),
-            start_date: Joi.date()
+            start_freight_city: Joi.string(),
+            end_freight_city: Joi.string(),
+            truck_location: Joi.string(),
+            contractor_name: Joi.string(),
+            truck_current_km: Joi.number(),
+            fuel_avg_per_km: Joi.number(),
+            estimated_tonnage: Joi.number(),
+            estimated_fuel_cost: Joi.number(),
+            ton_value: Joi.number(),
+            route_distance_km: Joi.string(),
+            route_duration: Joi.string(),
+            tons_loaded: Joi.number(),
+            toll_cost: Joi.number(),
+            truck_km_end_trip: Joi.number(),
+            discharge: Joi.number(),
+            status: enumSchemas.freightStatus
         })
     },
     approveFreight: {
         params: Joi.object({
-            id: Joi.string().required()
-        }),
-        body: Joi.object({
-            driver_id: Joi.number().required(),
-            status: enumSchemas.freightStatus.required()
+            id: Joi.string().required(),
+            financial_id: Joi.string().required()
         })
     },
     firstCheckId: {
@@ -353,6 +378,22 @@ export default {
         query: Joi.object({
             page: Joi.number(),
             limit: Joi.number()
+        })
+    },
+    getAllCities: {
+        query: Joi.object({
+            search: Joi.string(),
+            uf: Joi.string()
+        })
+    },
+    getAllStates: {
+        query: Joi.object({
+            search: Joi.string()
+        })
+    },
+    popularCityStateData: {
+        body: Joi.object({
+            file: Joi.string().required()
         })
     }
 };

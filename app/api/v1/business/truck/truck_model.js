@@ -9,7 +9,7 @@ class Truck extends Model {
                 truck_board: Sequelize.STRING,
                 truck_color: Sequelize.STRING,
                 truck_km: Sequelize.DOUBLE,
-                truck_chassis: Sequelize.DOUBLE,
+                truck_chassis: Sequelize.STRING,
                 truck_year: Sequelize.STRING,
                 image_truck: {
                     type: Sequelize.JSONB,

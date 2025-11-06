@@ -4,7 +4,7 @@ import { updateHours } from '../../../../utils/updateHours.js';
 
 import RestockModel from './restock_model.js';
 import FreightModel from '../freight/freight_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
@@ -19,7 +19,7 @@ class RestockService extends BaseService {
     constructor() {
         super();
         this._restockModel = RestockModel;
-        this._financialStatementsModel = FinancialStatements;
+        this._financialStatementsModel = FinancialStatementsModel;
         this._freightModel = FreightModel;
     }
     async create(driver, body) {
@@ -56,7 +56,7 @@ class RestockService extends BaseService {
                 financial_statements_id: financial.id
             });
 
-            return result;
+            return result.toJSON();
         }
 
         const err = new Error('TRIP_NOT_STARTED');
@@ -66,6 +66,12 @@ class RestockService extends BaseService {
 
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
+
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         const restock = await this._restockModel.findByPk(id);
         if (!restock) {
@@ -152,12 +158,18 @@ class RestockService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
+        const { freight_id, page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
 
         const totalItems = (await this._restockModel.findAll()).length;
         const totalPages = Math.ceil(totalItems / limit);
 
+        const where = {};
+        if (freight_id) {
+            where.freight_id = freight_id;
+        }
+
         const restocks = await this._restockModel.findAll({
+            where,
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0

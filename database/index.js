@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import 'dotenv/config';
+import '../config/config.mjs';
 import Models from './models/index.js';
-import databaseConfig from '../config/config.cjs';
+import databaseConfig from '../config/config.mjs';
 
 import { Sequelize } from 'sequelize';
 
@@ -12,7 +12,7 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
     host: config.host,
     port: config.port,
     dialect: config.dialect,
-    logging: console.log,
+    logging: process.env.NODE_ENV === 'development' ? console.log : false,
     define: {
         timestamps: true,
         underscored: true,
@@ -21,17 +21,13 @@ const sequelize = new Sequelize(config.database, config.username, config.passwor
 });
 
 // Inicializa os modelos
-Models.forEach((model) => {
-    if (model.initModel) {
-        model.initModel(sequelize);
-    }
-});
+for (const model of Object.values(Models)) {
+    if (model.init) model.init(sequelize);
+}
 
 // Associa os modelos
-Models.forEach((model) => {
-    if (model.associate) {
-        model.associate(sequelize.models);
-    }
-});
+for (const model of Object.values(Models)) {
+    if (model.associate) model.associate(sequelize.models);
+}
 
 export default sequelize;

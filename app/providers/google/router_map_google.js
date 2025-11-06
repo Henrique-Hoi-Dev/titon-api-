@@ -27,22 +27,22 @@ export default {
                             var data = JSON.parse(body);
 
                             if (!data.routes || !data.routes[0]) {
-                                return reject(new Error('No routes found in the response'));
+                                return reject(new Error('INVALID_ROUTE_GOOGLE_MAPS'));
                             }
 
                             const legs = data.routes[0].legs;
                             if (!legs || !legs[0]) {
-                                return reject(new Error('No legs found in the route'));
+                                return reject(new Error('INVALID_ROUTE_GOOGLE_MAPS'));
                             }
 
                             resolve(legs[0]);
                         } catch (error) {
-                            reject(new Error('Error parsing response: ' + error.message));
+                            reject(new Error('ERROR_PARSING_RESPONSE: ' + error.message));
                         }
                     });
                 })
                 .on('error', function (error) {
-                    reject(new Error('Request error: ' + error.message));
+                    reject(new Error('ERROR_REQUEST_GOOGLE_MAPS: ' + error.message));
                 });
         });
     }

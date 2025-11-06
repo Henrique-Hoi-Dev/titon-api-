@@ -1,6 +1,6 @@
 import CartModel from './cart_model.js';
 import BaseService from '../../base/base_service.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
 import { literal, Op } from 'sequelize';
 import { generateRandomCode } from '../../../../utils/crypto.js';
 import { deleteFile, getFile, sendFilePublic } from '../../../../providers/aws/index.js';
@@ -9,7 +9,7 @@ class CartService extends BaseService {
     constructor() {
         super();
         this._cartModel = CartModel;
-        this._financialStatementsModel = FinancialStatements;
+        this._financialStatementsModel = FinancialStatementsModel;
     }
 
     async create(body) {
@@ -36,16 +36,14 @@ class CartService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
+        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id', search } = query;
 
         const where = {};
-        // if (id) where.id = id;
         /* eslint-disable indent */
         const carts = await this._cartModel.findAll({
             where: search
                 ? {
                       [Op.or]: [
-                          // { id: search },
                           { cart_color: { [Op.iLike]: `%${search}%` } },
                           { cart_models: { [Op.iLike]: `%${search}%` } },
                           { cart_year: { [Op.iLike]: `%${search}%` } },
@@ -93,12 +91,12 @@ class CartService extends BaseService {
                     [Op.notIn]: literal('(SELECT "cart_id" FROM "financial_statements")')
                 }
             },
-            attributes: ['id', 'cart_models'],
+            attributes: ['id', 'cart_models', 'cart_board'],
             raw: true
         });
 
         const selectFinancial = await this._cartModel.findAll({
-            attributes: ['id', 'cart_models'],
+            attributes: ['id', 'cart_models', 'cart_board'],
             include: [
                 {
                     model: this._financialStatementsModel,

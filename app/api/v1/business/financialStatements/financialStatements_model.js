@@ -13,24 +13,22 @@ class FinancialStatements extends Model {
                     defaultValue: true
                 },
                 start_km: Sequelize.INTEGER,
-                final_km: Sequelize.INTEGER,
+                end_km: Sequelize.INTEGER,
                 start_date: Sequelize.DATE,
-                final_date: Sequelize.DATE,
-                invoicing_all: Sequelize.INTEGER,
-                medium_fuel_all: Sequelize.INTEGER,
-                total_value: {
+                end_date: Sequelize.DATE,
+                total_invoicing: {
                     type: Sequelize.INTEGER,
+                    allowNull: false,
                     defaultValue: 0
                 },
-                transactions: {
-                    type: Sequelize.ARRAY(
-                        Sequelize.JSONB({
-                            typeTransactions: Sequelize.STRING,
-                            value: Sequelize.INTEGER,
-                            date: Sequelize.DATE
-                        })
-                    ),
-                    defaultValue: null
+                average_fuel_consumption: {
+                    type: Sequelize.INTEGER,
+                    allowNull: false,
+                    defaultValue: 0
+                },
+                total_amount: {
+                    type: Sequelize.INTEGER,
+                    defaultValue: 0
                 }
             },
             {
@@ -60,6 +58,10 @@ class FinancialStatements extends Model {
         this.hasMany(models.TravelExpenses, {
             foreignKey: 'financial_statements_id',
             as: 'travel_expense'
+        });
+        this.hasMany(models.Trasactions, {
+            foreignKey: 'financial_statements_id',
+            as: 'trasactions'
         });
     }
 

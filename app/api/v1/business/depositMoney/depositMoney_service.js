@@ -1,8 +1,8 @@
-import DepositMoney from './depositMoney_model.js';
 import BaseService from '../../base/base_service.js';
-import Driver from '../driver/driver_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
-import Freight from '../freight/freight_model.js';
+import DepositMoneyModel from './depositMoney_model.js';
+import DriverModel from '../driver/driver_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
+import FreightModel from '../freight/freight_model.js';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
@@ -18,10 +18,10 @@ dayjs.tz.setDefault('America/Sao_Paulo');
 class DepositMoneyService extends BaseService {
     constructor() {
         super();
-        this._depositMoneyModel = DepositMoney;
-        this._driverModel = Driver;
-        this._financialStatementsModel = FinancialStatements;
-        this._freightModel = Freight;
+        this._depositMoneyModel = DepositMoneyModel;
+        this._driverModel = DriverModel;
+        this._financialStatementsModel = FinancialStatementsModel;
+        this._freightModel = FreightModel;
     }
 
     async create(driver, body) {
@@ -61,11 +61,11 @@ class DepositMoneyService extends BaseService {
                 typeTransactions: result.type_transaction
             });
 
-            const driver = await this._driverModel.findByPk(driverFind.id);
+            const driverUpdated = await this._driverModel.findByPk(driverFind.id);
             const values = driverFind.transactions.map((res) => res.value);
             const total = values.reduce((acc, cur) => acc + cur, 0);
 
-            await driver.update({
+            await driverUpdated.update({
                 transactions: driverFind.transactions,
                 credit: total
             });
@@ -80,6 +80,12 @@ class DepositMoneyService extends BaseService {
 
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
+
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         const depositMoney = await this._depositMoneyModel.findByPk(id);
         if (!depositMoney) {
@@ -161,12 +167,18 @@ class DepositMoneyService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
+        const { freight_id, page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
 
         const totalItems = (await this._depositMoneyModel.findAll()).length;
         const totalPages = Math.ceil(totalItems / limit);
 
+        const where = {};
+        if (freight_id) {
+            where.freight_id = freight_id;
+        }
+
         const depositMoney = await this._depositMoneyModel.findAll({
+            where,
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0

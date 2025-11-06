@@ -44,7 +44,9 @@ export const sendFile = async ({ file, body }) => {
         return Location;
     } catch {
         const err = new Error('ERROR_UPLOAD_FILE');
-        console.log(err);
+        if (process.env.NODE_ENV === 'development') {
+            console.log(err);
+        }
         err.status = 400;
         throw err;
     }
@@ -66,7 +68,9 @@ export const sendFilePublic = async ({ file, body }) => {
         return Location;
     } catch {
         const err = new Error('ERROR_UPLOAD_FILE');
-        console.log(err);
+        if (process.env.NODE_ENV === 'development') {
+            console.log(err);
+        }
         err.status = 400;
         throw err;
     }

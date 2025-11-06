@@ -1,3 +1,4 @@
+import validateAndReturn from '../../../../utils/validFile.js';
 import BaseResourceController from '../../base/base_resource_controller.js';
 import DriverService from './driver_service.js';
 import HttpStatus from 'http-status';
@@ -35,6 +36,25 @@ class DriverController extends BaseResourceController {
         }
     };
 
+    getIdAvatar = async (req, res, next) => {
+        try {
+            const data = await this._driverService.getIdAvatar(req.driver.id);
+            res.set('Content-Type', validateAndReturn(data.contentType));
+            return res.send(data.fileData);
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    };
+
+    uploadImage = async (req, res, next) => {
+        try {
+            const data = await this._driverService.uploadImage(req.driver.id, req);
+            res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
+        } catch (error) {
+            next(this.handleError(error));
+        }
+    };
+
     update = async (req, res, next) => {
         try {
             const data = await this._driverService.update(req.body, req.params.id);
@@ -44,9 +64,9 @@ class DriverController extends BaseResourceController {
         }
     };
 
-    requestCodeValidation = async (req, res, next) => {
+    requestCodeValidationForgotPassword = async (req, res, next) => {
         try {
-            const data = await this._driverService.requestCodeValidation(req.body);
+            const data = await this._driverService.requestCodeValidationForgotPassword(req.body);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -71,9 +91,9 @@ class DriverController extends BaseResourceController {
         }
     };
 
-    create = async (req, res, next) => {
+    driverSignup = async (req, res, next) => {
         try {
-            const data = await this._driverService.create(req.body);
+            const data = await this._driverService.driverSignup(req.body);
             res.status(HttpStatus.CREATED).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

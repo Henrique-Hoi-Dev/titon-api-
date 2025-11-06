@@ -5,8 +5,8 @@ import { updateHours } from '../../../../utils/updateHours.js';
 import TravelExpensesModel from './travelExpenses_model.js';
 import BaseService from '../../base/base_service.js';
 import dayjs from 'dayjs';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
-import Freight from '../freight/freight_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
+import FreightModel from '../freight/freight_model.js';
 
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
@@ -19,8 +19,8 @@ class TravelExpensesService extends BaseService {
     constructor() {
         super();
         this._travelExpensesModel = TravelExpensesModel;
-        this._financialStatementsModel = FinancialStatements;
-        this._freightModel = Freight;
+        this._financialStatementsModel = FinancialStatementsModel;
+        this._freightModel = FreightModel;
     }
 
     async create(driver, body) {
@@ -33,13 +33,13 @@ class TravelExpensesService extends BaseService {
             this._freightModel.findByPk(freight_id)
         ]);
 
-        if (!financial.dataValues) {
+        if (!financial) {
             const err = new Error('FINANCIAL_NOT_FOUND');
             err.status = 404;
             throw err;
         }
 
-        if (!freight.dataValues) {
+        if (!freight) {
             const err = new Error('FREIGHT_NOT_FOUND');
             err.status = 404;
             throw err;
@@ -54,7 +54,7 @@ class TravelExpensesService extends BaseService {
                 financial_statements_id: financial.id
             });
 
-            return result;
+            return result.toJSON();
         }
 
         const err = new Error('TRIP_NOT_FOUND');
@@ -64,6 +64,12 @@ class TravelExpensesService extends BaseService {
 
     async uploadDocuments(payload, { id }) {
         const { file, body } = payload;
+
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
 
         const travelExpenses = await this._travelExpensesModel.findByPk(id);
         if (!travelExpenses.dataValues) {
@@ -139,12 +145,18 @@ class TravelExpensesService extends BaseService {
     }
 
     async getAll(query) {
-        const { page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
+        const { freight_id, page = 1, limit = 10, sort_order = 'ASC', sort_field = 'id' } = query;
 
         const totalItems = (await this._travelExpensesModel.findAll()).length;
         const totalPages = Math.ceil(totalItems / limit);
 
+        const where = {};
+        if (freight_id) {
+            where.freight_id = freight_id;
+        }
+
         const travelExpenses = await this._travelExpensesModel.findAll({
+            where,
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0

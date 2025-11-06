@@ -1,31 +1,34 @@
 import BaseService from '../../base/base_service.js';
-import Driver from './driver_model.js';
-import ValidateCode from '../validateCode/validateCode_model.js';
-import FinancialStatements from '../financialStatements/financialStatements_model.js';
-import Truck from '../truck/truck_model.js';
-import Cart from '../cart/cart_model.js';
+import DriverModel from './driver_model.js';
+import ValidateCodeModel from '../validateCode/validateCode_model.js';
+import FinancialStatementsModel from '../financialStatements/financialStatements_model.js';
+import TruckModel from '../truck/truck_model.js';
+import CartModel from '../cart/cart_model.js';
 import validateCpf from '../../../../utils/validateCpf.js';
 
 import { createExpirationDateFromNow } from '../../../../utils/date.js';
 import { Op, literal } from 'sequelize';
-import { generateDriverToken } from '../../../../utils/jwt.js';
-import { sendSMS } from '../../../../providers/aws/index.js';
+import {
+    generateDriverToken,
+    generateDriverRequestCodeForgotPassword
+} from '../../../../utils/jwt.js';
+import { getFile, sendFilePublic, sendSMS } from '../../../../providers/aws/index.js';
 import { generateRandomCode } from '../../../../utils/crypto.js';
 
 class DriverService extends BaseService {
     constructor() {
         super();
-        this._driverModel = Driver;
-        this._validateCodeModel = ValidateCode;
-        this._financialStatementsModel = FinancialStatements;
-        this._truckModel = Truck;
-        this._cartModel = Cart;
+        this._driverModel = DriverModel;
+        this._validateCodeModel = ValidateCodeModel;
+        this._financialStatementsModel = FinancialStatementsModel;
+        this._truckModel = TruckModel;
+        this._cartModel = CartModel;
     }
 
     async signin(body) {
         const { cpf, password } = body;
 
-        const driver = await Driver.findOne({
+        const driver = await this._driverModel.findOne({
             where: { cpf: cpf }
         });
 
@@ -93,7 +96,8 @@ class DriverService extends BaseService {
                 'credit',
                 'value_fix',
                 'percentage',
-                'daily'
+                'daily',
+                'avatar'
             ]
         });
 
@@ -128,11 +132,12 @@ class DriverService extends BaseService {
         return await this._driverModel.findByPk(id);
     }
 
-    async requestCodeValidation({ phone }) {
+    async requestCodeValidationForgotPassword({ phone, cpf }) {
         try {
             const user = await this._driverModel.findOne({
                 where: {
-                    phone: phone
+                    phone: phone,
+                    cpf: cpf
                 }
             });
 
@@ -177,7 +182,9 @@ class DriverService extends BaseService {
             resultSendSMS.cpf = user.cpf;
             resultSendSMS.code = verificationCode;
 
-            return { token: generateDriverToken(resultSendSMS) };
+            return {
+                token: generateDriverRequestCodeForgotPassword(resultSendSMS)
+            };
         } catch (error) {
             if (['CELL_PHONE_DOES_NOT_EXIST', 'ERROR_SENDING_CODE'].includes(error.message)) {
                 throw new Error(`${error.message}`);
@@ -249,7 +256,7 @@ class DriverService extends BaseService {
 
         if (upValidOk) {
             return {
-                token: generateDriverToken({
+                token: generateDriverRequestCodeForgotPassword({
                     valid,
                     name: driver.name,
                     phone: driver.phone,
@@ -277,7 +284,9 @@ class DriverService extends BaseService {
         return { msg: 'Password updated successfully' };
     }
 
-    async create(body) {
+    async driverSignup(body) {
+        const data = body;
+
         const cpf = body.cpf.replace(/\D/g, '');
         const validCpf = validateCpf(cpf);
 
@@ -287,32 +296,47 @@ class DriverService extends BaseService {
             throw err;
         }
 
-        // doing name user verification
-        const driverExist = await this._driverModel.findOne({
-            where: { cpf: validCpf }
-        });
-
-        if (driverExist) {
-            const err = new Error('THIS_CPF_ALREADY_EXISTS');
+        if (!body.password) {
+            const err = new Error('PASSWORD_REQUIRED');
             err.status = 400;
             throw err;
         }
+        // doing name user verification
+        const driverExist = await this._driverModel.findOne({
+            where: {
+                [Op.or]: [{ cpf: validCpf }, { phone: `+55${body.phone}` }, { email: body.email }]
+            }
+        });
 
-        const data = {
-            cpf: validCpf,
-            password: body.password,
-            name: body.name,
-            phone: `+55${body.phone}`,
-            email: body.email,
-            type_position: 'COLLABORATOR',
-            value_fix: body?.value_fix,
-            percentage: body?.percentage,
-            daily: body?.daily
-        };
+        if (driverExist) {
+            if (driverExist.cpf === validCpf) {
+                const err = new Error('CPF_ALREADY_EXISTS');
+                err.status = 400;
+                throw err;
+            }
 
-        await this._driverModel.create(data);
+            if (driverExist.phone === `+55${body.phone}`) {
+                const err = new Error('PHONE_ALREADY_EXISTS');
+                err.status = 400;
+                throw err;
+            }
 
-        return { msg: 'Driver created successfully' };
+            if (driverExist.email === body.email) {
+                const err = new Error('EMAIL_ALREADY_EXISTS');
+                err.status = 400;
+                throw err;
+            }
+        }
+
+        data.cpf = validCpf;
+        data.phone = `+55${data.phone}`;
+
+        const driver = await this._driverModel.create(data);
+
+        // eslint-disable-next-line no-unused-vars
+        const { password_hash, ...driverData } = driver.toJSON();
+
+        return driverData;
     }
 
     async resetPassword({ cpf }) {
@@ -375,39 +399,53 @@ class DriverService extends BaseService {
     async getAllManagerDriver(query) {
         const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
 
-        const where = {};
-        // if (id) where.id = id;
         /* eslint-disable indent */
+        const driverWhere = search
+            ? {
+                  [Op.or]: [
+                      { name: { [Op.iLike]: `%${search}%` } },
+                      { '$financialStatements.truck.truck_board$': { [Op.iLike]: `%${search}%` } },
+                      { '$financialStatements.cart.cart_board$': { [Op.iLike]: `%${search}%` } }
+                  ]
+              }
+            : {};
+
         const drivers = await this._driverModel.findAll({
-            where: search
-                ? {
-                      [Op.or]: [
-                          // { id: search },
-                          { truck: { [Op.iLike]: `%${search}%` } },
-                          { name: { [Op.iLike]: `%${search}%` } }
-                      ]
-                  }
-                : where,
+            where: driverWhere,
+            subQuery: false,
             order: [[sort_field, sort_order]],
             limit: limit,
-            offset: page - 1 ? (page - 1) * limit : 0,
-            attributes: ['id', 'name', 'cpf', 'credit', 'value_fix', 'percentage', 'daily'],
+            offset: (page - 1) * limit,
+            attributes: [
+                'id',
+                'name',
+                'cpf',
+                'credit',
+                'value_fix',
+                'percentage',
+                'daily',
+                'avatar',
+                'address'
+            ],
             include: [
                 {
                     model: this._financialStatementsModel,
                     as: 'financialStatements',
                     where: { status: true },
+                    attributes: ['id', 'status', 'truck_id', 'cart_id'],
                     required: false,
                     include: [
                         {
                             model: this._truckModel,
                             as: 'truck',
-                            attributes: ['truck_models', 'truck_board']
+                            attributes: ['truck_models', 'truck_board'],
+                            required: false
                         },
                         {
                             model: this._cartModel,
                             as: 'cart',
-                            attributes: ['cart_models', 'cart_board']
+                            attributes: ['cart_models', 'cart_board'],
+                            required: false
                         }
                     ]
                 }
@@ -416,7 +454,6 @@ class DriverService extends BaseService {
 
         const total = await this._driverModel.count();
         const totalPages = Math.ceil(total / limit);
-
         const currentPage = Number(page);
 
         return {
@@ -424,10 +461,8 @@ class DriverService extends BaseService {
                 const driverData = driver.toJSON();
                 const activeFinancial = driverData.financialStatements?.[0];
 
-                const { ...driverInfo } = driverData;
-
                 return {
-                    ...driverInfo,
+                    ...driverData,
                     truck: activeFinancial?.truck || {},
                     cart: activeFinancial?.cart || {}
                 };
@@ -455,7 +490,9 @@ class DriverService extends BaseService {
                 'value_fix',
                 'percentage',
                 'daily',
-                'transactions'
+                'transactions',
+                'avatar',
+                'address'
             ],
             include: [
                 {
@@ -495,6 +532,107 @@ class DriverService extends BaseService {
             truck: activeFinancial?.truck || {},
             cart: activeFinancial?.cart || {}
         };
+    }
+
+    async uploadImage(id, payload) {
+        const { file, body } = payload;
+
+        if (!file) {
+            const err = new Error('FILE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
+        const driver = await this._driverModel.findByPk(id);
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        if (driver.avatar && driver.avatar.uuid) {
+            await this.deleteFile({ id });
+        }
+
+        if (!body.category) {
+            const err = new Error('CATEGORY_OR_TYPE_NOT_FOUND');
+            err.status = 400;
+            throw err;
+        }
+
+        const originalFilename = file.originalname;
+
+        const code = generateRandomCode(9);
+
+        file.name = code;
+
+        await sendFilePublic(payload);
+
+        const infoDriver = await driver.update({
+            avatar: {
+                uuid: file.name,
+                name: originalFilename,
+                mimetype: file.mimetype,
+                category: body.category
+            }
+        });
+
+        return infoDriver.toJSON();
+    }
+
+    async deleteFile({ id }) {
+        const driver = await this._driverModel.findByPk(id);
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        try {
+            await this._deleteFileIntegration({
+                filename: driver.avatar.uuid,
+                category: driver.avatar.category
+            });
+
+            const infoDriver = await driver.update({
+                avatar: {}
+            });
+
+            return infoDriver;
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    async _deleteFileIntegration({ filename, category }) {
+        try {
+            return await this.deleteFile({ filename, category });
+        } catch {
+            const err = new Error('ERROR_DELETE_FILE');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    async getIdAvatar(id) {
+        const driver = await this._driverModel.findByPk(id, {
+            attributes: ['avatar']
+        });
+
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        const { Body, ContentType } = await getFile({
+            filename: driver.avatar.uuid,
+            category: driver.avatar.category
+        });
+
+        return { contentType: ContentType, fileData: Body };
     }
 
     async updateManagerDriver(body, id) {

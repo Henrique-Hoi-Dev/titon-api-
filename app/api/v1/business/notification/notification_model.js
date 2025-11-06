@@ -4,6 +4,7 @@ class Notification extends Model {
     static init(sequelize) {
         super.init(
             {
+                title: Sequelize.STRING,
                 content: Sequelize.STRING,
                 driver_id: Sequelize.INTEGER,
                 user_id: Sequelize.INTEGER,

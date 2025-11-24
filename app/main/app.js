@@ -40,10 +40,13 @@ const rawBodySaver = function (req, res, buffer, encoding) {
 app.use(compress());
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN || '*',
-        credentials: true
+        origin: '*',
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
     })
 );
+
 app.use(
     bodyParser.json({
         limit: '50mb',
@@ -66,8 +69,6 @@ app.use(
 
 const routers = {};
 routers.v1 = express.Router();
-
-// app.set('port', process.env.PORT_SERVER || 3000);
 
 app.use(i18n.init);
 

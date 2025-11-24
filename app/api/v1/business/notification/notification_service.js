@@ -48,9 +48,9 @@ class NotificationService extends BaseService {
                     externalUserIds: [driver.cpf]
                 });
 
-                this.logger?.info?.('Notificação enviada push:', sendToAllOneSignal);
+                this.logger?.info?.({ sendToAllOneSignal }, 'Notificação enviada push:');
             }
-            this.logger?.info?.('Notificação nao enviada push:', driver.cpf);
+            this.logger?.info?.({ driver: driver.cpf }, 'Notificação nao enviada push:');
         }
 
         return notification.toJSON();

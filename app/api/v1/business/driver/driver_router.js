@@ -107,7 +107,7 @@ router
         validator(validation.createFreight),
         freightController.createFreightDriver.bind(freightController)
     )
-    .patch(
+    .put(
         '/freight/:id',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,

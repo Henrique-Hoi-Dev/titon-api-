@@ -228,14 +228,22 @@ class FinancialStatementService extends BaseService {
         });
 
         if (financialStatement.id && driver?.id && truck?.id && cart?.id && userAdm?.id) {
-            await this._notificationService.createNotification({
-                driver_id: driver?.id,
-                financial_id: financialStatement.id,
-                title: 'Nova Ficha',
-                content: `${userAdm.name}, Criou uma ficha para você ${driver.name}!`,
-                titlePush: 'Nova Ficha',
-                messagePush: `${userAdm.name}, Criou uma ficha para você ${driver.name}!`
-            });
+            try {
+                await this._notificationService.createNotification({
+                    driver_id: driver?.id,
+                    financial_id: financialStatement.id,
+                    title: 'Nova Ficha',
+                    content: `${userAdm.name}, Criou uma ficha para você ${driver.name}!`,
+                    titlePush: 'Nova Ficha',
+                    messagePush: `${userAdm.name}, Criou uma ficha para você ${driver.name}!`
+                });
+            } catch (error) {
+                // Log do erro mas não interrompe o fluxo, pois a ficha já foi criada
+                this.logger?.error?.(
+                    { error, financialStatementId: financialStatement.id },
+                    'Erro ao enviar notificação ao criar ficha'
+                );
+            }
         }
 
         return { msg: 'SUCCESSFUL CREATED FINANCIAL STATEMENT' };

@@ -85,7 +85,8 @@ export default {
         }),
         body: Joi.object({
             file: Joi.string().required(),
-            category: Joi.string().required()
+            category: Joi.string(),
+            typeImg: Joi.string()
         })
     },
     updateFreight: {
@@ -116,7 +117,8 @@ export default {
             id: Joi.number().required()
         }),
         query: Joi.object({
-            typeImg: Joi.string().required()
+            typeImg: Joi.string(),
+            category: Joi.string()
         })
     },
     startingTrip: {

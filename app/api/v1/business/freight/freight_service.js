@@ -874,14 +874,14 @@ class FreightService extends BaseService {
         }
 
         // Valida se o arquivo tem as propriedades necessárias
-        if (!file.name || !file.data) {
+        if (!file.buffer || !file.originalname) {
             const err = new Error('INVALID_FILE_FORMAT');
             err.status = 400;
             throw err;
         }
 
         // Valida se o arquivo tem dados válidos
-        if (!Buffer.isBuffer(file.data) && !(file.data instanceof Uint8Array)) {
+        if (!Buffer.isBuffer(file.buffer) && !(file.buffer instanceof Uint8Array)) {
             const err = new Error('INVALID_FILE_DATA');
             err.status = 400;
             throw err;

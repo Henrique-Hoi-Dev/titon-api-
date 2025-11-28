@@ -84,10 +84,9 @@ export default {
             id: Joi.number().required()
         }),
         body: Joi.object({
-            file: Joi.string().required(),
-            category: Joi.string(),
-            typeImg: Joi.string()
-        })
+            category: Joi.string().required(),
+            typeImg: Joi.string().required()
+        }).unknown(true)
     },
     updateFreight: {
         params: Joi.object({

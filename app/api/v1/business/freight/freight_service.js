@@ -130,7 +130,10 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        const data = await this.getId({ freight_id: result.id }, { id: driver.id });
+        const data = await this.getId(
+            { freight_id: result.id },
+            { id: driver.id, changedDestiny: true }
+        );
 
         return data;
     }
@@ -697,7 +700,10 @@ class FreightService extends BaseService {
             throw err;
         }
 
-        if (!financial_id && changedDestiny) {
+        const routeDistanceKm = freight?.dataValues?.route_distance_km;
+        const routeDuration = freight?.dataValues?.route_duration;
+
+        if ((!financial_id && changedDestiny) || (!routeDistanceKm && !routeDuration)) {
             const origin = freight.dataValues.start_freight_city;
             const destination = freight.dataValues.end_freight_city;
 

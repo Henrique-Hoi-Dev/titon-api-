@@ -65,32 +65,71 @@ class FinancialStatementService extends BaseService {
         });
 
         if (!financialStatement) {
-            const err = new Error('FINANCIAL_STATEMENT_CURRENT_NOT_FOUND');
-            err.status = 404;
-            throw err;
+            return {};
         }
 
         return financialStatement;
     }
 
     async getAllFinished(driver, query) {
-        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id' } = query;
+        const { page = 1, limit = 100, sort_order = 'ASC', sort_field = 'id', search } = query;
+
+        const where = { driver_id: driver.id, status: false };
+
+        /* eslint-disable indent */
+        const whereSearch = search?.trim()
+            ? {
+                  [Op.or]: [
+                      { '$truck.truck_board$': { [Op.iLike]: `%${search}%` } },
+                      { '$cart.cart_board$': { [Op.iLike]: `%${search}%` } }
+                  ]
+              }
+            : {};
+        /* eslint-enable indent */
+
+        const whereClause = search ? { ...where, ...whereSearch } : where;
 
         const totalItems = await this._financialStatementModel.count({
-            where: { driver_id: driver.id, status: false }
+            where: whereClause,
+            include: [
+                {
+                    model: this._truckModel,
+                    as: 'truck',
+                    required: !!search
+                },
+                {
+                    model: this._cartModel,
+                    as: 'cart',
+                    required: !!search
+                }
+            ]
         });
 
         const totalPages = Math.ceil(totalItems / limit);
 
         const financialStatements = await this._financialStatementModel.findAll({
-            where: { driver_id: driver.id, status: false },
+            where: whereClause,
             order: [[sort_field, sort_order]],
             limit: limit,
             offset: page - 1 ? (page - 1) * limit : 0,
-            include: {
-                model: this._freightModel,
-                as: 'freight'
-            }
+            include: [
+                {
+                    model: this._truckModel,
+                    as: 'truck',
+                    attributes: ['truck_models', 'truck_board', 'image_truck'],
+                    required: !!search
+                },
+                {
+                    model: this._cartModel,
+                    as: 'cart',
+                    attributes: ['cart_models', 'cart_board', 'image_cart'],
+                    required: !!search
+                },
+                {
+                    model: this._freightModel,
+                    as: 'freight'
+                }
+            ]
         });
 
         const currentPage = Number(page);

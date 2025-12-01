@@ -1,5 +1,5 @@
 import { format, add } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 export const formatWithTimezone = (
     date,
@@ -8,7 +8,7 @@ export const formatWithTimezone = (
     addHours = 3
 ) => {
     if (!date) return null;
-    const zonedDate = utcToZonedTime(date, timeZone);
+    const zonedDate = toZonedTime(date, timeZone);
 
     const adjustedDate = add(zonedDate, { hours: addHours });
 

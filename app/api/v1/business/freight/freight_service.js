@@ -806,6 +806,24 @@ class FreightService extends BaseService {
 
         await freight.update(body);
 
+        if (body.status === 'PENDING') {
+            try {
+                await this._notificationService.createNotification({
+                    title: 'Requisitou um novo check frete',
+                    content: `${name}, Requisitou um novo check frete!`,
+                    manager_id: financial.creator_user_id,
+                    freight_id: freightId,
+                    driver_id: id,
+                    financial_id: financial.id
+                });
+            } catch (error) {
+                this.logger?.error?.(
+                    { error: error.message, stack: error.stack, freightId, driverId: id },
+                    'Erro ao criar notificação - não interrompe o processo'
+                );
+            }
+        }
+
         if (freight.dataValues.status === 'STARTING_TRIP') {
             const result = await freight.update({
                 tons_loaded: body.tons_loaded,
@@ -818,25 +836,6 @@ class FreightService extends BaseService {
             });
 
             await this._updateValorFinancial(result);
-
-            if (body.status === 'PENDING') {
-                try {
-                    await this._notificationService.createNotification({
-                        title: 'Requisitou um novo check frete',
-                        content: `${name}, Requisitou um novo check frete!`,
-                        manager_id: financial.creator_user_id,
-                        freight_id: freightId,
-                        driver_id: id,
-                        financial_id: financial.id
-                    });
-                } catch (error) {
-                    // Log do erro mas não interrompe o processo
-                    this.logger?.error?.(
-                        { error: error.message, stack: error.stack, freightId, driverId: id },
-                        'Erro ao criar notificação - não interrompe o processo'
-                    );
-                }
-            }
 
             return result;
         }

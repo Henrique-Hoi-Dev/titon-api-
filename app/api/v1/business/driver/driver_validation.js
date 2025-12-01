@@ -174,9 +174,8 @@ export default {
             id: Joi.number().required()
         }),
         body: Joi.object({
-            file: Joi.string().required(),
             category: Joi.string().required()
-        })
+        }).unknown(true)
     },
     deleteFileDeposit: {
         params: Joi.object({
@@ -219,9 +218,8 @@ export default {
             id: Joi.number().required()
         }),
         body: Joi.object({
-            file: Joi.string().required(),
             category: Joi.string().required()
-        })
+        }).unknown(true)
     },
     deleteFileTravel: {
         params: Joi.object({
@@ -257,9 +255,8 @@ export default {
             id: Joi.number().required()
         }),
         body: Joi.object({
-            file: Joi.string().required(),
             category: Joi.string().required()
-        })
+        }).unknown(true)
     },
     deleteFileRestock: {
         params: Joi.object({

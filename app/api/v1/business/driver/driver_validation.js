@@ -53,6 +53,7 @@ export default {
     },
     getAllFinished: {
         query: Joi.object({
+            search: Joi.string().optional(),
             page: Joi.number().optional(),
             limit: Joi.number().optional(),
             sort_order: Joi.string().optional(),

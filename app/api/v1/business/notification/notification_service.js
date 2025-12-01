@@ -35,11 +35,7 @@ class NotificationService extends BaseService {
         // Envia notificação push para o driver
         if (driver_id) {
             const driver = await this._driverModel.findByPk(driver_id);
-            if (!driver) {
-                const err = new Error('DRIVER_NOT_FOUND');
-                err.status = 404;
-                throw err;
-            }
+            if (!driver) return;
 
             if (!driver.player_id) {
                 const sendToAllOneSignal = await this._oneSignalProvider.sendToUsers({

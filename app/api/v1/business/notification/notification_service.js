@@ -100,9 +100,7 @@ class NotificationService extends BaseService {
         });
 
         if (!notification) {
-            const err = new Error('NOTIFICATION_NOT_FOUND');
-            err.status = 404;
-            throw err;
+            return { msg: 'NOTIFICATION_NOT_FOUND_OR_ALREADY_READ' };
         }
 
         await notification.update({ read: true });

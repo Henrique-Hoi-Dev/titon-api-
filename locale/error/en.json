@@ -87,5 +87,6 @@
     "ERROR_REQUEST_GOOGLE_MAPS": "Error request google maps",
     "INVALID_FILE_FORMAT": "Invalid file format",
     "INVALID_FILE_DATA": "Invalid file data",
-    "FREIGHT_IN_TRIP": "Freight in trip"
+    "FREIGHT_IN_TRIP": "Freight in trip",
+    "NOTIFICATION_NOT_FOUND_OR_ALREADY_READ": "Notification not found or already read"
 }

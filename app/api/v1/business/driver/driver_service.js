@@ -96,6 +96,8 @@ class DriverService extends BaseService {
                 'credit',
                 'value_fix',
                 'percentage',
+                'gender',
+                'address',
                 'daily',
                 'avatar'
             ]
@@ -110,8 +112,10 @@ class DriverService extends BaseService {
         return driver.toJSON();
     }
 
-    async update(id, body) {
-        const { oldPassword, ...updateData } = body;
+    async update(id, body = {}) {
+        // Remove campos que não podem ser editados
+        // eslint-disable-next-line no-unused-vars
+        const { cpf, password, password_hash, oldPassword, id: bodyId, ...updateData } = body;
 
         const driver = await this._driverModel.findByPk(id);
 
@@ -121,15 +125,50 @@ class DriverService extends BaseService {
             throw err;
         }
 
-        if (oldPassword && !(await driver.checkPassword(oldPassword))) {
-            const err = new Error('PASSWORDS_NOT_MATCHED');
-            err.status = 400;
-            throw err;
+        const currentStatus = driver.dataValues?.status || driver.status;
+        const newStatus = updateData.status;
+
+        if (currentStatus === 'INCOMPLETE' && newStatus === 'ACTIVE') {
+            const requiredFields = [
+                'name',
+                'phone',
+                'email',
+                'number_cnh',
+                'valid_cnh',
+                'date_valid_mopp',
+                'date_valid_nr20',
+                'date_valid_nr35'
+            ];
+
+            const missingFields = [];
+
+            // Verifica campos obrigatórios no driver atual ou nos dados sendo atualizados
+            requiredFields.forEach((field) => {
+                const currentValue = driver.dataValues?.[field] || driver[field];
+                const updateValue = updateData[field];
+                const finalValue = updateValue !== undefined ? updateValue : currentValue;
+
+                if (!finalValue || finalValue === null || finalValue === '') {
+                    missingFields.push(field);
+                }
+            });
+
+            if (missingFields.length > 0) {
+                const err = new Error('MISSING_REQUIRED_FIELDS_TO_ACTIVATE');
+                err.status = 400;
+                err.details = {
+                    message: 'Campos obrigatórios não preenchidos para ativar o motorista',
+                    missingFields
+                };
+                throw err;
+            }
         }
 
         await driver.update(updateData);
 
-        return await this._driverModel.findByPk(id);
+        const driverResult = await this._driverModel.findByPk(id);
+
+        return driverResult.toJSON();
     }
 
     async requestCodeValidationForgotPassword({ phone, cpf }) {
@@ -268,12 +307,25 @@ class DriverService extends BaseService {
         }
     }
 
-    async forgotPassword(body) {
-        const { password, cpf } = body;
+    async forgotPassword(body, driverId) {
+        const { password } = body;
 
-        const driver = await this._driverModel.findOne({ where: { cpf } });
+        if (!password) {
+            const err = new Error('PASSWORD_REQUIRED');
+            err.status = 400;
+            throw err;
+        }
 
-        if (password && (await driver.checkPassword(password))) {
+        const driver = await this._driverModel.findByPk(driverId);
+
+        if (!driver) {
+            const err = new Error('DRIVER_NOT_FOUND');
+            err.status = 404;
+            throw err;
+        }
+
+        // Verifica se a nova senha é igual à senha atual
+        if (await driver.checkPassword(password)) {
             const err = new Error('NEW_PASSWORD_SAME_AS_OLD');
             err.status = 400;
             throw err;

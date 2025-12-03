@@ -79,6 +79,7 @@ router
         '/forgot-password',
         middleware.ensureAuthorization,
         middleware.verifyDriverToken,
+        validator(validation.forgotPassword),
         driverController.forgotPassword.bind(driverController)
     );
 

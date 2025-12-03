@@ -622,8 +622,16 @@ class FreightService extends BaseService {
         return financial.toJSON();
     }
 
-    async getId({ freight_id, financial_id }, { id, changedDestiny = false }) {
+    async getId({ freight_id, financial_id }, driver = {}) {
+        const { id, changedDestiny = false } = driver;
         let financial = null;
+        const summary = {
+            restockTotal: 0,
+            travelExpensesTotal: 0,
+            depositMoneyTotal: 0,
+            valueFreightTotal: 0
+        };
+
         if (freight_id && financial_id) {
             const result = await this._financialStatementModel.findOne({
                 where: { id: financial_id, driver_id: id }
@@ -719,7 +727,53 @@ class FreightService extends BaseService {
             });
         }
 
-        return freight.toJSON();
+        // Usar dados do driver que já vêm do token (req.driver)
+
+        // Calcular totais do summary
+        const restockData = freight.dataValues.restock || [];
+        const travelExpenseData = freight.dataValues.travel_expense || [];
+        const depositMoneyData = freight.dataValues.deposit_money || [];
+
+        // Calcular restockTotal
+        if (restockData.length > 0) {
+            summary.restockTotal = restockData.reduce((total, item) => {
+                return total + (item.total_nota_value || 0);
+            }, 0);
+        }
+
+        // Calcular travelExpensesTotal
+        if (travelExpenseData.length > 0) {
+            summary.travelExpensesTotal = travelExpenseData.reduce((total, item) => {
+                return total + (item.value || 0);
+            }, 0);
+        }
+
+        // Calcular depositMoneyTotal
+        if (depositMoneyData.length > 0) {
+            summary.depositMoneyTotal = depositMoneyData.reduce((total, item) => {
+                return total + (item.value || 0);
+            }, 0);
+        }
+
+        // Calcular valueFreightTotal (valor bruto do frete: tonelada x valor da tonelada)
+        const estimatedTonnage = freight.dataValues.estimated_tonnage || 0;
+        const tonValue = freight.dataValues.ton_value || 0;
+        summary.valueFreightTotal = (estimatedTonnage / 1000) * tonValue;
+
+        // Calcular comissão do motorista
+        summary.driverCommission = 0;
+        // Se tiver valor fixo, deixa 0 (não adiciona ao summary)
+        // Se não tiver valor fixo e for porcentagem, calcula a porcentagem do valor bruto
+        if (!driver.value_fix || driver.value_fix === 0) {
+            if (driver.percentage && driver.percentage > 0) {
+                summary.driverCommission = summary.valueFreightTotal * (driver.percentage / 100);
+            }
+        }
+
+        const freightData = freight.toJSON();
+        freightData.summary = summary;
+
+        return freightData;
     }
 
     async _calculate(values) {
@@ -828,8 +882,11 @@ class FreightService extends BaseService {
             const result = await freight.update({
                 tons_loaded: body.tons_loaded,
                 toll_cost: body.toll_cost,
-                truck_km_end_trip: body.truck_km_end_trip,
                 discharge: body.discharge,
+                taxa_adm: body.taxa_adm,
+                insurance: body.insurance,
+                break_ton: body.break_ton,
+
                 img_proof_cte: body.img_proof_cte,
                 img_proof_ticket: body.img_proof_ticket,
                 img_proof_freight_letter: body.img_proof_freight_letter

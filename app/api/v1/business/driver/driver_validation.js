@@ -11,16 +11,34 @@ export default {
     },
     update: {
         body: Joi.object({
-            name: Joi.string(),
-            oldPassword: Joi.string(),
-            password: Joi.string(),
-            number_cnh: Joi.string(),
-            valid_cnh: Joi.date(),
-            date_valid_mopp: Joi.date(),
-            date_valid_nr20: Joi.date(),
-            date_valid_nr35: Joi.date(),
-            date_admission: Joi.date(),
-            date_birthday: Joi.date()
+            name: Joi.string().optional(),
+            phone: Joi.string().optional(),
+            email: Joi.string().email().optional(),
+            gender: Joi.string().optional(),
+            date_birthday: Joi.date().optional(),
+            status: enumSchemas.driverStatus.optional(),
+            type_positions: Joi.string().optional(),
+            permission_id: Joi.number().optional(),
+            external_user_id: Joi.string().optional(),
+            player_id: Joi.string().optional(),
+            number_cnh: Joi.string().optional(),
+            valid_cnh: Joi.date().optional(),
+            date_valid_mopp: Joi.date().optional(),
+            date_valid_nr20: Joi.date().optional(),
+            date_valid_nr35: Joi.date().optional(),
+            date_admission: Joi.date().optional(),
+            credit: Joi.number().optional(),
+            transactions: Joi.array().optional(),
+            value_fix: Joi.number().optional(),
+            percentage: Joi.number().optional(),
+            daily: Joi.number().optional(),
+            address: Joi.object({
+                street: Joi.string().optional(),
+                number: Joi.string().optional(),
+                complement: Joi.string().optional(),
+                state: Joi.string().optional(),
+                city: Joi.string().optional()
+            }).optional()
         })
     },
     getIdAvatar: {
@@ -43,6 +61,11 @@ export default {
         body: Joi.object({
             code: Joi.string().required(),
             cpf: Joi.string().replace(/\D/g, '').custom(validateCpf).required()
+        })
+    },
+    forgotPassword: {
+        body: Joi.object({
+            password: Joi.string().required().min(6)
         })
     },
     getIdFreight: {
@@ -109,6 +132,9 @@ export default {
             toll_cost: Joi.number(),
             truck_km_end_trip: Joi.number(),
             discharge: Joi.number(),
+            taxa_adm: Joi.number(),
+            insurance: Joi.number(),
+            break_ton: Joi.number(),
             status: enumSchemas.freightStatus
         })
     },

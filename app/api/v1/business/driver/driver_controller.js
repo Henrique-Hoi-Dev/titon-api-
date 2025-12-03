@@ -57,7 +57,7 @@ class DriverController extends BaseResourceController {
 
     update = async (req, res, next) => {
         try {
-            const data = await this._driverService.update(req.body, req.params.id);
+            const data = await this._driverService.update(req.driver.id, req.body);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));
@@ -84,7 +84,7 @@ class DriverController extends BaseResourceController {
 
     forgotPassword = async (req, res, next) => {
         try {
-            const data = await this._driverService.forgotPassword(req.body);
+            const data = await this._driverService.forgotPassword(req.body, req.driver.id);
             res.status(HttpStatus.OK).json(this.parseKeysToCamelcase({ data }));
         } catch (error) {
             next(this.handleError(error));

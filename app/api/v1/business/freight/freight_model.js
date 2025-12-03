@@ -28,10 +28,33 @@ class Freight extends Model {
                 }),
 
                 // level two
-                tons_loaded: DataTypes.INTEGER, // Tonelada carregada real
-                toll_cost: DataTypes.INTEGER, // Valor do pedágio em centavos
+                tons_loaded: {
+                    type: DataTypes.INTEGER,
+                    allowNull: true
+                }, // Tonelada carregada real
+                toll_cost: {
+                    type: DataTypes.INTEGER,
+                    allowNull: true
+                }, // Valor do pedágio em centavos
+                // level finished
+                discharge: {
+                    type: DataTypes.INTEGER,
+                    allowNull: true
+                }, // Desconto, peso que foi descarregado no final da viagem
+                taxa_adm: {
+                    type: DataTypes.INTEGER,
+                    allowNull: true
+                }, // Taxa de administração em centavos
+                insurance: {
+                    type: DataTypes.INTEGER,
+                    allowNull: true
+                }, // Taxa de seguro em centavos
+                break_ton: {
+                    type: DataTypes.INTEGER,
+                    allowNull: true
+                }, // Quebra, peso que foi perdido na viagem
+
                 truck_km_end_trip: DataTypes.INTEGER, // KM final da viagem
-                discharge: DataTypes.INTEGER,
 
                 img_proof_cte: {
                     type: DataTypes.JSONB,

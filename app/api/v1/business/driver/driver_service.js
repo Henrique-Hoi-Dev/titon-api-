@@ -128,39 +128,36 @@ class DriverService extends BaseService {
         const currentStatus = driver.dataValues?.status || driver.status;
         const newStatus = updateData.status;
 
-        if (currentStatus === 'INCOMPLETE' && newStatus === 'ACTIVE') {
-            const requiredFields = [
-                'name',
-                'phone',
-                'email',
-                'number_cnh',
-                'valid_cnh',
-                'date_valid_mopp',
-                'date_valid_nr20',
-                'date_valid_nr35'
-            ];
+        // Lista de campos obrigatórios para ativar o motorista
+        const requiredFields = [
+            'name',
+            'phone',
+            'email',
+            'number_cnh',
+            'valid_cnh',
+            'date_valid_mopp',
+            'date_valid_nr20',
+            'date_valid_nr35'
+        ];
 
-            const missingFields = [];
+        const missingFields = [];
 
-            // Verifica campos obrigatórios no driver atual ou nos dados sendo atualizados
-            requiredFields.forEach((field) => {
-                const currentValue = driver.dataValues?.[field] || driver[field];
-                const updateValue = updateData[field];
-                const finalValue = updateValue !== undefined ? updateValue : currentValue;
+        // Verifica campos obrigatórios no driver atual ou nos dados sendo atualizados
+        requiredFields.forEach((field) => {
+            const currentValue = driver.dataValues?.[field] || driver[field];
+            const updateValue = updateData[field];
+            const finalValue = updateValue !== undefined ? updateValue : currentValue;
 
-                if (!finalValue || finalValue === null || finalValue === '') {
-                    missingFields.push(field);
-                }
-            });
+            if (!finalValue || finalValue === null || finalValue === '') {
+                missingFields.push(field);
+            }
+        });
 
-            if (missingFields.length > 0) {
-                const err = new Error('MISSING_REQUIRED_FIELDS_TO_ACTIVATE');
-                err.status = 400;
-                err.details = {
-                    message: 'Campos obrigatórios não preenchidos para ativar o motorista',
-                    missingFields
-                };
-                throw err;
+        // Se todos os campos obrigatórios estão completos e o status atual é INCOMPLETE
+        if (currentStatus === 'INCOMPLETE' && missingFields.length === 0) {
+            // Muda automaticamente o status para ACTIVE se não foi especificado outro status
+            if (!newStatus || newStatus === 'ACTIVE') {
+                updateData.status = 'ACTIVE';
             }
         }
 
